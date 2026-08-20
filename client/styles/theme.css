@@ -1,0 +1,91 @@
+/* =====================================================================
+   THEME FILE — all color palettes live here, nowhere else.
+
+   Each theme is one selector block of HSL triples ("H S% L%").
+   Pages NEVER hard-code colors — they use semantic Tailwind classes
+   (bg-background, text-foreground, bg-card, bg-primary, border-border, …)
+   which map to these variables in client/index.css.
+
+   To switch themes at runtime, set `data-theme` on <html> (handled by
+   client/hooks/use-theme.ts). To ADD a theme, copy a block below, rename
+   the [data-theme="..."] selector, and register it in client/lib/themes.ts.
+
+   HSL is used (not hex) so Tailwind opacity modifiers like `bg-primary/10`
+   keep working.
+   ===================================================================== */
+
+:root {
+  /* Shared, theme-independent tokens */
+  --radius: 0.875rem;
+}
+
+/* ---------------------- LIGHT (default) ---------------------- */
+:root,
+[data-theme="light"] {
+  --background: 0 0% 100%;          /* #FFFFFF */
+  --foreground: 240 6% 10%;         /* #18181B */
+
+  --border: 326 85% 90%;            /* #FBCFE8 */
+
+  --card: 342 100% 98%;             /* #FFF5F8 */
+  --card-foreground: 240 6% 10%;
+  --card-border: 326 85% 90%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 6% 10%;
+  --popover-border: 326 85% 90%;
+
+  --primary: 338 100% 65%;          /* #FF4D8D */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 338 100% 73%;    /* #FF77A9 */
+
+  --secondary: 340 60% 96%;
+  --secondary-foreground: 240 6% 20%;
+
+  --muted: 340 30% 96%;
+  --muted-foreground: 240 4% 46%;
+
+  --accent: 338 100% 95%;
+  --accent-foreground: 338 80% 42%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --input: 326 85% 90%;
+  --ring: 338 100% 65%;
+}
+
+/* ---------------------- DARK ---------------------- */
+[data-theme="dark"] {
+  --background: 0 0% 6%;            /* #0F0F0F */
+  --foreground: 0 0% 96%;           /* #F5F5F5 */
+
+  --border: 0 0% 16%;              /* #2A2A2A */
+
+  --card: 0 0% 10%;               /* #1A1A1A */
+  --card-foreground: 0 0% 96%;
+  --card-border: 0 0% 16%;
+
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 96%;
+  --popover-border: 0 0% 16%;
+
+  --primary: 338 100% 65%;          /* #FF4D8D */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 338 100% 73%;    /* #FF77A9 */
+
+  --secondary: 0 0% 16%;
+  --secondary-foreground: 0 0% 92%;
+
+  --muted: 0 0% 14%;
+  --muted-foreground: 0 0% 64%;
+
+  --accent: 0 0% 16%;
+  --accent-foreground: 0 0% 96%;
+
+  --destructive: 0 63% 52%;
+  --destructive-foreground: 0 0% 100%;
+
+  --input: 0 0% 16%;
+  --ring: 338 100% 65%;
+}

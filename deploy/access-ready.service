@@ -1,0 +1,16 @@
+[Unit]
+Description=ACCESS Ready student app
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/access-ready
+Environment=NODE_ENV=production
+EnvironmentFile=-/opt/access-ready/.env
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -480,7 +480,7 @@ export function SessionActiveView({ trail, showCapsule }: SessionActiveViewProps
                     question:     currentQ.question,
                     imageSrc:     (currentQ as any).imageSrc,
                     labels:       currentQ.options ?? [],
-                    correctLabel: (currentQ.options ?? [])[currentQ.correct ?? 0] ?? "",
+                    correctLabel: (currentQ.options ?? [])[typeof currentQ.correct === "number" ? currentQ.correct : 0] ?? "",
                   }}
                   showFeedback={showFeedback}
                   selectedLabel={selectedIdx >= 0 ? (currentQ.options ?? [])[selectedIdx] ?? "" : ""}

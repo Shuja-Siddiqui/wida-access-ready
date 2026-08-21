@@ -24,7 +24,6 @@ export interface SessionQuestion {
 
   // ── Multiple-choice / image_grid ──────────────────────────────────────────
   options?: string[];
-  correct?: number;
 
   // ── sequence_order (reading) / sequence_ordering (listening) ─────────────
   items?: string[];
@@ -110,7 +109,7 @@ export interface SessionContextValue {
 
   // ── Writing domain ────────────────────────────────────────────────────────
   writingText: string;
-  setWritingText: (s: string) => void;
+  setWritingText: (s: string | ((prev: string) => string)) => void;
   onSubmitWriting: (text: string) => void;
 }
 

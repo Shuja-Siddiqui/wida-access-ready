@@ -22,7 +22,7 @@ export function SessionImageGrid() {
 
       {/* max-w-[340px] keeps each cell ≈ 162px — right-sized for 640px webformatURL images */}
       <div className="grid grid-cols-2 gap-3 max-w-[340px]">
-        {currentQ.options.map((opt, i) => {
+        {(currentQ.options ?? []).map((opt, i) => {
           const imgSrc     = currentQ.imageUrls?.[i] ?? "";
           const isCorrect  = i === currentQ.correct;
           const isSelected = i === selectedIdx;

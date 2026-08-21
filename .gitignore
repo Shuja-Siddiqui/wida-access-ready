@@ -9,10 +9,13 @@ build/
 out/
 *.tsbuildinfo
 
-# Environment
+# Secrets — keep .env.example tracked
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.pem
+*.ppk
+*.key
 
 # Logs
 logs/
@@ -29,12 +32,14 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Cache
 .cache/
 .parcel-cache/
 .vite/
 .turbo/
+.npm/
 
 # Coverage
 coverage/

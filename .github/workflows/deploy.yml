@@ -55,9 +55,14 @@ jobs:
           printf '%s\n' "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           echo "Connecting to ${HOST} as ${USER}"
-          ssh-keyscan -T 20 -H "$HOST" >> ~/.ssh/known_hosts 2>/tmp/keyscan.err || true
-          if ! grep -q "$HOST" ~/.ssh/known_hosts 2>/dev/null; then
+          # Do not use -H: hashed hosts cannot be grepped by IP, which falsely fails this step.
+          if ! ssh-keyscan -T 20 "$HOST" >> ~/.ssh/known_hosts 2>/tmp/keyscan.err; then
             echo "ssh-keyscan could not reach ${HOST}:22"
+            cat /tmp/keyscan.err || true
+            exit 1
+          fi
+          if ! grep -qE ' (ssh-|ecdsa-)' ~/.ssh/known_hosts; then
+            echo "ssh-keyscan wrote no host keys for ${HOST}:22"
             cat /tmp/keyscan.err || true
             exit 1
           fi

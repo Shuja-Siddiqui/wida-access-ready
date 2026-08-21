@@ -10,6 +10,7 @@
     "dev": "tsx server/index.ts",
     "build": "vite build --config vite.config.ts --outDir dist/public && vite build --config vite.config.ts --ssr client/entry-server.tsx --outDir dist/server",
     "serve": "tsx server/index.ts",
+    "start": "tsx server/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

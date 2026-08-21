@@ -22,10 +22,13 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Typecheck
+      - name: Typecheck and build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: |
           npm ci --legacy-peer-deps
           npm run typecheck
+          npm run build
 
       - name: Check deploy secrets
         env:
@@ -79,7 +82,7 @@ jobs:
       - name: Sync and restart
         run: |
           rsync -az --delete \
-            --exclude node_modules --exclude dist --exclude .env --exclude .env.local \
+            --exclude node_modules --exclude .env --exclude .env.local \
             --exclude logs --exclude .git \
             ./ deploy-target:/opt/access-ready/
           scp deploy/remote-deploy.sh deploy/access-ready.service deploy-target:/tmp/

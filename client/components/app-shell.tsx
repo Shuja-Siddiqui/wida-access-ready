@@ -3,6 +3,8 @@ import { LogOut as LogOutIcon, Moon as MoonIcon, Sun as SunIcon } from "lucide-r
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavConfig } from "@/components/nav-config";
+import { BreadcrumbTrailProvider } from "@/components/breadcrumbs";
+import { Navbar } from "@/components/navbar";
 import { cn } from "@/lib/utils";
 
 const HIDDEN_PATHS = new Set([
@@ -40,9 +42,9 @@ function useCanShowCapsule() {
   return canShow;
 }
 
-type NavContextValue = { showNav: boolean; showCapsule: boolean };
+type NavContextValue = { showNav: boolean; showCapsule: boolean; showBar: boolean };
 
-const NavContext = createContext<NavContextValue>({ showNav: false, showCapsule: false });
+const NavContext = createContext<NavContextValue>({ showNav: false, showCapsule: false, showBar: false });
 
 export function useShowNav() {
   return useContext(NavContext).showNav;
@@ -50,6 +52,10 @@ export function useShowNav() {
 
 export function useShowCapsule() {
   return useContext(NavContext).showCapsule;
+}
+
+export function useShowBar() {
+  return useContext(NavContext).showBar;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -60,7 +66,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { navItems, isDark, toggleTheme, handleLogout } = useNavConfig();
 
   const isAuthed = !!studentId || !!teacherId;
-  const showNav = ready && isAuthed && !HIDDEN_PATHS.has(location);
+  const showBar = !HIDDEN_PATHS.has(location);
+  const showNav = ready && isAuthed && showBar;
   const showCapsule = showNav && canShowCapsule;
 
   const itemClass = (active: boolean) =>
@@ -78,7 +85,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <>
+    <BreadcrumbTrailProvider>
       {showCapsule && (
         <nav
           aria-label="Primary"
@@ -122,7 +129,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       )}
-      <NavContext.Provider value={{ showNav, showCapsule }}>{children}</NavContext.Provider>
-    </>
+      <NavContext.Provider value={{ showNav, showCapsule, showBar }}>
+        {showBar && <Navbar />}
+        {children}
+      </NavContext.Provider>
+    </BreadcrumbTrailProvider>
   );
 }

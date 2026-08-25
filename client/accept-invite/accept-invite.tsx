@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { InputField } from "@/components/input-field";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi, ApiError } from "@/hooks/use-api";
+import { PageLoader } from "@/components/loading-screen";
 
 type Step = "loading" | "form" | "success" | "invalid";
 
@@ -141,8 +142,8 @@ export default function AcceptInvite() {
           <AnimatePresence mode="wait">
             {step === "loading" && (
               <motion.div key="loading" {...slide} className="flex flex-col items-center gap-6 py-6">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                <p className="text-muted-foreground font-bold uppercase tracking-widest">Loading invitation…</p>
+                <PageLoader />
+                <p className="text-muted-foreground font-bold uppercase tracking-widest">Loading invitation</p>
               </motion.div>
             )}
 

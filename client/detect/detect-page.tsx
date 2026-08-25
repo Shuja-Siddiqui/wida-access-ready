@@ -11,7 +11,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Scan, ImageIcon, Loader2, AlertCircle } from "lucide-react";
-import { Navbar } from "@/components/navbar";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -171,8 +170,7 @@ export default function DetectPage() {
 
   return (
     <>
-      <Navbar />
-      <div className="min-h-[calc(100vh-4rem)] bg-background">
+      <div className="min-h-[calc(100vh-5rem)] bg-background">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
           {/* Header */}
@@ -242,7 +240,7 @@ export default function DetectPage() {
                     {detections.length} boxes
                   </span>
                   <span className="px-2.5 py-1 rounded-full bg-violet-500/10 text-violet-600 border border-violet-500/20">
-                    ⚡ Grounding DINO
+                    Grounding DINO
                   </span>
                   <span className="px-2.5 py-1 rounded-full bg-muted/40 text-muted-foreground border border-border/40">
                     {candidates.length} candidates from Claude vision
@@ -307,7 +305,6 @@ export default function DetectPage() {
                       exit={{ opacity: 0, y: -6 }}
                       className="flex items-center gap-3 px-4 py-3 rounded-xl border border-growth-green/30 bg-growth-green/10"
                     >
-                      <span className="text-lg">👆</span>
                       <div>
                         <p className="text-xs font-semibold text-muted-foreground">You tapped</p>
                         <p className="text-sm font-bold text-foreground">{clicked.label}</p>
@@ -315,8 +312,9 @@ export default function DetectPage() {
                       <button
                         onClick={() => setClicked(null)}
                         className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+                        aria-label="Clear selection"
                       >
-                        ✕
+                        <X className="w-4 h-4" />
                       </button>
                     </motion.div>
                   ) : (

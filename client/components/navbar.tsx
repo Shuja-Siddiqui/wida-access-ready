@@ -3,7 +3,8 @@ import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useShowCapsule, useShowNav } from "@/components/app-shell";
 import { useNavConfig } from "@/components/nav-config";
-import { Breadcrumbs, type Crumb } from "@/components/breadcrumbs";
+import { Breadcrumbs, useOptionalTrail, type Crumb } from "@/components/breadcrumbs";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -18,7 +19,9 @@ export function Navbar({ trail }: { trail?: Crumb[] } = {}) {
   const { userType } = useAuth();
   const showNav = useShowNav();
   const showCapsule = useShowCapsule();
+  const contextTrail = useOptionalTrail();
   const { navItems, isDark, toggleTheme, handleLogout, homePath } = useNavConfig();
+  const crumbs = trail ?? contextTrail;
 
   return (
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border/40 transition-colors duration-200">
@@ -34,9 +37,11 @@ export function Navbar({ trail }: { trail?: Crumb[] } = {}) {
           <div className="h-8 w-px bg-border flex-shrink-0 hidden sm:block" aria-hidden="true" />
 
           <div className="min-w-0 font-semibold text-muted-foreground">
-            <Breadcrumbs userType={userType} items={trail} />
+            <Breadcrumbs userType={userType} items={crumbs} />
           </div>
         </div>
+
+        {!showNav && <ThemeToggle />}
 
         {showNav && !showCapsule && (
           <DropdownMenu>

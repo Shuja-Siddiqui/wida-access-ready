@@ -5,8 +5,10 @@ import { useApi, extractErrorMessage } from "@/hooks/use-api";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Mic, Square, Volume2, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Mic, Square, Volume2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { OptionVisual, StemVisual } from "@/components/shape-glyph";
+import { LoadingScreen } from "@/components/loading-screen";
 
 type SessionState = "loading" | "error" | "active" | "finishing";
 
@@ -97,17 +99,12 @@ export default function Session() {
   };
 
   if (state === "loading") {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-muted-foreground font-bold">Building your {domain} session...</p>
-      </div>
-    );
+    return <LoadingScreen message={`Preparing ${domain}`} />;
   }
 
   if (state === "error") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-6 px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 text-center">
+      <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center bg-background gap-6 px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 text-center">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <p className="text-destructive font-bold text-lg max-w-sm">{errorMsg}</p>
         <div className="flex gap-3">
@@ -123,12 +120,7 @@ export default function Session() {
   }
 
   if (state === "finishing") {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-        <Loader2 className="w-10 h-10 text-growth-green animate-spin" />
-        <p className="text-muted-foreground font-bold">Saving your results...</p>
-      </div>
-    );
+    return <LoadingScreen message="Saving your results" />;
   }
 
   const content = session?.content;
@@ -194,12 +186,9 @@ export default function Session() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-[calc(100vh-5rem)] bg-background flex flex-col">
       <div className="p-4 bg-card border-b shadow-sm sticky top-0 z-10">
         <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <button onClick={() => setLocation("/home")} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
           <span className="uppercase tracking-widest text-xs font-black text-muted-foreground">{domain}</span>
           <Progress value={progressPct} className="h-2 flex-1" />
           <span className="text-xs font-bold text-muted-foreground">{qIdx + 1}/{questions.length || 1}</span>
@@ -217,16 +206,20 @@ export default function Session() {
             className="space-y-6"
           >
             {/* Illustration image — shown when the API found a matching library image for this topic */}
-            {(type === "reading" || type === "listening") && data?.illustrationUrl && (
-              <div className="rounded-2xl overflow-hidden border border-border/40 shadow-sm">
-                <img
-                  src={data.illustrationUrl}
-                  alt="Story illustration"
-                  className="w-full block"
-                />
+            {(data?.illustrationUrl || data?.visual) && (
+              <div className="space-y-3">
+                {data.illustrationUrl && (
+                  <div className="rounded-2xl overflow-hidden border border-border/40 shadow-sm">
+                    <img
+                      src={data.illustrationUrl}
+                      alt="Story illustration"
+                      className="w-full block"
+                    />
+                  </div>
+                )}
+                {!data.illustrationUrl && <StemVisual visual={data.visual} />}
               </div>
             )}
-
             {type === "reading" && data?.passage && (
               <div className="bg-energy-orange/5 border border-energy-orange/20 rounded-2xl p-5">
                 <p className="text-foreground leading-relaxed text-[15px]">{data.passage}</p>
@@ -268,7 +261,7 @@ export default function Session() {
                       >
                         {/* Placeholder so the cell always has visible height */}
                         <div className={`w-full aspect-square ${PLACEHOLDER_COLORS[i]} flex items-center justify-center`}>
-                          <span className="text-3xl opacity-30">{["🌿","🦁","🍄","🐛"][i]}</span>
+                          <span className="text-sm font-black opacity-40">{["A","B","C","D"][i]}</span>
                         </div>
                         {imgSrc && (
                           <img
@@ -282,7 +275,7 @@ export default function Session() {
                         </div>
                         {showFeedback && (i === currentQ.correct || i === selectedIdx) && (
                           <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black ${i === currentQ.correct ? "bg-growth-green" : "bg-destructive"}`}>
-                            {i === currentQ.correct ? "✓" : "✗"}
+                            {i === currentQ.correct ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
                           </div>
                         )}
                         <div className="absolute bottom-0 left-0 right-0 bg-black/55 text-white text-[11px] font-bold py-1.5 text-center leading-tight px-1">
@@ -303,6 +296,7 @@ export default function Session() {
               if (!q.type || q.type === "multiple_choice") {
                 return (
                   <div className="space-y-4">
+                    <StemVisual visual={q.visual} />
                     <h3 className="text-xl font-black text-foreground">{q.question}</h3>
                     <div className="space-y-2.5">
                       {(q.options || []).map((opt: string, i: number) => {
@@ -314,7 +308,7 @@ export default function Session() {
                         return (
                           <button key={i} onClick={() => handleAnswer(i)} disabled={showFeedback}
                             className={`w-full text-left px-5 py-3.5 rounded-xl border-2 font-bold transition-all ${style}`}>
-                            <span className="text-sm">{opt}</span>
+                            <span className="text-sm"><OptionVisual label={opt} diagram={q.optionDiagrams?.[i]} /></span>
                           </button>
                         );
                       })}
@@ -349,7 +343,7 @@ export default function Session() {
                               {items[itemIdx]}
                               {!showFeedback && (
                                 <button onClick={() => setSeqSelection(prev => prev.filter((_, pi) => pi !== pos))}
-                                  className="ml-auto text-muted-foreground hover:text-destructive text-xs">✕</button>
+                                  className="ml-auto text-muted-foreground hover:text-destructive text-xs">Remove</button>
                               )}
                             </div>
                           );
@@ -514,6 +508,7 @@ export default function Session() {
 
             {type === "speaking" && (
               <div className="space-y-8 text-center py-8">
+                <StemVisual visual={data?.visual} />
                 <h3 className="text-2xl font-black text-foreground">{data?.prompt}</h3>
                 {data?.scaffold && (
                   <p className="text-muted-foreground text-lg italic">Try starting with: "{data.scaffold}"</p>
@@ -540,6 +535,7 @@ export default function Session() {
 
             {type === "writing" && (
               <div className="space-y-5">
+                <StemVisual visual={data?.visual} />
                 {/* Task prompt */}
                 <div className="bg-achieve-purple/5 border border-achieve-purple/20 rounded-2xl p-5">
                   <p className="text-foreground font-bold text-[15px] leading-relaxed">{data?.prompt}</p>

@@ -22,8 +22,10 @@ export interface MultipleChoiceQuestion {
   type: "multiple_choice";
   passage?: string;
   imageUrl?: string;
+  visual?: string;
   question: string;
   options: string[];
+  optionDiagrams?: (string | null)[];
   correctIndex: number;
 }
 
@@ -76,8 +78,10 @@ export interface ListeningMCQuestion {
   type: "listening_mc";
   audioScript: string;
   audioUrl?: string;
+  visual?: string;
   question: string;
   options: string[];
+  optionDiagrams?: (string | null)[];
   correctIndex: number;
 }
 

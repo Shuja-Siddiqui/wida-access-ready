@@ -23,7 +23,7 @@ import {
 } from "@/api-generated";
 import { useAuth } from "@/hooks/use-auth";
 import { PageContainer } from "@/components/page-container";
-import { LoadingScreen } from "@/components/loading-screen";
+import { LoadingScreen, PageLoader } from "@/components/loading-screen";
 import { Loader2, Lock, ArrowLeft, CreditCard, Plus, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -428,8 +428,8 @@ export default function Checkout() {
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col items-center justify-center gap-6 py-24 bg-card border border-border/40 rounded-2xl shadow-sm"
           >
-            <Loader2 className="w-12 h-12 animate-spin text-primary" strokeWidth={3} />
-            <p className="text-xl font-black uppercase tracking-wider text-foreground">Finalizing your subscription…</p>
+            <PageLoader />
+            <p className="text-xl font-black uppercase tracking-wider text-foreground">Finalizing your subscription</p>
           </motion.div>
         ) : (
           <motion.div
@@ -501,7 +501,7 @@ export default function Checkout() {
                   transition={{ duration: 0.3 }}
                   className="flex items-center justify-center py-24 bg-card border border-border/40 rounded-2xl shadow-sm"
                 >
-                  <Loader2 className="w-10 h-10 animate-spin text-primary" strokeWidth={3} />
+                  <PageLoader />
                 </motion.div>
               )
             )}

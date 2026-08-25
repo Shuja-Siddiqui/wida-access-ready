@@ -24,6 +24,8 @@ export interface SessionQuestion {
 
   // ── Multiple-choice / image_grid ──────────────────────────────────────────
   options?: string[];
+  optionDiagrams?: (string | null)[];
+  visual?: string;
 
   // ── sequence_order (reading) / sequence_ordering (listening) ─────────────
   items?: string[];
@@ -63,6 +65,8 @@ export interface SessionData {
       word_bank?: string[];
       sentence_frame?: string;
       topic?: string;
+      visual?: string;
+      illustrationUrl?: string;
       questions?: SessionQuestion[];
     };
   };

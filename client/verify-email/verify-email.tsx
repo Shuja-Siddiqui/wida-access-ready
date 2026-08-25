@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Mail, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi } from "@/hooks/use-api";
+import { PageLoader } from "@/components/loading-screen";
 
 type Step = "verifying" | "success" | "invalid";
 
@@ -82,8 +83,8 @@ export default function VerifyEmail() {
           <AnimatePresence mode="wait">
             {step === "verifying" && (
               <motion.div key="verifying" {...slide} className="flex flex-col items-center gap-6 py-6">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                <p className="text-muted-foreground font-bold uppercase tracking-widest">Verifying your email…</p>
+                <PageLoader />
+                <p className="text-muted-foreground font-bold uppercase tracking-widest">Verifying your email</p>
               </motion.div>
             )}
 

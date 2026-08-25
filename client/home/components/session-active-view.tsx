@@ -2,19 +2,17 @@ import { useState, useEffect } from "react";
 import { Mic, Square, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Navbar } from "@/components/navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import type { Crumb } from "@/components/breadcrumbs";
 import { DOMAIN_CONFIG } from "../home-types";
 import { SessionImageGrid } from "./session-image-grid";
 import { SessionAudioPlayer } from "./session-audio-player";
 import { SessionFeedbackBar } from "./session-feedback-bar";
 import { SessionObjectDetect } from "./session-object-detect";
 import { useSessionContext } from "../session-context";
+import { OptionVisual, StemVisual } from "@/components/shape-glyph";
 
 interface SessionActiveViewProps {
-  trail: Crumb[];
   showCapsule: boolean;
 }
 
@@ -42,12 +40,14 @@ function evalClassify(map: Record<number, number>, correct: number[], itemCount:
 
 function McOptions({
   options,
+  diagrams,
   correct,
   selectedIdx,
   showFeedback,
   onSelect,
 }: {
   options: string[];
+  diagrams?: (string | null)[];
   correct: number;
   selectedIdx: number;
   showFeedback: boolean;
@@ -79,7 +79,9 @@ function McOptions({
               <span className="flex-shrink-0 w-6 h-6 rounded-md bg-border/40 flex items-center justify-center text-[11px] font-bold text-muted-foreground">
                 {String.fromCharCode(65 + i)}
               </span>
-              <span className={`text-sm leading-snug ${textStyle}`}>{opt}</span>
+              <span className={`text-sm leading-snug ${textStyle}`}>
+                <OptionVisual label={opt} diagram={diagrams?.[i]} />
+              </span>
             </div>
           </motion.button>
         );
@@ -90,7 +92,7 @@ function McOptions({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function SessionActiveView({ trail, showCapsule }: SessionActiveViewProps) {
+export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
   const {
     session, activeDomain, qIdx, questions, currentQ,
     showFeedback, selectedIdx, lastCorrect,
@@ -418,15 +420,14 @@ export function SessionActiveView({ trail, showCapsule }: SessionActiveViewProps
 
   return (
     <>
-      <Navbar trail={trail} />
       <div
         className={cn(
-          "min-h-screen bg-background flex flex-col",
+          "min-h-[calc(100vh-5rem)] bg-background flex flex-col",
           showCapsule && "md:pl-14 lg:pl-14",
         )}
       >
         {/* ── Progress header ─────────────────────────────────────────────── */}
-        <div className="sticky top-16 z-30 bg-background/80 backdrop-blur-xl border-b border-border/60">
+        <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/60">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
             <div className={`w-8 h-8 rounded-lg ${cfg.bg} flex items-center justify-center flex-shrink-0`}>
               <DomainIcon className={`w-4 h-4 ${cfg.color}`} />
@@ -462,6 +463,17 @@ export function SessionActiveView({ trail, showCapsule }: SessionActiveViewProps
               transition={{ duration: 0.22, ease: "easeOut" }}
               className="space-y-5"
             >
+              {(data.illustrationUrl || data.visual) && (
+                <div className="space-y-3">
+                  {data.illustrationUrl && (
+                    <div className="rounded-2xl overflow-hidden border border-border/40 shadow-sm">
+                      <img src={data.illustrationUrl} alt="" className="w-full block" />
+                    </div>
+                  )}
+                  {!data.illustrationUrl && <StemVisual visual={data.visual} />}
+                </div>
+              )}
+
               {/* Reading passage */}
               {type === "reading" && data.passage && (
                 <div className="rounded-2xl border border-energy-orange/20 bg-energy-orange/[0.04] p-5">
@@ -511,9 +523,11 @@ export function SessionActiveView({ trail, showCapsule }: SessionActiveViewProps
                     !["sequence_order", "match_columns", "classify", "object_detect"].includes(currentQ.type)) &&
                     Array.isArray(currentQ.options) && (
                     <div className="space-y-4">
+                      <StemVisual visual={currentQ.visual} />
                       <h3 className="text-[18px] font-bold text-foreground leading-snug">{currentQ.question}</h3>
                       <McOptions
                         options={currentQ.options}
+                        diagrams={currentQ.optionDiagrams}
                         correct={typeof currentQ.correct === "number" ? currentQ.correct : 0}
                         selectedIdx={selectedIdx}
                         showFeedback={showFeedback}
@@ -557,9 +571,11 @@ export function SessionActiveView({ trail, showCapsule }: SessionActiveViewProps
                   {!["image_grid", "sequence_ordering", "pair_matching", "agree_disagree", "category_sorting"].includes(currentQ.type) &&
                     Array.isArray(currentQ.options) && (
                     <div className="space-y-4">
+                      <StemVisual visual={currentQ.visual} />
                       <h3 className="text-[18px] font-bold text-foreground leading-snug">{currentQ.question}</h3>
                       <McOptions
                         options={currentQ.options}
+                        diagrams={currentQ.optionDiagrams}
                         correct={typeof currentQ.correct === "number" ? currentQ.correct : 0}
                         selectedIdx={selectedIdx}
                         showFeedback={showFeedback}
@@ -573,6 +589,7 @@ export function SessionActiveView({ trail, showCapsule }: SessionActiveViewProps
               {/* ── SPEAKING question ─────────────────────────────────────── */}
               {type === "speaking" && (
                 <div className="space-y-8 text-center py-8">
+                  <StemVisual visual={data.visual} />
                   <h3 className="text-xl font-bold text-foreground">{data.prompt}</h3>
                   {data.scaffold && (
                     <p className="text-muted-foreground text-base italic">Try: "{data.scaffold}"</p>
@@ -621,6 +638,7 @@ export function SessionActiveView({ trail, showCapsule }: SessionActiveViewProps
               {/* ── WRITING question ──────────────────────────────────────── */}
               {type === "writing" && (
                 <div className="space-y-5">
+                  {!data.illustrationUrl && <StemVisual visual={data.visual} />}
                   <h3 className="text-[18px] font-bold text-foreground leading-snug">{data.prompt}</h3>
 
                   {/* Word bank — tappable chips that insert into the textarea */}

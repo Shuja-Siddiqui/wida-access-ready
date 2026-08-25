@@ -1,6 +1,5 @@
-import { Navbar } from "@/components/navbar";
 import { useShowCapsule } from "@/components/app-shell";
-import type { Crumb } from "@/components/breadcrumbs";
+import { useBreadcrumbTrail, type Crumb } from "@/components/breadcrumbs";
 import { cn } from "@/lib/utils";
 
 export function PageContainer({
@@ -15,10 +14,10 @@ export function PageContainer({
   className?: string;
 }) {
   const showCapsule = useShowCapsule();
+  useBreadcrumbTrail(trail);
 
   return (
     <>
-      <Navbar trail={trail} />
       <main
         className={cn(
           "min-h-[calc(100vh-5rem)] bg-background px-4 sm:px-6 lg:pr-10 py-8 sm:py-12 relative",

@@ -8,7 +8,7 @@ import {
 import { useApi } from "@/hooks/use-api";
 import { useToast } from "@/hooks/use-toast";
 import { PageContainer } from "@/components/page-container";
-import { LoadingScreen } from "@/components/loading-screen";
+import { LoadingScreen, PageLoader } from "@/components/loading-screen";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -294,7 +294,7 @@ export default function PrincipalTeacherDetail() {
 
           {loadingSchoolStudents ? (
             <div className="flex-1 flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <PageLoader />
             </div>
           ) : (
             <>

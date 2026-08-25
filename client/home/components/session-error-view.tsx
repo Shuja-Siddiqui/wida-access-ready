@@ -1,20 +1,15 @@
 import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
-import type { Crumb } from "@/components/breadcrumbs";
 
 interface SessionErrorViewProps {
-  trail: Crumb[];
   errorMsg: string;
   onBack: () => void;
   onRetry: () => void;
 }
 
-export function SessionErrorView({ trail, errorMsg, onBack, onRetry }: SessionErrorViewProps) {
+export function SessionErrorView({ errorMsg, onBack, onRetry }: SessionErrorViewProps) {
   return (
-    <>
-      <Navbar trail={trail} />
-      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-background p-6">
+      <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center bg-background p-6">
         <div className="w-full max-w-md bg-card border border-border/40 rounded-3xl p-8 shadow-xl text-center relative overflow-hidden">
           
           <div className="w-20 h-20 bg-destructive/10 rounded-2xl flex items-center justify-center mx-auto mb-6 mt-2">
@@ -43,6 +38,5 @@ export function SessionErrorView({ trail, errorMsg, onBack, onRetry }: SessionEr
           </div>
         </div>
       </div>
-    </>
   );
 }

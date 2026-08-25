@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import {
-  Headphones, ArrowLeft, ArrowRight, CheckCircle2, XCircle,
+  Headphones, ArrowRight, CheckCircle2, XCircle,
   Star, Zap, Flame, LayoutGrid,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -170,7 +170,7 @@ export default function ListeningDemo() {
   if (screen === "complete") {
     const pct = Math.round((score / QUESTIONS.length) * 100);
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-[calc(100vh-5rem)] bg-background flex flex-col items-center justify-center p-6 text-center">
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm space-y-5">
           <div className="flex justify-center">
             {pct >= 80
@@ -208,17 +208,10 @@ export default function ListeningDemo() {
 
   // ── SESSION SCREEN ────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-[calc(100vh-5rem)] bg-background flex flex-col">
       {/* Sticky header */}
       <div className="sticky top-0 z-30 bg-card/90 backdrop-blur-md border-b border-border shadow-sm">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setLocation("/")}
-            className="w-9 h-9 rounded-xl bg-trust-blue/10 flex items-center justify-center flex-shrink-0 hover:bg-trust-blue/20 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 text-trust-blue" />
-          </button>
           <div className="w-7 h-7 rounded-lg bg-trust-blue/10 flex items-center justify-center flex-shrink-0">
             <Headphones className="w-4 h-4 text-trust-blue" />
           </div>
@@ -239,7 +232,7 @@ export default function ListeningDemo() {
       {/* Demo banner */}
       <div className="bg-primary/8 border-b border-primary/15 py-1.5 px-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-2">
-          <span className="text-xs font-bold text-primary/80">✦ Preview — dummy data, no account needed</span>
+          <span className="text-xs font-bold text-primary/80">Preview — dummy data, no account needed</span>
           <div className="flex items-center gap-1">
             {QUESTIONS.map((_, i) => (
               <button

@@ -9,10 +9,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ArrowLeft, Download, Upload, CheckCircle, XCircle, Loader2,
+  ArrowLeft, Download, Upload, CheckCircle, XCircle,
   FileSpreadsheet, AlertCircle, Mail,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PageLoader } from "@/components/loading-screen";
 import { useToast } from "@/hooks/use-toast";
 
 const GRADE_BANDS = ["K-2", "3-5", "6-8", "9-12"] as const;
@@ -375,7 +376,7 @@ export function BulkImportWizard({ guardianId, onBack }: BulkImportWizardProps) 
 
         {step === "importing" && (
           <motion.div key="importing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-24 gap-6">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <PageLoader />
             <div className="text-center space-y-1">
               <p className="font-extrabold text-foreground text-xl">Importing students…</p>
               <p className="text-muted-foreground font-medium">Creating accounts and sending invite emails. This may take a moment.</p>

@@ -2,10 +2,9 @@ import { BookOpen, ChevronRight, Flame, Lock, PenLine, Sparkles, Star, Zap, Trop
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { domainTierToKey } from "../home-types";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { DomainCharts, type DomainProgress, type SessionPoint } from "./domain-charts";
+import { DomainCharts, ListeningTracksPanel, type DomainProgress, type SessionPoint } from "./domain-charts";
 import { DOMAIN_CONFIG, domainLabel } from "../home-types";
 
 // ─── Mobile domain card ───────────────────────────────────────────────────────
@@ -18,7 +17,6 @@ function MobileDomainCard({
   index:   number;
   onStart: (domain: string) => void;
 }) {
-  const Icon      = cfg.icon;
   const pct       = Math.min(100, Math.max(0, (d.currentLevel / d.exitThreshold) * 100));
   const colorName = cfg.color.replace("text-", "");
   const stroke    = `hsl(var(--color-${colorName}))`; // Changed to hsl to work with theme tokens if needed, but colorName is like 'trust-blue' so var(--color-trust-blue)
@@ -34,9 +32,6 @@ function MobileDomainCard({
       <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(to right, var(--color-${colorName}), transparent)` }} />
       <div className="p-5 flex-1">
         <div className="flex items-center gap-4 mb-5">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `hsl(var(--color-${colorName}) / 0.15)`, color: `var(--color-${colorName})` }}>
-            <Icon className="w-6 h-6" />
-          </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-black text-2xl tracking-tight text-foreground leading-none">{domainLabel(d.domain)}</h3>
             <div className="text-xs font-semibold uppercase tracking-widest mt-1.5 opacity-80" style={{ color: `var(--color-${colorName})` }}>{d.levelLabel || "Level"}</div>
@@ -107,10 +102,9 @@ export function HomeDashboardView({
 
   return (
     <>
-      <Navbar />
       <div
         className={cn(
-          "min-h-screen bg-background px-4 sm:px-6 lg:pr-10 py-6 sm:py-10 pb-32",
+          "min-h-[calc(100vh-5rem)] bg-background px-4 sm:px-6 lg:pr-10 py-6 sm:py-10 pb-32",
           showCapsule ? "md:pl-24 lg:pl-24" : "lg:pl-10",
         )}
       >
@@ -307,8 +301,6 @@ export function HomeDashboardView({
                   const rest  = domains.filter((d) => d.domain !== "listening" && d.domain !== "listening_academic");
                   const genCfg = DOMAIN_CONFIG.listening;
                   const acCfg  = DOMAIN_CONFIG.listening_academic ?? DOMAIN_CONFIG.listening;
-                  const GenIcon = genCfg.icon;
-                  const AcIcon  = acCfg.icon;
 
                   return (
                     <>
@@ -319,74 +311,26 @@ export function HomeDashboardView({
                           initial={{ opacity: 0, y: 12 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.1, duration: 0.3 }}
-                          className="w-full rounded-2xl bg-card border border-border/40 overflow-hidden relative shadow-sm hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
+                          className="w-full rounded-3xl bg-card border border-border/40 overflow-hidden shadow-sm"
                         >
-                          <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(to right, var(--color-trust-blue), transparent)` }} />
-                          <div className="p-6">
-                            <div className="flex items-center gap-4 mb-6">
-                              <div className="w-12 h-12 rounded-xl bg-trust-blue/15 flex items-center justify-center flex-shrink-0">
-                                <GenIcon className="w-6 h-6 text-trust-blue" />
-                              </div>
-                              <div>
-                                <h3 className="font-black text-2xl tracking-tight text-foreground leading-none">Listening</h3>
-                                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1.5">Select Track</div>
-                              </div>
+                          <div
+                            className="relative px-5 py-5 text-white overflow-hidden"
+                            style={{ background: "linear-gradient(120deg, #ff4d8d 0%, #7c3aed 55%, #4f46e5 100%)" }}
+                          >
+                            <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
+                            <div>
+                              <h3 className="font-black text-2xl tracking-tight leading-none">Listening</h3>
+                              <p className="text-xs text-white/80 mt-1.5">Everyday talk or classroom English</p>
                             </div>
-
-                            <div className="space-y-6 mb-8">
-                              {/* Everyday */}
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs font-semibold uppercase tracking-widest text-trust-blue">Everyday</span>
-                                  <span className="text-2xl font-black text-trust-blue tabular-nums leading-none">
-                                    {genL.currentLevel.toFixed(1)}
-                                    <span className="text-xs text-muted-foreground ml-1 font-medium">/ {genL.exitThreshold}</span>
-                                  </span>
-                                </div>
-                                <div className="h-4 bg-muted rounded-full overflow-hidden relative">
-                                  <div
-                                    className="h-full rounded-full transition-all duration-1000 ease-out bg-trust-blue relative overflow-hidden"
-                                    style={{ width: `${Math.min(100, (genL.currentLevel / genL.exitThreshold) * 100)}%` }}
-                                  >
-                                    <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-full" />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Academic */}
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs font-semibold uppercase tracking-widest text-indigo-500">Academic</span>
-                                  <span className="text-2xl font-black text-indigo-500 tabular-nums leading-none">
-                                    {acL.currentLevel.toFixed(1)}
-                                    <span className="text-xs text-muted-foreground ml-1 font-medium">/ {acL.exitThreshold}</span>
-                                  </span>
-                                </div>
-                                <div className="h-4 bg-muted rounded-full overflow-hidden relative">
-                                  <div
-                                    className="h-full rounded-full transition-all duration-1000 ease-out bg-indigo-500 relative overflow-hidden"
-                                    style={{ width: `${Math.min(100, (acL.currentLevel / acL.exitThreshold) * 100)}%` }}
-                                  >
-                                    <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-full" />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                              <button
-                                onClick={() => onStartSession(domainTierToKey("listening", "general"))}
-                                className="bg-gradient-to-br from-trust-blue to-[#d83c74] text-white font-bold uppercase tracking-widest py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all"
-                              >
-                                <GenIcon className="w-4 h-4" /> Everyday
-                              </button>
-                              <button
-                                onClick={() => onStartSession(domainTierToKey("listening", "academic"))}
-                                className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white font-bold uppercase tracking-widest py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(99,102,241,0.5)] active:translate-y-0 active:shadow-sm transition-all"
-                              >
-                                <AcIcon className="w-4 h-4" /> Academic
-                              </button>
-                            </div>
+                          </div>
+                          <div className="p-4">
+                            <ListeningTracksPanel
+                              general={genL}
+                              academic={acL}
+                              compact
+                              onSelectEveryday={() => onStartSession(domainTierToKey("listening", "general"))}
+                              onSelectAcademic={() => onStartSession(domainTierToKey("listening", "academic"))}
+                            />
                           </div>
                         </motion.div>
                       )}

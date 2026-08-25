@@ -1,14 +1,11 @@
 import { ArrowRight, Flame, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/navbar";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useEffect } from "react";
-import type { Crumb } from "@/components/breadcrumbs";
 import type { AnswerRecord } from "../home-types";
 
 interface SessionCompleteViewProps {
-  trail: Crumb[];
   answers: AnswerRecord[];
   sessionResult: {
     message?: string;
@@ -56,7 +53,7 @@ function ScoreArc({ pct }: { pct: number }) {
   );
 }
 
-export function SessionCompleteView({ trail, answers, sessionResult, onContinue }: SessionCompleteViewProps) {
+export function SessionCompleteView({ answers, sessionResult, onContinue }: SessionCompleteViewProps) {
   const correctCount = answers.filter(a => a.correct).length;
   const total        = answers.length;
   const pct          = total > 0 ? Math.round((correctCount / total) * 100) : 100;
@@ -113,8 +110,7 @@ export function SessionCompleteView({ trail, answers, sessionResult, onContinue 
 
   return (
     <>
-      <Navbar trail={trail} />
-      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-background px-6 py-10 relative overflow-hidden">
+      <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center bg-background px-6 py-10 relative overflow-hidden">
         {/* Background decorative elements */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-trust-blue/10 rounded-full mix-blend-screen filter blur-[100px] opacity-60" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-growth-green/10 rounded-full mix-blend-screen filter blur-[100px] opacity-60" />

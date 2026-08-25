@@ -337,7 +337,7 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
   );
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-xl mx-auto pb-8">
+    <div className="flex flex-col gap-4 w-full max-w-xl mx-auto px-4 sm:px-6 py-6 pb-8">
 
       {/* Domain badge + progress */}
       <div className="flex items-center justify-between">
@@ -603,10 +603,10 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
           }`}
         >
           {isCorrect
-            ? `✓ Correct! ${currentQ.explanation}`
+            ? `Correct. ${currentQ.explanation}`
             : currentQ.type === "image_yes_no"
-              ? `✗ Not quite — the correct answer is "${currentQ.correctAnswer}". ${currentQ.explanation}`
-              : `✗ Not quite — the correct answer is highlighted in green. ${currentQ.explanation}`}
+              ? `Not quite — the correct answer is "${currentQ.correctAnswer}". ${currentQ.explanation}`
+              : `Not quite — the correct answer is highlighted in green. ${currentQ.explanation}`}
         </motion.div>
       )}
 

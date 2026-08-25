@@ -65,7 +65,7 @@ export function StudentDomainProgressBars({ domains, columns = "2" }: StudentDom
             {/* Status badge */}
             {atExit ? (
               <span className="text-[10px] font-black text-growth-green bg-growth-green/10 border border-growth-green/20 px-2.5 py-1 rounded-full uppercase tracking-widest">
-                Exit ready ✓
+                Exit ready
               </span>
             ) : (
               <span className="text-[10px] font-semibold text-muted-foreground">

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Play, Pause, Volume2, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ListeningMCQuestion } from "../types";
+import { OptionVisual, StemVisual } from "@/components/shape-glyph";
 
 const LABELS = ["A", "B", "C", "D"];
 
@@ -101,6 +102,7 @@ export function ListeningMC({ question, onSubmit, showResult = false }: Props) {
         )}
       </div>
 
+      <StemVisual visual={question.visual} />
       <p className="text-base font-bold text-foreground">{question.question}</p>
 
       <div className="flex flex-col gap-2">
@@ -125,7 +127,7 @@ export function ListeningMC({ question, onSubmit, showResult = false }: Props) {
                 ? <XCircle className="w-3.5 h-3.5" />
                 : LABELS[i]}
             </span>
-            {opt}
+            <OptionVisual label={opt} diagram={question.optionDiagrams?.[i]} />
           </button>
         ))}
       </div>

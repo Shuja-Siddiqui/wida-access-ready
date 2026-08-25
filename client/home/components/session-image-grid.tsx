@@ -9,8 +9,6 @@ const PLACEHOLDER_GRADIENTS = [
   "from-emerald-300/60 to-teal-300/60",
 ];
 
-const PLACEHOLDER_EMOJI = ["🌿", "🦁", "🍄", "🐛"];
-
 export function SessionImageGrid() {
   const { currentQ, showFeedback, selectedIdx, onAnswer } = useSessionContext();
 
@@ -57,8 +55,8 @@ export function SessionImageGrid() {
               {/* Image area — landscape 4:3 */}
               <div className={`relative w-full aspect-[4/3] bg-gradient-to-br ${PLACEHOLDER_GRADIENTS[i]}`}>
                 {!imgSrc && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-2">
-                    <span className="text-2xl opacity-50">{PLACEHOLDER_EMOJI[i]}</span>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-black text-white/50">{["A", "B", "C", "D"][i]}</span>
                   </div>
                 )}
                 {imgSrc && (

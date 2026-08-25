@@ -7,7 +7,7 @@ import {
 import { PageContainer } from "@/components/page-container";
 import { LoadingScreen } from "@/components/loading-screen";
 import {
-  Headphones, GraduationCap, ChevronLeft, Play,
+  Headphones, ChevronLeft, Play,
   Target, TrendingUp, Zap, BookOpen, Lightbulb,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -55,7 +55,6 @@ const TIPS = [
 function TrackCard({
   title,
   subtitle,
-  icon: Icon,
   domain,
   progress,
   accentColor,
@@ -65,7 +64,6 @@ function TrackCard({
 }: {
   title: string;
   subtitle: string;
-  icon: typeof Headphones;
   domain: string;
   progress: DomainProgress;
   accentColor: string;
@@ -81,63 +79,49 @@ function TrackCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, type: "spring", stiffness: 300, damping: 25 }}
-      className="bg-card rounded-2xl border border-border/40 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
+      className="relative overflow-hidden rounded-3xl border border-border/40 bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
     >
-      {/* Color accent line */}
-      <div className="h-1" style={{ background: accentColor }} />
-
+      <div className="h-1.5" style={{ background: accentColor }} />
       <div className="p-6 flex-1 flex flex-col">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${stroke}20` }}>
-              <Icon className="w-6 h-6" style={{ color: stroke }} />
-            </div>
-            <div>
-              <h3 className="font-black text-xl text-foreground tracking-tight">{title}</h3>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-0.5">{subtitle}</p>
-            </div>
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div>
+            <h3 className="font-black text-xl text-foreground tracking-tight">{title}</h3>
+            <p className="text-xs font-medium text-muted-foreground mt-0.5">{subtitle}</p>
           </div>
           <div className="text-right">
-            <span className="text-3xl font-black tabular-nums" style={{ color: stroke }}>
+            <span className="text-3xl font-black tabular-nums leading-none" style={{ color: stroke }}>
               {progress.currentLevel.toFixed(1)}
             </span>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mt-1">
               / {progress.exitThreshold} exit
             </p>
           </div>
         </div>
 
-        {/* Ring — centrepiece */}
-        <div className="flex justify-center py-1">
+        <div className="flex justify-center py-2">
           <LevelRing
             pct={pct}
             level={progress.currentLevel}
             exitThreshold={progress.exitThreshold}
             color={stroke}
-            size={148}
+            size={132}
           />
         </div>
 
-        {/* Session score bars */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 mt-2">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             {sessionCount > 0 ? `Last ${Math.min(sessionCount, 12)} sessions` : "No sessions yet"}
           </p>
           <SessionBars history={progress.sessionHistory ?? []} color={stroke} />
         </div>
 
-        {/* CTA */}
         <button
           onClick={() => onStart(domain)}
           className="mt-6 w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
-          style={{
-            background: accentColor,
-            boxShadow: `0 4px 14px ${stroke}55`,
-          }}
+          style={{ background: stroke, boxShadow: `0 8px 20px ${stroke}40` }}
         >
           <Play className="w-4 h-4 fill-white" />
-          Start Practice
+          Start {title}
         </button>
       </div>
     </motion.div>
@@ -261,9 +245,8 @@ export default function ListeningPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TrackCard
-            title="Everyday Listening"
-            subtitle="Everyday Conversations"
-            icon={Headphones}
+            title="Everyday"
+            subtitle="Talk, stories, and daily life"
             domain="listening"
             progress={genProgress}
             accentColor="linear-gradient(135deg, #FF4D8D, #e91e8c)"
@@ -272,9 +255,8 @@ export default function ListeningPage() {
             delay={0.05}
           />
           <TrackCard
-            title="Academic Listening"
-            subtitle="Classroom & Lecture Content"
-            icon={GraduationCap}
+            title="Academic"
+            subtitle="Lessons, lectures, school talk"
             domain="listening_academic"
             progress={acProgress}
             accentColor="linear-gradient(135deg, #6366f1, #4f46e5)"

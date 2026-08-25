@@ -11,6 +11,7 @@ import { useTextToSpeech } from "@/hooks/use-text-to-speech";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { useShowCapsule } from "@/components/app-shell";
 import { Home as HomeIcon } from "lucide-react";
+import { LoadingScreen } from "@/components/loading-screen";
 import confetti from "canvas-confetti";
 
 import type { AnswerRecord, View } from "./home-types";
@@ -23,7 +24,7 @@ import { SessionLoadingView }  from "./components/session-loading-view";
 import { SessionErrorView }    from "./components/session-error-view";
 import { SessionCompleteView } from "./components/session-complete-view";
 import { SessionActiveView }   from "./components/session-active-view";
-import type { Crumb } from "@/components/breadcrumbs";
+import { useBreadcrumbTrail, type Crumb } from "@/components/breadcrumbs";
 
 export default function Home() {
   const {
@@ -272,12 +273,12 @@ export default function Home() {
     ];
   };
 
+  useBreadcrumbTrail(view === "home" ? undefined : sessionTrail(activeDomain));
+
   // ─── Global loading guard ─────────────────────────────────────────────────
   if (!studentId || loadingStudent || loadingProgress) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse w-8 h-8 rounded-full bg-primary" />
-      </div>
+      <LoadingScreen />
     );
   }
 
@@ -317,13 +318,12 @@ export default function Home() {
   }
 
   if (view === "loading") {
-    return <SessionLoadingView trail={sessionTrail(activeDomain)} domain={activeDomain} />;
+    return <SessionLoadingView domain={activeDomain} />;
   }
 
   if (view === "error") {
     return (
       <SessionErrorView
-        trail={sessionTrail(activeDomain)}
         errorMsg={errorMsg}
         onBack={() => setView("home")}
         onRetry={() => startSession(activeDomain)}
@@ -334,7 +334,6 @@ export default function Home() {
   if (view === "complete") {
     return (
       <SessionCompleteView
-        trail={sessionTrail(activeDomain)}
         answers={answers}
         sessionResult={sessionResult}
         onContinue={() => setView("home")}
@@ -394,7 +393,6 @@ export default function Home() {
       },
     }}>
       <SessionActiveView
-        trail={sessionTrail(activeDomain)}
         showCapsule={showCapsule}
       />
     </SessionProvider>

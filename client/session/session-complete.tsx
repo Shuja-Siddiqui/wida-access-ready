@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Flame, ArrowUpCircle, Star, BookOpen } from "lucide-react";
+import { LoadingScreen } from "@/components/loading-screen";
 import confetti from "canvas-confetti";
 
 const CONFETTI_TOKENS = [
@@ -77,10 +78,10 @@ export default function SessionComplete() {
     frame();
   };
 
-  if (!result) return null;
+  if (!result) return <LoadingScreen />;
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 ${result.domainAtExit ? 'bg-streak-gold/5' : 'bg-background'}`}>
+    <div className={`min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 ${result.domainAtExit ? 'bg-streak-gold/5' : 'bg-background'}`}>
       
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}

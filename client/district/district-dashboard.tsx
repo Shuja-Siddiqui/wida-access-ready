@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Building2, Users, GraduationCap, Upload, Loader2, ChevronDown, Plus } from "lucide-react";
+import { Building2, Users, GraduationCap, Upload, ChevronDown, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useHasActivePlan } from "@/hooks/use-has-active-plan";
 import { PlanGatedAction } from "@/components/plan-gated-action";
 import { useToast } from "@/hooks/use-toast";
 import { PageContainer } from "@/components/page-container";
 import { Button } from "@/components/ui/button";
-import { LoadingScreen } from "@/components/loading-screen";
+import { LoadingScreen, PageLoader } from "@/components/loading-screen";
 import { StatCard } from "@/components/stat-card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { customFetch } from "@/api-generated/custom-fetch";
@@ -157,7 +157,7 @@ export default function DistrictDashboard() {
           </h2>
           {planQuery.isLoading ? (
             <div className="bg-card border border-border rounded-2xl px-5 py-6 flex justify-center">
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <PageLoader className="w-12 h-12" />
             </div>
           ) : planData ? (
             <DistrictPlanCard
@@ -222,7 +222,7 @@ export default function DistrictDashboard() {
               >
                 {activePanel?.loading ? (
                   <div className="py-16 flex justify-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <PageLoader />
                   </div>
                 ) : !activePanel?.teachers.length ? (
                   <div className="bg-card border border-border/40 shadow-sm rounded-2xl py-12 flex flex-col items-center gap-2 text-muted-foreground">

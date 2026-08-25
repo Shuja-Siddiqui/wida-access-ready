@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
+import { LoadingScreen } from "@/components/loading-screen";
 
 const PENDING_GOOGLE_AUTH_KEY = "pendingGoogleAuth";
 
@@ -90,12 +90,5 @@ export default function AuthCallback() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-      <div className="bg-card border-4 border-foreground rounded-2xl shadow-[8px_8px_0_0_hsl(var(--foreground))] p-10 flex flex-col items-center gap-6">
-        <Loader2 className="w-16 h-16 text-primary animate-spin" />
-        <p className="text-foreground font-black text-xl uppercase tracking-widest">Signing you in…</p>
-      </div>
-    </div>
-  );
+  return <LoadingScreen message="Signing you in" />;
 }

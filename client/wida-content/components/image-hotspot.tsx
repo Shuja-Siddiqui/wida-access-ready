@@ -4,7 +4,7 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ImageHotspotQuestion } from "../types";
 
-const LABELS = ["A", "B", "C", "D"];
+const LABELS = ["A", "B", "C"];
 
 interface Props {
   question: ImageHotspotQuestion;

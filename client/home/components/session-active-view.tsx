@@ -8,6 +8,8 @@ import { DOMAIN_CONFIG } from "../home-types";
 import { SessionImageGrid } from "./session-image-grid";
 import { SessionAudioPlayer } from "./session-audio-player";
 import { SessionFeedbackBar } from "./session-feedback-bar";
+import { ItemCoachingCard, aiItemPassed } from "./item-coaching-card";
+import { AnswerStepButtons } from "./answer-step-buttons";
 import { SessionObjectDetect } from "./session-object-detect";
 import { useSessionContext } from "../session-context";
 import { OptionVisual, StemVisual } from "@/components/shape-glyph";
@@ -99,7 +101,9 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
     writingText, setWritingText,
     recording, finalizingSpeaking,
     onAnswer, onAnswerNonMC, onStartRecording, onStopRecording, onSubmitWriting,
-    sttSupported, sttTranscript, sttInterim, sttError,
+    sttSupported, sttTranscript, sttInterim, sttLevel, sttError,
+    productionReview, onContinueProduction, onRetryProduction,
+    speakFeedback, onStopSpeaking,
   } = useSessionContext();
 
   // ── Non-MC interaction state ───────────────────────────────────────────────
@@ -594,6 +598,33 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
                   {data.scaffold && (
                     <p className="text-muted-foreground text-base italic">Try: "{data.scaffold}"</p>
                   )}
+                  {productionReview?.kind === "speaking" ? (
+                    <div className="text-left space-y-4 max-w-md mx-auto">
+                      <p className="text-sm text-muted-foreground">
+                        You said: <span className="text-foreground font-medium">“{productionReview.text}”</span>
+                      </p>
+                      <ItemCoachingCard
+                        feedback={productionReview.feedback}
+                        loading={productionReview.loading}
+                        speakText={speakFeedback}
+                        stopSpeaking={onStopSpeaking}
+                        nextAction={
+                          productionReview.loading
+                            ? undefined
+                            : aiItemPassed(productionReview.feedback)
+                              ? "next"
+                              : "retry"
+                        }
+                      />
+                      <AnswerStepButtons
+                        loading={productionReview.loading}
+                        passed={aiItemPassed(productionReview.feedback)}
+                        isLast={qIdx >= questions.length - 1}
+                        onAdvance={onContinueProduction}
+                        onRetry={onRetryProduction}
+                      />
+                    </div>
+                  ) : (
                   <div className="flex flex-col items-center gap-4">
                     <button
                       disabled={finalizingSpeaking}
@@ -618,20 +649,45 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
                     <p className="text-muted-foreground text-sm font-medium">
                       {finalizingSpeaking ? "Transcribing…" : recording ? "Tap to stop" : "Tap to speak"}
                     </p>
-                    {recording && sttSupported && (
-                      <p className="max-w-sm mx-auto text-sm text-foreground/70 italic min-h-[1.5rem]">
-                        {sttTranscript}
-                        {sttInterim && <span className="text-muted-foreground"> {sttInterim}</span>}
-                        {!sttTranscript && !sttInterim && "Listening…"}
-                      </p>
-                    )}
-                    {recording && !sttSupported && (
-                      <p className="max-w-sm mx-auto text-xs text-muted-foreground">
-                        Your browser can't transcribe speech, but your response will still be recorded.
-                      </p>
+                    {(recording || finalizingSpeaking) && (
+                      <div className="w-full max-w-sm mx-auto rounded-2xl border border-border bg-muted/40 px-4 py-3 space-y-2">
+                        {recording && (
+                          <div className="flex items-end justify-center gap-1 h-6" aria-hidden>
+                            {Array.from({ length: 8 }, (_, i) => {
+                              const on = sttLevel > (i + 1) / 10;
+                              return (
+                                <span
+                                  key={i}
+                                  className={`w-1.5 rounded-full transition-all ${on ? "bg-growth-green" : "bg-border"}`}
+                                  style={{ height: `${8 + i * 2}px` }}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          You said
+                        </p>
+                        <p className="text-sm text-foreground min-h-[2.5rem] leading-relaxed">
+                          {sttTranscript}
+                          {sttInterim && (
+                            <span className="text-muted-foreground"> {sttInterim}</span>
+                          )}
+                          {!sttTranscript && !sttInterim && (
+                            <span className="text-muted-foreground italic">
+                              {finalizingSpeaking
+                                ? "Finishing transcription…"
+                                : sttSupported
+                                  ? "Speak now — words will appear here."
+                                  : "Your browser can't show live words, but we are still recording."}
+                            </span>
+                          )}
+                        </p>
+                      </div>
                     )}
                     {sttError && <p className="text-xs text-destructive">{sttError}</p>}
                   </div>
+                  )}
                 </div>
               )}
 
@@ -691,10 +747,34 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
                   <Button
                     className="w-full h-12 text-base font-semibold bg-achieve-purple hover:bg-achieve-purple/90 text-white rounded-xl shadow-sm"
                     onClick={() => onSubmitWriting(writingText)}
-                    disabled={writingText.length < 5}
+                    disabled={writingText.length < 5 || productionReview?.loading}
                   >
                     Submit Writing
                   </Button>
+                  {productionReview?.kind === "writing" && (
+                    <div className="space-y-3">
+                      <ItemCoachingCard
+                        feedback={productionReview.feedback}
+                        loading={productionReview.loading}
+                        speakText={speakFeedback}
+                        stopSpeaking={onStopSpeaking}
+                        nextAction={
+                          productionReview.loading
+                            ? undefined
+                            : aiItemPassed(productionReview.feedback)
+                              ? "next"
+                              : "retry"
+                        }
+                      />
+                      <AnswerStepButtons
+                        loading={productionReview.loading}
+                        passed={aiItemPassed(productionReview.feedback)}
+                        isLast={qIdx >= questions.length - 1}
+                        onAdvance={onContinueProduction}
+                        onRetry={onRetryProduction}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 

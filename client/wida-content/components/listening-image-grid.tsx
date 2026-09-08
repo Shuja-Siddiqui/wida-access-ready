@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { ListeningAudioPlayer } from "./listening-audio-player";
 import type { ListeningImageGridQuestion } from "../types";
 
-const LABELS = ["A", "B", "C", "D"];
+const LABELS = ["A", "B", "C"];
 
 interface Props {
   question: ListeningImageGridQuestion;

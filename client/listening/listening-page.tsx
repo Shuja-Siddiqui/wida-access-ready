@@ -157,7 +157,7 @@ export default function ListeningPage() {
   const fallbackProgress: DomainProgress = {
     domain: "listening",
     currentLevel: 0,
-    exitThreshold: 5,
+    exitThreshold: 4.7,
     levelLabel: "Newcomer",
     sessionHistory: [],
   };

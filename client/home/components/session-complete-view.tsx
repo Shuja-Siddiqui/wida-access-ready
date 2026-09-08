@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useEffect } from "react";
 import type { AnswerRecord } from "../home-types";
+import { AttemptFeedbackCard } from "./attempt-feedback-card";
 
 interface SessionCompleteViewProps {
   answers: AnswerRecord[];
@@ -13,6 +14,16 @@ interface SessionCompleteViewProps {
     xpEarned?: number;
     streakBonus?: number;
     newStreak?: number;
+    attemptFeedback?: {
+      summary: string;
+      mistakes: Array<{
+        question: string;
+        whatHappened: string;
+        howToImprove: string;
+      }>;
+      strengths: string[];
+      nextSteps: string[];
+    } | null;
   } | null;
   onContinue: () => void;
 }
@@ -147,6 +158,10 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
           <div className="bg-muted/50 rounded-xl p-4 mb-8 text-center">
             <p className="text-lg font-bold text-foreground">{msg}</p>
           </div>
+
+          {sessionResult?.attemptFeedback && (
+            <AttemptFeedbackCard feedback={sessionResult.attemptFeedback} />
+          )}
 
           {/* ── XP breakdown ──────────────────────────────────── */}
           <div className="rounded-2xl border border-border/40 bg-card overflow-hidden mb-8 shadow-sm">

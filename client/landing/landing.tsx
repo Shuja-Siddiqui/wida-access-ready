@@ -219,7 +219,7 @@ export default function Landing() {
           className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-20"
         >
           {DOMAINS.map((d, i) => {
-            const EXIT      = 5.0;
+            const EXIT      = 4.7;
             const finalLvl  = d.series[d.series.length - 1];
             const growth    = (finalLvl - d.series[0]).toFixed(1);
             const pct       = Math.min(100, (finalLvl / EXIT) * 100);

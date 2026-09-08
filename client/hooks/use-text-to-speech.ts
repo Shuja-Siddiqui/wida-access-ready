@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { synthesizeSpeech } from "@/api-generated";
 import { getAzureSpeechAvailable } from "@/lib/speech-status";
+import { azureVoiceForDelivery, type SpeechDelivery } from "@/lib/speech-voices";
 
 export interface UseTextToSpeechOptions {
   rate?: number;
@@ -9,25 +10,23 @@ export interface UseTextToSpeechOptions {
   onEnd?: () => void;
 }
 
+export type { SpeechDelivery } from "@/lib/speech-voices";
+
 export interface UseTextToSpeechReturn {
   isSupported: boolean;
   isSpeaking: boolean;
   /** True while the server-generated audio is being fetched, before playback starts. */
   isLoading: boolean;
-  speak: (text: string) => void;
+  speak: (text: string, delivery?: SpeechDelivery) => void;
   stop: () => void;
 }
 
-const browserTtsSupported = typeof window !== "undefined" && "speechSynthesis" in window;
-
 /**
  * Reads AI-generated text (listening passages, prompts, feedback) aloud.
- * Prefers server-side Azure neural TTS (consistent, natural voice across every
- * browser); falls back to the browser's built-in SpeechSynthesis if Azure is
- * not configured or the request fails.
+ * Azure neural TTS only — never the browser SpeechSynthesis voice.
  */
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextToSpeechReturn {
-  const { rate = 0.85, pitch = 1.0, lang = "en-US", onEnd } = options;
+  const { onEnd } = options;
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,12 +34,16 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const onEndRef = useRef(onEnd);
   onEndRef.current = onEnd;
-  // Tracks whether an Azure TTS request is currently in-flight so a second
-  // speak() call can invalidate it before the response arrives.
   const requestIdRef = useRef<number>(0);
+
+  const getAudio = useCallback(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    return audioRef.current;
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -52,12 +55,36 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     };
   }, []);
 
-  const cleanupAudio = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.onended = null;
-      audioRef.current.onerror = null;
-      audioRef.current = null;
+  // Chrome blocks Audio.play() after async work unless a player was unlocked
+  // on a user gesture. SpeechSynthesis does not have that restriction, which
+  // is why short coaching like "Tap Next" used to play in the system voice.
+  useEffect(() => {
+    const unlock = () => {
+      const audio = getAudio();
+      audio.muted = true;
+      void audio
+        .play()
+        .then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.muted = false;
+        })
+        .catch(() => {
+          audio.muted = false;
+        });
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    return () => window.removeEventListener("pointerdown", unlock);
+  }, [getAudio]);
+
+  const cleanupSrc = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.onended = null;
+      audio.onerror = null;
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
     }
     if (audioUrlRef.current) {
       URL.revokeObjectURL(audioUrlRef.current);
@@ -67,108 +94,66 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
 
   useEffect(() => {
     return () => {
-      cleanupAudio();
-      if (browserTtsSupported) window.speechSynthesis.cancel();
+      cleanupSrc();
+      audioRef.current = null;
     };
-  }, [cleanupAudio]);
-
-  const speakWithBrowser = useCallback(
-    (text: string) => {
-      if (!browserTtsSupported) {
-        setIsSpeaking(false);
-        return;
-      }
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = rate;
-      utterance.pitch = pitch;
-      utterance.lang = lang;
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        onEndRef.current?.();
-      };
-      utterance.onerror = () => setIsSpeaking(false);
-      utteranceRef.current = utterance;
-      window.speechSynthesis.speak(utterance);
-    },
-    [rate, pitch, lang],
-  );
+  }, [cleanupSrc]);
 
   const speak = useCallback(
-    (text: string) => {
+    (text: string, delivery: SpeechDelivery = "passage") => {
       if (!text) return;
+      if (azureAvailable === false) return;
 
-      // Invalidate any in-flight Azure request by bumping the generation counter.
-      // The .then() handler below checks whether its request ID is still current
-      // before touching any state or creating an audio element — this prevents a
-      // stale response from a previous speak() call racing with the current one.
       const myRequestId = ++requestIdRef.current;
-
-      cleanupAudio();
-      if (browserTtsSupported) window.speechSynthesis.cancel();
-
-      if (azureAvailable === false) {
-        speakWithBrowser(text);
-        return;
-      }
+      cleanupSrc();
 
       setIsLoading(true);
-      synthesizeSpeech({ text })
+      synthesizeSpeech({ text, delivery, voice: azureVoiceForDelivery(delivery) })
         .then((blob) => {
-          // Drop this response if speak() was called again while we were waiting.
           if (requestIdRef.current !== myRequestId) return;
 
           setIsLoading(false);
           const url = URL.createObjectURL(blob);
           audioUrlRef.current = url;
-          const audio = new Audio(url);
-          audioRef.current = audio;
-
+          const audio = getAudio();
           audio.onended = () => {
             setIsSpeaking(false);
-            cleanupAudio();
+            cleanupSrc();
             onEndRef.current?.();
           };
           audio.onerror = () => {
             setIsSpeaking(false);
-            cleanupAudio();
+            cleanupSrc();
           };
-
+          audio.src = url;
           setIsSpeaking(true);
-          audio.play().catch(() => {
-            // play() can reject for two reasons:
-            //   1. Autoplay policy — audio never started → fall back to browser TTS.
-            //   2. The element was interrupted/paused by cleanup — audio is already
-            //      stopped, so browser TTS fallback is also wrong; just clean up.
-            // We distinguish them by checking whether the audio actually started.
-            const didStart = !audio.paused || audio.currentTime > 0;
-            if (!didStart) {
-              setIsSpeaking(false);
-              cleanupAudio();
-              speakWithBrowser(text);
-            }
-            // If audio did start (paused mid-play), isSpeaking was already set true
-            // and the onended/onerror handlers will clean up when it finishes.
+          void audio.play().catch(() => {
+            if (requestIdRef.current !== myRequestId) return;
+            setIsSpeaking(false);
+            cleanupSrc();
           });
         })
         .catch(() => {
           if (requestIdRef.current !== myRequestId) return;
           setIsLoading(false);
-          speakWithBrowser(text);
+          setIsSpeaking(false);
         });
     },
-    [azureAvailable, cleanupAudio, speakWithBrowser],
+    [azureAvailable, cleanupSrc, getAudio],
   );
 
   const stop = useCallback(() => {
-    cleanupAudio();
-    if (browserTtsSupported) window.speechSynthesis.cancel();
+    requestIdRef.current += 1;
+    cleanupSrc();
     setIsSpeaking(false);
     setIsLoading(false);
-  }, [cleanupAudio]);
+  }, [cleanupSrc]);
 
-  const isSupported = azureAvailable !== false || browserTtsSupported;
-
-  return { isSupported, isSpeaking, isLoading, speak, stop };
+  return {
+    isSupported: azureAvailable !== false,
+    isSpeaking,
+    isLoading,
+    speak,
+    stop,
+  };
 }

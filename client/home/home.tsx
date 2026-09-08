@@ -451,8 +451,19 @@ export default function Home() {
     );
   }
 
-  // view === "session" — image_library (levels 0–2) bypasses the regular session pipeline
-  if (session?.content?.type === "image_library") {
+  // view === "session"
+  if (!session?.content?.data) {
+    return (
+      <SessionErrorView
+        errorMsg="This practice session could not be loaded. Please try again."
+        onBack={() => setView("home")}
+        onRetry={() => startSession(activeDomain)}
+      />
+    );
+  }
+
+  // image_library (levels 0–2) bypasses the regular session pipeline
+  if (session.content.type === "image_library") {
     return (
       <ImageLibrarySession
         data={{

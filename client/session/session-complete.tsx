@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Flame, ArrowUpCircle, Star, BookOpen } from "lucide-react";
 import { LoadingScreen } from "@/components/loading-screen";
+import { AttemptFeedbackCard } from "@/home/components/attempt-feedback-card";
 import confetti from "canvas-confetti";
 
 const CONFETTI_TOKENS = [
@@ -149,6 +150,10 @@ export default function SessionComplete() {
               {result.streakUpdated ? `${result.newStreak} Day Streak!` : "Streak Kept Alive"}
             </div>
           </div>
+        )}
+
+        {result.attemptFeedback && (
+          <AttemptFeedbackCard feedback={result.attemptFeedback} />
         )}
 
         <Button 

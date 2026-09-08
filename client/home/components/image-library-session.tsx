@@ -9,7 +9,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, ChevronRight, BookOpen, ImageIcon, Volume2, Loader2, ThumbsUp, ThumbsDown, RotateCcw } from "lucide-react";
+import { CheckCircle2, XCircle, BookOpen, ImageIcon, Volume2, Loader2, ThumbsUp, ThumbsDown } from "lucide-react";
+import { useApi } from "@/hooks/use-api";
+import { ItemCoachingCard, coachingSpeech, aiItemPassed, type ItemFeedbackPayload } from "./item-coaching-card";
+import { AnswerStepButtons } from "./answer-step-buttons";
 import type { CropBox } from "./image-crop";
 
 interface Detection {
@@ -52,6 +55,7 @@ export interface ImageLibraryData {
   passage: string;
   imageUrl: string | null;
   tags: string[];
+  imageDescription?: string | null;
   detectionResults: { detections: Detection[]; model: string } | null;
   questions: ImageLibraryQuestion[];
   /**
@@ -60,6 +64,7 @@ export interface ImageLibraryData {
    * "box_tap"     — general sessions: bounding boxes overlaid on image (default).
    */
   tapMode?: "text_choice" | "box_tap";
+  keyUse?: string;
 }
 
 interface AnswerRecord {
@@ -69,17 +74,20 @@ interface AnswerRecord {
   correct: boolean;
 }
 
+function pictureQuestionText(q: ImageLibraryQuestion): string {
+  return (q.question ?? "").trim();
+}
+
 interface Props {
   data: ImageLibraryData;
   onComplete: (answers: AnswerRecord[]) => void;
-  /** Azure TTS speak function passed from home.tsx */
-  speakText: (text: string) => void;
-  /** Whether TTS audio is currently being fetched */
+  speakPassage: (text: string) => void;
+  speakFeedback: (text: string) => void;
   isLoadingTts: boolean;
-  /** Whether TTS audio is actively playing */
   isSpeaking: boolean;
-  /** Stop TTS playback */
   stopSpeaking: () => void;
+  studentId?: string;
+  level?: number;
 }
 
 // ── Choices builder ───────────────────────────────────────────────────────────
@@ -141,7 +149,18 @@ function buildLibraryChoices(
   return choices;
 }
 
-export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts, isSpeaking, stopSpeaking }: Props) {
+export function ImageLibrarySession({
+  data,
+  onComplete,
+  speakPassage,
+  speakFeedback,
+  isLoadingTts,
+  isSpeaking,
+  stopSpeaking,
+  studentId,
+  level = 1,
+}: Props) {
+  const { request } = useApi();
   const [qIdx, setQIdx]                 = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [tappedLabel, setTappedLabel]   = useState<string | null>(null);
@@ -152,13 +171,16 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
   const [questionRecorded, setQuestionRecorded] = useState(false);
   const [isRetrying, setIsRetrying]       = useState(false);
   const [choices, setChoices]             = useState<ChoiceOption[]>([]);
+  const [coach, setCoach]                 = useState<ItemFeedbackPayload | null>(null);
+  const [coachLoading, setCoachLoading]   = useState(false);
   const spokenForQIdxRef = useRef(-1);
   const feedbackRef      = useRef<HTMLDivElement>(null);
 
-  const { passage, imageUrl, detectionResults, questions, topic, tapMode = "box_tap" } = data;
+  const { passage, imageUrl, detectionResults, questions, topic, tapMode = "box_tap", keyUse } = data;
   const isTextChoice = tapMode === "text_choice";
   const detections   = detectionResults?.detections ?? [];
   const currentQ     = questions[qIdx];
+  const questionText = currentQ ? pictureQuestionText(currentQ) : "";
   const passageText = passage?.trim() || "Look at the picture below and listen carefully.";
 
   // Auto-play passage + question whenever the active question changes.
@@ -173,10 +195,10 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
     setAudioStarted(false);
 
     const narration = qIdx === 0
-      ? `${passageText}... ${currentQ.question}`
-      : currentQ.question;
+      ? `${passageText}... ${questionText}`
+      : questionText;
 
-    speakText(narration);
+    speakPassage(narration);
     // Small delay so isSpeaking/isLoadingTts have time to flip before the
     // unlock watcher checks them
     const t = setTimeout(() => setAudioStarted(true), 300);
@@ -242,13 +264,67 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
     return na === nb || na.includes(nb) || nb.includes(na);
   }
 
+  const itemIsCorrect = currentQ
+    ? currentQ.type === "image_yes_no"
+      ? yesNoAnswer === currentQ.correctAnswer
+      : tappedLabel !== null && labelsMatch(tappedLabel, currentQ.targetLabel)
+    : false;
+
+  const tagKey = (data.tags ?? []).join("|");
+  const currentQuestionKey = currentQ
+    ? `${currentQ.type}:${questionText}:${"targetLabel" in currentQ ? currentQ.targetLabel : ""}`
+    : "";
+
+  useEffect(() => {
+    if (!showFeedback || !studentId || !currentQ) {
+      setCoachLoading(false);
+      return;
+    }
+    const studentAnswer =
+      currentQ.type === "image_yes_no" ? (yesNoAnswer ?? "") : (tappedLabel ?? "");
+    const correctAnswer =
+      currentQ.type === "image_yes_no" ? currentQ.correctAnswer : currentQ.targetLabel;
+    let cancelled = false;
+    setCoach(null);
+    setCoachLoading(true);
+    request<ItemFeedbackPayload>(`/api/students/${studentId}/item-feedback`, {
+      method: "POST",
+      body: JSON.stringify({
+        domain: "listening",
+        level,
+        format: "picture",
+        question: questionText,
+        studentAnswer,
+        correctAnswer,
+        correct: itemIsCorrect,
+        passage: passageText,
+        imageDescription: data.imageDescription || undefined,
+        imageTags: data.tags,
+        targetObject: currentQ.targetLabel || undefined,
+        options: currentQ.type === "image_object_tap" ? currentQ.options : undefined,
+      }),
+    })
+      .then((payload) => {
+        if (!cancelled) setCoach(payload);
+      })
+      .catch(() => {
+        if (!cancelled) setCoach(null);
+      })
+      .finally(() => {
+        if (!cancelled) setCoachLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [showFeedback, itemIsCorrect, studentId, currentQuestionKey, questionText, yesNoAnswer, tappedLabel, level, passageText, request, data.imageDescription, tagKey]);
+
   function handleReplay() {
     stopSpeaking();
     setAudioStarted(false);
     setAudioPlayed(false);
     setTimeout(() => {
       // Replay: always read passage + current question together
-      speakText(`${passageText}... ${currentQ.question}`);
+      speakPassage(`${passageText}... ${questionText}`);
       setTimeout(() => setAudioStarted(true), 300);
     }, 100);
   }
@@ -258,12 +334,13 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
     const correct = labelsMatch(label, currentQ.targetLabel);
     setTappedLabel(label);
     setShowFeedback(true);
+    setCoachLoading(true);
     setIsRetrying(false);
     if (!questionRecorded) {
       setQuestionRecorded(true);
       setAnswers((prev) => [
         ...prev,
-        { question: currentQ.question, content: currentQ, submittedAnswer: label, correct },
+        { question: questionText, content: currentQ, submittedAnswer: label, correct },
       ]);
     }
   }
@@ -275,12 +352,13 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
     const correct = labelsMatch(option, currentQ.targetLabel);
     setTappedLabel(option);
     setShowFeedback(true);
+    setCoachLoading(true);
     setIsRetrying(false);
     if (!questionRecorded) {
       setQuestionRecorded(true);
       setAnswers((prev) => [
         ...prev,
-        { question: currentQ.question, content: currentQ, submittedAnswer: option, correct },
+        { question: questionText, content: currentQ, submittedAnswer: option, correct },
       ]);
     }
   }
@@ -291,12 +369,13 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
     const correct = choice === currentQ.correctAnswer;
     setYesNoAnswer(choice);
     setShowFeedback(true);
+    setCoachLoading(true);
     setIsRetrying(false);
     if (!questionRecorded) {
       setQuestionRecorded(true);
       setAnswers((prev) => [
         ...prev,
-        { question: currentQ.question, content: currentQ, submittedAnswer: choice, correct },
+        { question: questionText, content: currentQ, submittedAnswer: choice, correct },
       ]);
     }
   }
@@ -305,6 +384,8 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
     stopSpeaking();                 // stop current audio before advancing
     setQuestionRecorded(false);
     setIsRetrying(false);
+    setCoach(null);
+    setCoachLoading(false);
     if (qIdx < questions.length - 1) {
       setQIdx(qIdx + 1);
       setShowFeedback(false);
@@ -322,6 +403,8 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
     setShowFeedback(false);
     setTappedLabel(null);
     setYesNoAnswer(null);
+    setCoach(null);
+    setCoachLoading(false);
     // Bypass the audio gate entirely — no auto-replay, tap immediately.
     // The passage is still visible; the Replay button lets them re-listen manually.
     stopSpeaking();
@@ -335,6 +418,9 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
       ? yesNoAnswer === currentQ.correctAnswer
       : tappedLabel !== null && labelsMatch(tappedLabel, currentQ.targetLabel)
   );
+  const passed = aiItemPassed(coach, isCorrect);
+  const waitingCoach = showFeedback && coachLoading;
+  const nextAction = waitingCoach ? undefined : passed ? "next" as const : "retry" as const;
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-xl mx-auto px-4 sm:px-6 py-6 pb-8">
@@ -345,7 +431,7 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
           className="text-xs font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
           style={{ color: "hsl(338 100% 65%)", background: "hsl(338 100% 65% / .12)" }}
         >
-          Listening
+          Listening{keyUse ? ` · ${keyUse}` : ""}
         </span>
         <span className="text-xs font-semibold text-muted-foreground">
           {qIdx + 1} / {questions.length}
@@ -511,14 +597,19 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
           exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}
           className="rounded-2xl border border-border bg-muted/60 px-4 py-3"
         >
-          <p className="text-base font-bold text-foreground leading-snug">{currentQ.question}</p>
+          <p className="text-base font-bold text-foreground leading-snug">{questionText}</p>
+          {currentQ.type === "image_yes_no" && (
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              Agree or disagree.
+            </p>
+          )}
+          {currentQ.type !== "image_yes_no" && (
           <p className="text-xs text-muted-foreground mt-1 font-medium">
-            {currentQ.type === "image_yes_no"
-              ? "Do you agree or disagree?"
-              : (isTextChoice || (currentQ.type === "image_object_tap" && choices.length === 0))
+            {(isTextChoice || (currentQ.type === "image_object_tap" && choices.length === 0))
                 ? "Choose the correct answer below"
                 : "Tap the correct object in the image above"}
           </p>
+          )}
         </motion.div>
       </AnimatePresence>
 
@@ -597,48 +688,45 @@ export function ImageLibrarySession({ data, onComplete, speakText, isLoadingTts,
       {showFeedback && (
         <motion.div ref={feedbackRef} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
           className={`rounded-xl px-4 py-3 border text-sm font-medium ${
-            isCorrect
-              ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/30 dark:border-green-800 dark:text-green-300"
-              : "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300"
+            coachLoading
+              ? "bg-muted/40 border-border text-foreground"
+              : passed
+                ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/30 dark:border-green-800 dark:text-green-300"
+                : "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300"
           }`}
         >
-          {isCorrect
-            ? `Correct. ${currentQ.explanation}`
-            : currentQ.type === "image_yes_no"
-              ? `Not quite — the correct answer is "${currentQ.correctAnswer}". ${currentQ.explanation}`
-              : `Not quite — the correct answer is highlighted in green. ${currentQ.explanation}`}
+          <div className="space-y-2">
+            <ItemCoachingCard
+              feedback={coach}
+              loading={coachLoading}
+              speakText={speakFeedback}
+              stopSpeaking={stopSpeaking}
+              nextAction={nextAction}
+            />
+            {!coachLoading && !coachingSpeech(coach) && (
+              passed ? (
+                <p>Yes. You got it. {currentQ.explanation}</p>
+              ) : (
+                <p>
+                  {currentQ.type === "image_yes_no"
+                    ? `Not quite — the correct answer is "${currentQ.correctAnswer}". ${currentQ.explanation}`
+                    : `Not quite — look at the picture again. ${currentQ.explanation}`}
+                </p>
+              )
+            )}
+          </div>
         </motion.div>
       )}
 
-      {/* Action buttons */}
       {showFeedback && (
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-2"
-        >
-          {/* Try Again — only on wrong answers */}
-          {!isCorrect && (
-            <button
-              onClick={handleTryAgain}
-              className="w-full rounded-xl py-3.5 text-sm font-bold flex items-center justify-center gap-2 bg-primary text-primary-foreground transition-opacity hover:opacity-90 active:scale-[0.98]"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Try Again
-            </button>
-          )}
-
-          {/* Next / Finish */}
-          <button
-            onClick={handleNext}
-            className={`w-full rounded-xl py-3.5 text-sm font-bold flex items-center justify-center gap-2 transition-opacity hover:opacity-90 active:scale-[0.98] ${
-              isCorrect
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted border border-border text-foreground"
-            }`}
-          >
-            {qIdx < questions.length - 1
-              ? <><span>Next Question</span><ChevronRight className="w-4 h-4" /></>
-              : isCorrect ? "Finish Session" : "Skip & Finish"}
-          </button>
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+          <AnswerStepButtons
+            loading={coachLoading}
+            passed={passed}
+            isLast={qIdx >= questions.length - 1}
+            onAdvance={handleNext}
+            onRetry={handleTryAgain}
+          />
         </motion.div>
       )}
     </div>

@@ -83,11 +83,25 @@ export default function Session() {
     const scorePct = total > 0 ? (correctCount / total) * 100 : 80;
 
     try {
+      const questions = session.content?.data?.questions || [];
+      const payloadAnswers = (questions.length > 0 ? questions : [session.content?.data]).map(
+        (q: Record<string, unknown> | undefined, i: number) => ({
+          question: String(q?.question ?? q?.prompt ?? ""),
+          content: q && typeof q === "object" ? q : undefined,
+          submittedAnswer: answers[i],
+          correct: Boolean(answers[i]?.correct),
+        }),
+      );
       const result = await request(
         `/api/students/${studentId}/sessions/${session.sessionId}/complete`,
         {
           method: "POST",
-          body: JSON.stringify({ scorePct, durationSeconds: 600, weakTypes: [] }),
+          body: JSON.stringify({
+            scorePct,
+            durationSeconds: 600,
+            weakTypes: [],
+            answers: payloadAnswers,
+          }),
         },
       );
       localStorage.setItem("lastSessionResult", JSON.stringify(result));
@@ -120,7 +134,7 @@ export default function Session() {
   }
 
   if (state === "finishing") {
-    return <LoadingScreen message="Saving your results" />;
+    return <LoadingScreen message="Reviewing your answers" />;
   }
 
   const content = session?.content;
@@ -261,7 +275,7 @@ export default function Session() {
                       >
                         {/* Placeholder so the cell always has visible height */}
                         <div className={`w-full aspect-square ${PLACEHOLDER_COLORS[i]} flex items-center justify-center`}>
-                          <span className="text-sm font-black opacity-40">{["A","B","C","D"][i]}</span>
+                          <span className="text-sm font-black opacity-40">{["A","B","C"][i]}</span>
                         </div>
                         {imgSrc && (
                           <img
@@ -271,7 +285,7 @@ export default function Session() {
                           />
                         )}
                         <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center text-xs font-black">
-                          {["A","B","C","D"][i]}
+                          {["A","B","C"][i]}
                         </div>
                         {showFeedback && (i === currentQ.correct || i === selectedIdx) && (
                           <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-black ${i === currentQ.correct ? "bg-growth-green" : "bg-destructive"}`}>

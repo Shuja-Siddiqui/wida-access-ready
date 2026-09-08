@@ -7,7 +7,7 @@ import {
   useGetStudentStreak,   getGetStudentStreakQueryKey,
   useGetStudentPathway,  getGetStudentPathwayQueryKey,
 } from "@/api-generated";
-import { useTextToSpeech } from "@/hooks/use-text-to-speech";
+import { useSpokenContent } from "@/hooks/use-spoken-content";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { useShowCapsule } from "@/components/app-shell";
 import { Home as HomeIcon } from "lucide-react";
@@ -18,6 +18,7 @@ import type { AnswerRecord, View } from "./home-types";
 import { DOMAIN_CONFIG, domainLabel } from "./home-types";
 import { SessionProvider } from "./session-context";
 import { ImageLibrarySession } from "./components/image-library-session";
+import type { ItemFeedbackPayload } from "./components/item-coaching-card";
 import type { DomainProgress, SessionPoint } from "./components/domain-charts";
 import { HomeDashboardView }   from "./components/home-dashboard-view";
 import { SessionLoadingView }  from "./components/session-loading-view";
@@ -56,7 +57,18 @@ export default function Home() {
   const [finalizingSpeaking, setFinalizingSpeaking] = useState(false);
   const [sessionResult, setSessionResult] = useState<any>(null);
   const [listenedOnce, setListenedOnce]   = useState(false);
+  const [productionReview, setProductionReview] = useState<{
+    kind: "speaking" | "writing";
+    text: string;
+    feedback: ItemFeedbackPayload | null;
+    loading: boolean;
+  } | null>(null);
   const sessionStartTime = useRef<number>(0);
+  const speakingCoachRef = useRef<{
+    tryCount: number;
+    lastJudgment?: ItemFeedbackPayload["judgment"];
+    lastCoachTip: string;
+  }>({ tryCount: 0, lastCoachTip: "" });
 
   // ─── Auth guard ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -91,25 +103,29 @@ export default function Home() {
   }, [studentId, view, loadingProgress]);
 
   // ─── TTS / STT ────────────────────────────────────────────────────────────
-  const { isSpeaking: speaking, isLoading: ttsLoading, speak: speakText, stop: stopSpeaking } =
-    useTextToSpeech({ onEnd: () => setListenedOnce(true) });
+  const { isSpeaking: speaking, isLoadingTts: ttsLoading, speakPassage, speakFeedback, stopSpeaking } =
+    useSpokenContent({ onEnd: () => setListenedOnce(true) });
 
-  // Auto-play the listening passage once when a new session starts.
-  // Lives here (not in SessionAudioPlayer) so React StrictMode's double-mount
-  // of child components cannot trigger a second simultaneous TTS request.
-  // Only the passage is spoken — question text is displayed on screen and not
-  // read aloud; the student can replay manually via the player button.
+  // Auto-play spoken support once per session:
+  // listening = the passage; speaking/writing = the on-screen prompt.
+  // Reading is never auto-played — the student must read the print themselves.
   const autoPlaySessionRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!session || session.content?.type !== "listening") return;
-    const audioScript: string = session.content?.data?.audioScript ?? "";
-    if (!audioScript) return;
+    if (!session) return;
+    const kind = session.content?.type;
+    if (kind === "reading") return;
+    const data = session.content?.data;
+    const spoken =
+      kind === "listening"
+        ? (data?.audioScript ?? "")
+        : kind === "speaking" || kind === "writing"
+          ? [data?.prompt, data?.scaffold].filter(Boolean).join(". ")
+          : "";
+    if (!spoken) return;
     const sessionId: string = session.sessionId;
-    if (autoPlaySessionRef.current === sessionId) return; // already played this session
+    if (autoPlaySessionRef.current === sessionId) return;
     autoPlaySessionRef.current = sessionId;
-    speakText(audioScript);
-  // speakText is intentionally omitted — we want exactly one fire per sessionId,
-  // not a re-fire if speakText reference updates while azureAvailable resolves.
+    speakPassage(spoken);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.sessionId]);
 
@@ -119,7 +135,10 @@ export default function Home() {
     isTranscribing: sttTranscribing,
     transcript: sttTranscript,
     interimTranscript: sttInterim,
+    inputLevel: sttLevel,
     error: sttError,
+    uncertainWords: sttUncertainWords,
+    lastConfidence: sttConfidence,
     startListening: startSttListening,
     stopListening: stopSttListening,
     resetTranscript: resetSttTranscript,
@@ -137,7 +156,9 @@ export default function Home() {
     resetSttTranscript();
     setSession(null);
     setSessionResult(null);
+    setProductionReview(null);
     setListenedOnce(false);
+    speakingCoachRef.current = { tryCount: 0, lastCoachTip: "" };
     stopSpeaking();
     setView("loading");
     try {
@@ -162,6 +183,7 @@ export default function Home() {
   const completeSession = useCallback(async (overrideAnswers?: AnswerRecord[]) => {
     if (!session) return;
     stopSpeaking();
+    setView("finishing");
 
     const finalAnswers  = overrideAnswers ?? answers;
     const questions     = session.content?.data?.questions || [];
@@ -196,21 +218,98 @@ export default function Home() {
     refetchStudent();
   }, [session, answers, studentId, refetchProgress, refetchStreak, refetchStudent, stopSpeaking, request]);
 
-  // Finalize speaking answer after transcription completes
+  const loadItemFeedback = useCallback(async (body: Record<string, unknown>) => {
+    if (!studentId) return null;
+    try {
+      return await request<ItemFeedbackPayload>(`/api/students/${studentId}/item-feedback`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    } catch {
+      return null;
+    }
+  }, [studentId, request]);
+
   useEffect(() => {
-    if (!finalizingSpeaking || sttTranscribing) return;
-    const spoken = sttTranscript.trim();
-    const finalAnswers: AnswerRecord[] = [{
-      question: session?.content?.data?.prompt || "",
-      content:  session?.content?.data,
-      submittedAnswer: spoken || "(spoken response — not transcribed)",
-      correct: true,
-    }];
-    setAnswers(finalAnswers);
+    if (!finalizingSpeaking) return;
+    if (sttListening || sttTranscribing) return;
+
+    const spoken = /^[.\s…]*$/.test(sttTranscript.trim()) ? "" : sttTranscript.trim();
+    const data = session?.content?.data;
     setFinalizingSpeaking(false);
-    completeSession(finalAnswers);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finalizingSpeaking, sttTranscribing]);
+
+    if (!spoken) {
+      setProductionReview({
+        kind: "speaking",
+        text: "",
+        feedback: {
+          headline: "Try speaking again",
+          whyWrong: "",
+          correctAnswer: "",
+          objectClue: "",
+          modelResponse: "",
+          howToSayIt: "",
+          keepInMind: [],
+          tryAgainTip: "",
+          spokenText: sttError || "I did not catch that. Tap to speak again. Use the starter on the screen.",
+          judgment: "rejected",
+          meetsTask: false,
+        },
+        loading: false,
+      });
+      return;
+    }
+
+    setProductionReview({ kind: "speaking", text: spoken, feedback: null, loading: true });
+    speakingCoachRef.current.tryCount += 1;
+    void loadItemFeedback({
+      domain: "speaking",
+      level: Number(session?.levelStart ?? 1),
+      format: "speaking",
+      question: data?.prompt ?? "",
+      studentAnswer: spoken,
+      prompt: data?.prompt,
+      scaffold: data?.scaffold,
+      canDo: data?.canDoDescriptor,
+      keyUse: session?.keyUse ?? data?.keyUse,
+      canDoAction: data?.canDoAction,
+      canDoItems: data?.canDoItems,
+      responseLength: data?.responseLength,
+      imageTags: data?.imageTags ?? data?.tags,
+      imageDescription: data?.imageDescription || undefined,
+      sttConfidence: sttConfidence,
+      uncertainWords: sttUncertainWords,
+      tryCount: speakingCoachRef.current.tryCount,
+      lastJudgment: speakingCoachRef.current.lastJudgment,
+      lastCoachTip: speakingCoachRef.current.lastCoachTip || undefined,
+    }).then((feedback) => {
+      if (feedback) {
+        speakingCoachRef.current.lastJudgment = feedback.judgment;
+        speakingCoachRef.current.lastCoachTip = feedback.tryAgainTip || "";
+      }
+      setProductionReview({ kind: "speaking", text: spoken, feedback, loading: false });
+    });
+  }, [finalizingSpeaking, sttListening, sttTranscribing, sttTranscript, sttError, sttConfidence, sttUncertainWords, session, loadItemFeedback]);
+
+  const onContinueProduction = () => {
+    if (!productionReview || !session) return;
+    const rec: AnswerRecord = {
+      question: session.content?.data?.prompt ?? "",
+      content: session.content?.data,
+      submittedAnswer: productionReview.text,
+      correct: productionReview.feedback?.meetsTask ?? false,
+    };
+    setAnswers([rec]);
+    setProductionReview(null);
+    completeSession([rec]);
+  };
+
+  const onRetryProduction = () => {
+    setProductionReview(null);
+    resetSttTranscript();
+    setRecording(false);
+    setFinalizingSpeaking(false);
+  };
 
   // ─── Question handlers ────────────────────────────────────────────────────
   const questions = session?.content?.data?.questions ?? [];
@@ -252,6 +351,13 @@ export default function Home() {
     } else {
       completeSession();
     }
+  };
+
+  const handleRetryQuestion = () => {
+    setAnswers((prev) => prev.slice(0, -1));
+    setShowFeedback(false);
+    setSelectedIdx(-1);
+    setLastCorrect(false);
   };
 
   // ─── Demo jump (must be before any early return to satisfy Rules of Hooks) ──
@@ -321,6 +427,10 @@ export default function Home() {
     return <SessionLoadingView domain={activeDomain} />;
   }
 
+  if (view === "finishing") {
+    return <LoadingScreen fullHeight={false} message="Reviewing your answers" />;
+  }
+
   if (view === "error") {
     return (
       <SessionErrorView
@@ -345,8 +455,14 @@ export default function Home() {
   if (session?.content?.type === "image_library") {
     return (
       <ImageLibrarySession
-        data={session.content.data}
-        speakText={speakText}
+        data={{
+          ...session.content.data,
+          keyUse: session.keyUse ?? session.content.data?.keyUse,
+        }}
+        studentId={studentId ?? undefined}
+        level={Number(session.levelStart ?? 1)}
+        speakPassage={speakPassage}
+        speakFeedback={speakFeedback}
         isSpeaking={speaking}
         isLoadingTts={ttsLoading}
         stopSpeaking={stopSpeaking}
@@ -374,22 +490,50 @@ export default function Home() {
       onAnswer:      handleAnswer,
       onAnswerNonMC: handleAnswerNonMC,
       onNext:        handleNext,
+      onRetryQuestion: handleRetryQuestion,
       speaking,
-      onSpeak:        speakText,
+      speakPassage,
+      speakFeedback,
+      onSpeak:        speakPassage,
       onStopSpeaking: stopSpeaking,
       sttSupported,
       sttTranscript,
       sttInterim,
+      sttLevel,
       sttError: sttError ?? "",
       recording,
       finalizingSpeaking,
-      onStartRecording: () => { setRecording(true); resetSttTranscript(); if (sttSupported) startSttListening(); },
+      onStartRecording: () => {
+        stopSpeaking();
+        setRecording(true);
+        resetSttTranscript();
+        if (sttSupported) startSttListening();
+      },
       onStopRecording:  () => { setRecording(false); setFinalizingSpeaking(true); stopSttListening(); },
+      studentLevel: Number(session?.levelStart ?? 1),
+      productionReview,
+      onContinueProduction,
+      onRetryProduction,
       writingText,
       setWritingText,
       onSubmitWriting: (text) => {
-        setAnswers([{ question: session?.content?.data?.prompt ?? "", content: session?.content?.data, submittedAnswer: text, correct: true }]);
-        completeSession();
+        const data = session?.content?.data;
+        setProductionReview({ kind: "writing", text, feedback: null, loading: true });
+        void loadItemFeedback({
+          domain: "writing",
+          level: Number(session?.levelStart ?? 1),
+          format: "writing",
+          question: data?.prompt ?? "",
+          studentAnswer: text,
+          prompt: data?.prompt,
+          scaffold: data?.sentenceFrame ?? data?.sentence_frame,
+          canDo: data?.canDoDescriptor,
+          imageTags: data?.imageTags ?? data?.tags,
+          imageDescription: data?.imageDescription || undefined,
+          minSentences: data?.minSentences,
+        }).then((feedback) => {
+          setProductionReview({ kind: "writing", text, feedback, loading: false });
+        });
       },
     }}>
       <SessionActiveView

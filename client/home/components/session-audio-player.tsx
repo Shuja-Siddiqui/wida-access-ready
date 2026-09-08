@@ -5,7 +5,7 @@ import { useSessionContext } from "../session-context";
 const BAR_HEIGHTS = [18, 28, 38, 28, 44, 22, 36, 26, 40, 20, 34, 24];
 
 export function SessionAudioPlayer() {
-  const { session, speaking, listenedOnce, onSpeak, onStopSpeaking } =
+  const { session, speaking, listenedOnce, speakPassage, onStopSpeaking } =
     useSessionContext();
 
   const audioScript = session.content.data.audioScript ?? "";
@@ -44,7 +44,7 @@ export function SessionAudioPlayer() {
         {/* play button + waveform */}
         <div className="flex items-center gap-5">
           <button
-            onClick={speaking ? onStopSpeaking : () => onSpeak(audioScript)}
+            onClick={speaking ? onStopSpeaking : () => speakPassage(audioScript)}
             className={`relative flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 ${
               speaking
                 ? "bg-destructive hover:bg-destructive/90 scale-95"

@@ -7,7 +7,7 @@ export type AnswerRecord = {
   correct: boolean;
 };
 
-export type View = "home" | "loading" | "session" | "error" | "complete";
+export type View = "home" | "loading" | "session" | "error" | "complete" | "finishing";
 
 /**
  * Domain config entries drive the dashboard UI (icon, colour, label) and also

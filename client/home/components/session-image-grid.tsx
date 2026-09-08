@@ -56,7 +56,7 @@ export function SessionImageGrid() {
               <div className={`relative w-full aspect-[4/3] bg-gradient-to-br ${PLACEHOLDER_GRADIENTS[i]}`}>
                 {!imgSrc && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-black text-white/50">{["A", "B", "C", "D"][i]}</span>
+                    <span className="text-sm font-black text-white/50">{["A", "B", "C"][i]}</span>
                   </div>
                 )}
                 {imgSrc && (

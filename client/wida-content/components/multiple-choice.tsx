@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { MultipleChoiceQuestion } from "../types";
 import { OptionVisual, StemVisual } from "@/components/shape-glyph";
 
-const LABELS = ["A", "B", "C", "D", "E"];
+const LABELS = ["A", "B", "C"];
 
 interface Props {
   question: MultipleChoiceQuestion;

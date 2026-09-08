@@ -67,6 +67,12 @@ export interface SessionData {
       topic?: string;
       visual?: string;
       illustrationUrl?: string;
+      imageTags?: string[];
+      tags?: string[];
+      imageDescription?: string;
+      canDoDescriptor?: string;
+      responseLength?: string;
+      minSentences?: number;
       questions?: SessionQuestion[];
     };
   };
@@ -93,9 +99,14 @@ export interface SessionContextValue {
   /** For non-MC question types (sequence, match, classify, agree_disagree) */
   onAnswerNonMC: (submittedAnswer: unknown, isCorrect: boolean) => void;
   onNext: () => void;
+  onRetryQuestion: () => void;
 
   // ── TTS ───────────────────────────────────────────────────────────────────
   speaking: boolean;
+  /** Guy — passages, stems, replay. */
+  speakPassage: (text: string) => void;
+  /** Jenny — coaching and item feedback. */
+  speakFeedback: (text: string) => void;
   onSpeak: (text: string) => void;
   onStopSpeaking: () => void;
 
@@ -103,6 +114,7 @@ export interface SessionContextValue {
   sttSupported: boolean;
   sttTranscript: string;
   sttInterim: string;
+  sttLevel: number;
   sttError: string;
 
   // ── Recording (speaking domain) ───────────────────────────────────────────
@@ -110,6 +122,27 @@ export interface SessionContextValue {
   finalizingSpeaking: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
+
+  studentLevel: number;
+  productionReview: {
+    kind: "speaking" | "writing";
+    text: string;
+    feedback: {
+      headline: string;
+      whyWrong: string;
+      correctAnswer: string;
+      modelResponse: string;
+      howToSayIt: string;
+      keepInMind: string[];
+      tryAgainTip: string;
+      spokenText?: string;
+      judgment?: "agree" | "partial" | "rejected";
+      meetsTask: boolean;
+    } | null;
+    loading: boolean;
+  } | null;
+  onContinueProduction: () => void;
+  onRetryProduction: () => void;
 
   // ── Writing domain ────────────────────────────────────────────────────────
   writingText: string;

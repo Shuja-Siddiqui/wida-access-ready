@@ -16,10 +16,13 @@ export interface TextToSpeechBody {
    */
   text: string;
   voice?: string;
+  delivery?: "passage" | "coaching";
 }
 
 export interface SpeechToTextResponse {
   text: string;
+  confidence?: number;
+  uncertainWords?: string[];
 }
 
 export interface HealthStatus {
@@ -433,6 +436,16 @@ export interface SessionResult {
   streakUpdated: boolean;
   newStreak: number;
   domainAtExit: boolean;
+  attemptFeedback?: {
+    summary: string;
+    mistakes: Array<{
+      question: string;
+      whatHappened: string;
+      howToImprove: string;
+    }>;
+    strengths: string[];
+    nextSteps: string[];
+  } | null;
 }
 
 export interface WritingFeedbackBody {

@@ -43,6 +43,7 @@ export const synthesizeSpeechBodyTextMax = 4000;
 export const SynthesizeSpeechBody = zod.object({
   text: zod.string().min(1).max(synthesizeSpeechBodyTextMax),
   voice: zod.string().optional(),
+  delivery: zod.enum(["passage", "coaching"]).optional(),
 });
 
 /**
@@ -728,6 +729,20 @@ export const CompleteSessionResponse = zod.object({
   streakUpdated: zod.boolean(),
   newStreak: zod.number(),
   domainAtExit: zod.boolean(),
+  attemptFeedback: zod
+    .object({
+      summary: zod.string(),
+      mistakes: zod.array(
+        zod.object({
+          question: zod.string(),
+          whatHappened: zod.string(),
+          howToImprove: zod.string(),
+        }),
+      ),
+      strengths: zod.array(zod.string()),
+      nextSteps: zod.array(zod.string()),
+    })
+    .nullish(),
 });
 
 /**

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { ListeningMCQuestion } from "../types";
 import { OptionVisual, StemVisual } from "@/components/shape-glyph";
 
-const LABELS = ["A", "B", "C", "D"];
+const LABELS = ["A", "B", "C"];
 
 interface Props {
   question: ListeningMCQuestion;

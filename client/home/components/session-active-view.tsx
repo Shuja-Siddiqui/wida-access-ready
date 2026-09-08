@@ -123,6 +123,7 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
   const content     = session.content;
   const type        = content.type;
   const data        = content.data;
+  if (!data) return null;
   const progressPct = questions.length > 0 ? (qIdx / questions.length) * 100 : 0;
   const cfg         = DOMAIN_CONFIG[activeDomain] ?? DOMAIN_CONFIG.listening;
   const DomainIcon  = cfg.icon;

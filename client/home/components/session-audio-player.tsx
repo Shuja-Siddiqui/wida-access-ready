@@ -8,7 +8,7 @@ export function SessionAudioPlayer() {
   const { session, speaking, listenedOnce, speakPassage, onStopSpeaking } =
     useSessionContext();
 
-  const audioScript = session.content.data.audioScript ?? "";
+  const audioScript = session.content?.data?.audioScript ?? "";
 
   return (
     <div className="relative rounded-2xl overflow-hidden">

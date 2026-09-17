@@ -44,6 +44,22 @@ export function AttemptFeedbackCard({ feedback }: { feedback: AttemptFeedbackPay
           </div>
         )}
 
+        {feedback.strengths.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-growth-green mb-2">
+              What went well
+            </p>
+            <ul className="space-y-1.5">
+              {feedback.strengths.map((item) => (
+                <li key={item} className="text-sm text-foreground/80 leading-snug flex gap-2">
+                  <ListChecks className="w-4 h-4 shrink-0 mt-0.5 text-growth-green" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {feedback.nextSteps.length > 0 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-trust-blue mb-2 flex items-center gap-1.5">

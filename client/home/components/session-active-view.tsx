@@ -433,7 +433,7 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
       >
         {/* ── Progress header ─────────────────────────────────────────────── */}
         <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/60">
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center gap-3">
             <div className={`w-8 h-8 rounded-lg ${cfg.bg} flex items-center justify-center flex-shrink-0`}>
               <DomainIcon className={`w-4 h-4 ${cfg.color}`} />
             </div>
@@ -457,8 +457,8 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
           </div>
         </div>
 
-        {/* ── Question area ────────────────────────────────────────────────── */}
-        <div className="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-center">
+        {/* ── Question area: stacked on phones, landscape split on laptops ── */}
+        <div className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={`q-${qIdx}`}
@@ -466,29 +466,38 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className="space-y-5"
+              className={cn(
+                (data.illustrationUrl || data.visual || (type === "reading" && data.passage) || (type === "listening" && data.audioScript))
+                  ? "lg:grid lg:grid-cols-2 lg:gap-10 lg:items-start"
+                  : "max-w-3xl mx-auto",
+              )}
             >
-              {(data.illustrationUrl || data.visual) && (
-                <div className="space-y-3">
-                  {data.illustrationUrl && (
-                    <div className="rounded-2xl overflow-hidden border border-border/40 shadow-sm">
-                      <img src={data.illustrationUrl} alt="" className="w-full block" />
+              {(data.illustrationUrl || data.visual || (type === "reading" && data.passage) || (type === "listening" && data.audioScript)) && (
+                <div className="mb-6 lg:mb-0 lg:sticky lg:top-20 space-y-4">
+                  {(data.illustrationUrl || data.visual) && (
+                    <div className="space-y-3">
+                      {data.illustrationUrl && (
+                        <div className="rounded-2xl overflow-hidden border border-border/40 shadow-sm bg-muted/20 flex items-center justify-center min-h-[12rem] lg:min-h-[min(70vh,36rem)]">
+                          <img
+                            src={data.illustrationUrl}
+                            alt=""
+                            className="w-full h-auto max-h-[min(70vh,36rem)] object-contain block"
+                          />
+                        </div>
+                      )}
+                      {!data.illustrationUrl && <StemVisual visual={data.visual} />}
                     </div>
                   )}
-                  {!data.illustrationUrl && <StemVisual visual={data.visual} />}
+                  {type === "reading" && data.passage && (
+                    <div className="rounded-2xl border border-energy-orange/20 bg-energy-orange/[0.04] p-5 lg:max-h-[min(70vh,36rem)] lg:overflow-y-auto">
+                      <p className="text-foreground leading-relaxed text-[15px]">{data.passage}</p>
+                    </div>
+                  )}
+                  {type === "listening" && data.audioScript && <SessionAudioPlayer />}
                 </div>
               )}
 
-              {/* Reading passage */}
-              {type === "reading" && data.passage && (
-                <div className="rounded-2xl border border-energy-orange/20 bg-energy-orange/[0.04] p-5">
-                  <p className="text-foreground leading-relaxed text-[15px]">{data.passage}</p>
-                </div>
-              )}
-
-              {/* Listening: audio player */}
-              {type === "listening" && data.audioScript && <SessionAudioPlayer />}
-
+              <div className="min-w-0 space-y-5">
               {/* Object-detect question */}
               {currentQ?.type === "object_detect" && (currentQ as any).imageSrc && (
                 <SessionObjectDetect
@@ -593,7 +602,7 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
 
               {/* ── SPEAKING question ─────────────────────────────────────── */}
               {type === "speaking" && (
-                <div className="space-y-8 text-center py-8">
+                <div className="space-y-8 text-center py-4 lg:py-2">
                   <StemVisual visual={data.visual} />
                   <h3 className="text-xl font-bold text-foreground">{data.prompt}</h3>
                   {data.scaffold && (
@@ -695,7 +704,6 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
               {/* ── WRITING question ──────────────────────────────────────── */}
               {type === "writing" && (
                 <div className="space-y-5">
-                  {!data.illustrationUrl && <StemVisual visual={data.visual} />}
                   <h3 className="text-[18px] font-bold text-foreground leading-snug">{data.prompt}</h3>
 
                   {/* Word bank — tappable chips that insert into the textarea */}
@@ -724,10 +732,14 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
                   {/* Sentence frame starter */}
                   {(data.sentenceFrame ?? data.sentence_frame) && (
                     <div className="rounded-xl border-2 border-dashed border-achieve-purple/30 bg-achieve-purple/5 px-4 py-3 flex items-start gap-3">
-                      <span className="text-achieve-purple font-black text-xs uppercase tracking-widest mt-0.5 shrink-0">Start here</span>
+                      <span className="text-achieve-purple font-black text-xs uppercase tracking-widest mt-0.5 shrink-0">
+                        {/_{3,}|_____/.test(String(data.sentenceFrame ?? data.sentence_frame ?? ""))
+                          ? "Sentence frame"
+                          : "Start here"}
+                      </span>
                       <button
                         type="button"
-                        className="text-achieve-purple font-semibold text-sm text-left hover:underline"
+                        className="text-achieve-purple font-semibold text-sm text-left hover:underline whitespace-pre-line"
                         onClick={() =>
                           setWritingText((prev: string) =>
                             prev ? prev : (data.sentenceFrame ?? data.sentence_frame ?? "")
@@ -743,7 +755,7 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
                     value={writingText}
                     onChange={e => setWritingText(e.target.value)}
                     placeholder="Type your answer here..."
-                    className="min-h-[180px] text-base p-4 resize-none rounded-xl border-border/60 focus:border-achieve-purple/60 bg-card/60"
+                    className="min-h-[180px] lg:min-h-[240px] text-base p-4 resize-none rounded-xl border-border/60 focus:border-achieve-purple/60 bg-card/60"
                   />
                   <Button
                     className="w-full h-12 text-base font-semibold bg-achieve-purple hover:bg-achieve-purple/90 text-white rounded-xl shadow-sm"
@@ -781,6 +793,7 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
 
               {/* Feedback — slides in below question */}
               <SessionFeedbackBar />
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>

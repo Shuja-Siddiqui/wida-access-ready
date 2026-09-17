@@ -10,7 +10,10 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 const basePath = process.env.BASE_PATH ?? "/";
-const apiTarget = process.env.INTERNAL_PROXY_BASE_URL ?? "http://localhost:8080";
+const apiTarget = (process.env.INTERNAL_PROXY_BASE_URL ?? "http://127.0.0.1:8080").replace(
+  "://localhost",
+  "://127.0.0.1",
+);
 
 export default defineConfig(async ({ command }) => ({
   base: basePath,

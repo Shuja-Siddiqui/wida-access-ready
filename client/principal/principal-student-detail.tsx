@@ -9,6 +9,7 @@ import { LoadingScreen } from "@/components/loading-screen";
 import { StatCard } from "@/components/stat-card";
 import { StudentDomainProgressBars } from "@/components/student-domain-progress-bars";
 import { StudentDomainChart } from "@/components/student-domain-chart";
+import { StudentAiUsageChart } from "@/components/student-ai-usage-chart";
 import { principalApi, type StudentDetailResponse } from "./api";
 
 export default function PrincipalStudentDetail() {
@@ -82,6 +83,8 @@ export default function PrincipalStudentDetail() {
         <StatCard icon={Flame} label="Day streak" value={student.currentStreak} tone="warning" />
         <StatCard icon={Star} label="Total XP" value={(student.totalXp ?? 0).toLocaleString()} />
       </div>
+
+      {studentId && <StudentAiUsageChart studentId={studentId} />}
 
       {/* Large screen: line chart */}
       <div className="hidden lg:block">

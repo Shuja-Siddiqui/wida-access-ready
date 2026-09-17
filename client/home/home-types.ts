@@ -35,7 +35,7 @@ export const DOMAIN_CONFIG: Record<string, DomainConfig> = {
   listening_academic: { icon: GraduationCap, color: "text-indigo-600",      bg: "bg-indigo-100",         border: "border-indigo-400",      btnBg: "bg-indigo-500",      label: "Academic Listening",  apiDomain: "listening", tier: "academic" },
   speaking:           { icon: Mic,           color: "text-growth-green",    bg: "bg-growth-green/10",    border: "border-growth-green",    btnBg: "bg-growth-green",                                  apiDomain: "speaking",  tier: "general"  },
   reading:            { icon: BookOpen,      color: "text-energy-orange",   bg: "bg-energy-orange/10",   border: "border-energy-orange",   btnBg: "bg-energy-orange",                                 apiDomain: "reading",   tier: "general"  },
-  writing:            { icon: PenLine,       color: "text-achieve-purple",  bg: "bg-achieve-purple/10",  border: "border-achieve-purple",  btnBg: "bg-achieve-purple",                                apiDomain: "writing",   tier: "general"  },
+  writing:            { icon: PenLine,       color: "text-achieve-purple",  bg: "bg-achieve-purple/10",  border: "border-achieve-purple",  btnBg: "bg-achieve-purple",  label: "Writing",           apiDomain: "writing",   tier: "academic" },
 };
 
 /** Returns the user-facing label for a domain config key. */

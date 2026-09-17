@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "express": "^5",
+    "redis": "^6.2.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

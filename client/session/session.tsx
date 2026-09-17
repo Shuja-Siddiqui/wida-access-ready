@@ -9,6 +9,7 @@ import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Mic, Square, Volume2, Ale
 import { motion, AnimatePresence } from "framer-motion";
 import { OptionVisual, StemVisual } from "@/components/shape-glyph";
 import { LoadingScreen } from "@/components/loading-screen";
+import { cn } from "@/lib/utils";
 
 type SessionState = "loading" | "error" | "active" | "finishing";
 
@@ -202,14 +203,14 @@ export default function Session() {
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-background flex flex-col">
       <div className="p-4 bg-card border-b shadow-sm sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
+        <div className="max-w-[1440px] mx-auto flex items-center gap-4">
           <span className="uppercase tracking-widest text-xs font-black text-muted-foreground">{domain}</span>
           <Progress value={progressPct} className="h-2 flex-1" />
           <span className="text-xs font-bold text-muted-foreground">{qIdx + 1}/{questions.length || 1}</span>
         </div>
       </div>
 
-      <div className="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 flex flex-col justify-center">
+      <div className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-4 sm:py-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={`q-${qIdx}`}
@@ -217,38 +218,45 @@ export default function Session() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="space-y-6"
+            className={cn(
+              (data?.illustrationUrl || data?.visual || (type === "reading" && data?.passage) || (type === "listening" && data?.audioScript))
+                ? "lg:grid lg:grid-cols-2 lg:gap-10 lg:items-start"
+                : "max-w-3xl mx-auto space-y-6",
+            )}
           >
-            {/* Illustration image — shown when the API found a matching library image for this topic */}
-            {(data?.illustrationUrl || data?.visual) && (
-              <div className="space-y-3">
-                {data.illustrationUrl && (
-                  <div className="rounded-2xl overflow-hidden border border-border/40 shadow-sm">
-                    <img
-                      src={data.illustrationUrl}
-                      alt="Story illustration"
-                      className="w-full block"
-                    />
+            {(data?.illustrationUrl || data?.visual || (type === "reading" && data?.passage) || (type === "listening" && data?.audioScript)) && (
+              <div className="mb-6 lg:mb-0 lg:sticky lg:top-20 space-y-4">
+                {(data?.illustrationUrl || data?.visual) && (
+                  <div className="space-y-3">
+                    {data.illustrationUrl && (
+                      <div className="rounded-2xl overflow-hidden border border-border/40 shadow-sm bg-muted/20 flex items-center justify-center lg:min-h-[min(70vh,36rem)]">
+                        <img
+                          src={data.illustrationUrl}
+                          alt="Story illustration"
+                          className="w-full h-auto max-h-[min(70vh,36rem)] object-contain block"
+                        />
+                      </div>
+                    )}
+                    {!data.illustrationUrl && <StemVisual visual={data.visual} />}
                   </div>
                 )}
-                {!data.illustrationUrl && <StemVisual visual={data.visual} />}
+                {type === "reading" && data?.passage && (
+                  <div className="bg-energy-orange/5 border border-energy-orange/20 rounded-2xl p-5">
+                    <p className="text-foreground leading-relaxed text-[15px]">{data.passage}</p>
+                  </div>
+                )}
+                {type === "listening" && data?.audioScript && (
+                  <div className="bg-trust-blue/5 border border-trust-blue/20 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center gap-2 text-trust-blue font-bold text-sm">
+                      <Volume2 className="w-5 h-5" />
+                      <span>Listen to this passage:</span>
+                    </div>
+                    <p className="text-foreground leading-relaxed text-[15px] italic">"{data.audioScript}"</p>
+                  </div>
+                )}
               </div>
             )}
-            {type === "reading" && data?.passage && (
-              <div className="bg-energy-orange/5 border border-energy-orange/20 rounded-2xl p-5">
-                <p className="text-foreground leading-relaxed text-[15px]">{data.passage}</p>
-              </div>
-            )}
-
-            {type === "listening" && data?.audioScript && (
-              <div className="bg-trust-blue/5 border border-trust-blue/20 rounded-2xl p-5 space-y-3">
-                <div className="flex items-center gap-2 text-trust-blue font-bold text-sm">
-                  <Volume2 className="w-5 h-5" />
-                  <span>Listen to this passage:</span>
-                </div>
-                <p className="text-foreground leading-relaxed text-[15px] italic">"{data.audioScript}"</p>
-              </div>
-            )}
+            <div className="min-w-0 space-y-6">
 
             {/* Image grid for listening image_grid questions */}
             {type === "listening" && currentQ?.type === "image_grid" && (
@@ -581,10 +589,14 @@ export default function Session() {
                 {/* Sentence frame starter */}
                 {(data?.sentenceFrame ?? data?.sentence_frame) && (
                   <div className="rounded-xl border-2 border-dashed border-achieve-purple/30 bg-achieve-purple/5 px-4 py-3 flex items-start gap-3">
-                    <span className="text-achieve-purple font-black text-xs uppercase tracking-widest mt-0.5 shrink-0">Start here</span>
+                    <span className="text-achieve-purple font-black text-xs uppercase tracking-widest mt-0.5 shrink-0">
+                      {/_{3,}|_____/.test(String(data?.sentenceFrame ?? data?.sentence_frame ?? ""))
+                        ? "Sentence frame"
+                        : "Start here"}
+                    </span>
                     <button
                       type="button"
-                      className="text-achieve-purple font-semibold text-sm text-left hover:underline"
+                      className="text-achieve-purple font-semibold text-sm text-left hover:underline whitespace-pre-line"
                       onClick={() =>
                         setWritingText((prev) =>
                           prev ? prev : ((data?.sentenceFrame ?? data?.sentence_frame) as string)
@@ -616,6 +628,7 @@ export default function Session() {
                 </Button>
               </div>
             )}
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>
@@ -628,7 +641,7 @@ export default function Session() {
             exit={{ y: "100%" }}
             className={`fixed bottom-0 left-0 right-0 p-5 border-t-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50 ${lastCorrect ? "bg-growth-green/10 border-growth-green" : "bg-destructive/5 border-destructive"}`}
           >
-            <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+            <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
               <div className="flex items-center gap-3">
                 {lastCorrect ? (
                   <CheckCircle2 className="w-7 h-7 text-growth-green flex-shrink-0" />

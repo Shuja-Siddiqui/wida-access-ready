@@ -20,6 +20,8 @@ const GRADE_BANDS = ["K-2", "3-5", "6-8", "9-12"] as const;
 const ASSESSMENTS = ["WIDA", "OELPA", "TELPAS", "ELPAC", "ELPA21", "NYSESLAT"] as const;
 const TELPAS_LEVELS = ["Beginning", "Intermediate", "Advanced", "Advanced High"] as const;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface ParsedRow {
   rowNum: number;
   name: string;
@@ -27,6 +29,8 @@ interface ParsedRow {
   gradeBand: string;
   stateAssessment: string;
   homeLanguage: string;
+  guardianId: string;
+  schoolId: string;
   listening: string;
   speaking: string;
   reading: string;
@@ -56,6 +60,8 @@ function validateRow(raw: Record<string, string>, rowNum: number): ParsedRow {
   const gradeBand = get(["Grade Band", "grade_band", "Grade", "gradeBand"]);
   const stateAssessment = get(["State Assessment", "Assessment", "assessment", "stateAssessment"]);
   const homeLanguage = get(["Home Language", "homeLanguage", "Language"]);
+  const guardianId = get(["Teacher ID", "Guardian ID", "teacherId", "guardianId", "Teacher Id"]);
+  const schoolId = get(["School ID", "schoolId", "School Id"]);
   const listening = get(["Listening", "listening"]);
   const speaking = get(["Speaking", "speaking"]);
   const reading = get(["Reading", "reading"]);
@@ -71,6 +77,10 @@ function validateRow(raw: Record<string, string>, rowNum: number): ParsedRow {
     errors.push(`Assessment must be one of: ${ASSESSMENTS.join(", ")}`);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     errors.push("Email format is invalid");
+  if (guardianId && !UUID_RE.test(guardianId))
+    errors.push("Teacher ID must be a valid UUID");
+  if (schoolId && !UUID_RE.test(schoolId))
+    errors.push("School ID must be a valid UUID");
 
   if (stateAssessment === "TELPAS") {
     for (const [domain, val] of [["Listening", listening], ["Speaking", speaking], ["Reading", reading], ["Writing", writing]] as const) {
@@ -84,7 +94,7 @@ function validateRow(raw: Record<string, string>, rowNum: number): ParsedRow {
     }
   }
 
-  return { rowNum, name, email, gradeBand, stateAssessment, homeLanguage, listening, speaking, reading, writing, errors };
+  return { rowNum, name, email, gradeBand, stateAssessment, homeLanguage, guardianId, schoolId, listening, speaking, reading, writing, errors };
 }
 
 function buildStudentPayload(row: ParsedRow) {
@@ -95,6 +105,8 @@ function buildStudentPayload(row: ParsedRow) {
     gradeBand: row.gradeBand,
     stateAssessment: row.stateAssessment,
     homeLanguage: row.homeLanguage || undefined,
+    guardianId: row.guardianId || undefined,
+    schoolId: row.schoolId || undefined,
     ...(isTelpas
       ? {
           telpasListening: row.listening || undefined,
@@ -111,26 +123,45 @@ function buildStudentPayload(row: ParsedRow) {
   };
 }
 
-export function downloadImportTemplate() {
-  const headers = ["Name", "Email", "Grade Band", "State Assessment", "Home Language", "Listening", "Speaking", "Reading", "Writing"];
-  const examples = [
-    ["Maria Garcia", "maria@school.edu", "6-8", "WIDA", "Spanish", "2.5", "2.0", "3.0", "2.5"],
-    ["Ahmed Hassan", "ahmed@school.edu", "9-12", "TELPAS", "Arabic", "Beginning", "Intermediate", "Beginning", "Beginning"],
-    ["Linh Nguyen", "linh@school.edu", "3-5", "ELPAC", "Vietnamese", "3", "2", "3", "2"],
-    ["Fatou Diallo", "", "K-2", "WIDA", "French", "", "", "", ""],
-  ];
+export function downloadImportTemplate(showOrgColumns: boolean) {
+  const headers = showOrgColumns
+    ? ["Name", "Email", "Grade Band", "State Assessment", "Home Language", "Teacher ID", "School ID", "Listening", "Speaking", "Reading", "Writing"]
+    : ["Name", "Email", "Grade Band", "State Assessment", "Home Language", "Listening", "Speaking", "Reading", "Writing"];
+  const examples = showOrgColumns
+    ? [
+        ["Maria Garcia", "maria@school.edu", "6-8", "WIDA", "Spanish", "", "", "2.5", "2.0", "3.0", "2.5"],
+        ["Ahmed Hassan", "ahmed@school.edu", "9-12", "TELPAS", "Arabic", "00000000-0000-4000-8000-000000000001", "", "Beginning", "Intermediate", "Beginning", "Beginning"],
+        ["Linh Nguyen", "linh@school.edu", "3-5", "ELPAC", "Vietnamese", "", "00000000-0000-4000-8000-000000000002", "3", "2", "3", "2"],
+        ["Fatou Diallo", "", "K-2", "WIDA", "French", "", "", "", "", "", ""],
+      ]
+    : [
+        ["Maria Garcia", "maria@school.edu", "6-8", "WIDA", "Spanish", "2.5", "2.0", "3.0", "2.5"],
+        ["Ahmed Hassan", "ahmed@school.edu", "9-12", "TELPAS", "Arabic", "Beginning", "Intermediate", "Beginning", "Beginning"],
+        ["Linh Nguyen", "linh@school.edu", "3-5", "ELPAC", "Vietnamese", "3", "2", "3", "2"],
+        ["Fatou Diallo", "", "K-2", "WIDA", "French", "", "", "", ""],
+      ];
   const notes = [
     [""],
     ["NOTES:"],
     ["Grade Band options: K-2, 3-5, 6-8, 9-12"],
     ["Assessment options: WIDA, OELPA, TELPAS, ELPAC, ELPA21, NYSESLAT"],
+    ...(showOrgColumns
+      ? [
+          ["Teacher ID and School ID are optional — leave blank to assign later in the app"],
+          ["District imports: School ID assigns the student to a school"],
+          ["Principal imports: school is set automatically; Teacher ID assigns to a teacher"],
+        ]
+      : []),
     ["TELPAS domain scores: Beginning, Intermediate, Advanced, Advanced High"],
     ["Other assessments use numeric scores (e.g. 2.5 for WIDA, 3 for ELPAC)"],
     ["Email is optional but required to send the student a password setup invite"],
   ];
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...examples, ...notes]);
-  ws["!cols"] = [22, 28, 14, 18, 16, 12, 12, 12, 12].map((w) => ({ wch: w }));
+  ws["!cols"] = (showOrgColumns
+    ? [22, 28, 14, 18, 16, 38, 38, 12, 12, 12, 12]
+    : [22, 28, 14, 18, 16, 12, 12, 12, 12]
+  ).map((w) => ({ wch: w }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Students");
   XLSX.writeFile(wb, "ACCESS_Ready_Student_Import_Template.xlsx");
@@ -139,11 +170,13 @@ export function downloadImportTemplate() {
 type Step = "upload" | "preview" | "importing" | "results";
 
 interface BulkImportWizardProps {
-  guardianId: string;
+  /** Solo teachers import to their own roster; org staff stamp school/district from their account. */
+  mode: "teacher" | "org";
   onBack: () => void;
 }
 
-export function BulkImportWizard({ guardianId, onBack }: BulkImportWizardProps) {
+export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
+  const showOrgColumns = mode === "org";
   const { request } = useApi();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -199,10 +232,7 @@ export function BulkImportWizard({ guardianId, onBack }: BulkImportWizardProps) 
         "/api/students/bulk-import",
         {
           method: "POST",
-          body: JSON.stringify({
-            teacherId: guardianId,
-            students: validRows.map(buildStudentPayload),
-          }),
+          body: JSON.stringify({ students: validRows.map(buildStudentPayload) }),
         }
       );
       setResults(data.results);
@@ -279,7 +309,7 @@ export function BulkImportWizard({ guardianId, onBack }: BulkImportWizardProps) 
             <div className="mt-5 flex items-center justify-center gap-1.5">
               <p className="text-sm text-muted-foreground">Need a template?</p>
               <button
-                onClick={(e) => { e.stopPropagation(); downloadImportTemplate(); }}
+                onClick={(e) => { e.stopPropagation(); downloadImportTemplate(showOrgColumns); }}
                 className="text-sm font-bold text-primary hover:text-primary/80 underline underline-offset-2 transition-colors flex items-center gap-1"
               >
                 <Download className="w-3.5 h-3.5" /> Download
@@ -336,6 +366,12 @@ export function BulkImportWizard({ guardianId, onBack }: BulkImportWizardProps) 
                       <TableHead className="font-extrabold text-foreground h-12">Email</TableHead>
                       <TableHead className="font-extrabold text-foreground h-12">Grade</TableHead>
                       <TableHead className="font-extrabold text-foreground h-12">Assessment</TableHead>
+                      {showOrgColumns && (
+                        <>
+                          <TableHead className="font-extrabold text-foreground h-12">Teacher ID</TableHead>
+                          <TableHead className="font-extrabold text-foreground h-12">School ID</TableHead>
+                        </>
+                      )}
                       <TableHead className="font-extrabold text-foreground h-12">Listening</TableHead>
                       <TableHead className="font-extrabold text-foreground h-12">Speaking</TableHead>
                       <TableHead className="font-extrabold text-foreground h-12">Reading</TableHead>
@@ -356,6 +392,12 @@ export function BulkImportWizard({ guardianId, onBack }: BulkImportWizardProps) 
                         <TableCell>
                           {r.stateAssessment && <Badge variant="outline" className="font-bold text-xs border-border">{r.stateAssessment}</Badge>}
                         </TableCell>
+                        {showOrgColumns && (
+                          <>
+                            <TableCell className="text-xs text-muted-foreground font-mono max-w-[120px] truncate">{r.guardianId || "—"}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground font-mono max-w-[120px] truncate">{r.schoolId || "—"}</TableCell>
+                          </>
+                        )}
                         <TableCell className="text-sm text-muted-foreground">{r.listening || "—"}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{r.speaking || "—"}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{r.reading || "—"}</TableCell>

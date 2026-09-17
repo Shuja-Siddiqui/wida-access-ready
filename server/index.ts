@@ -26,8 +26,9 @@ const basePath = process.env.BASE_PATH ?? "/";
 
 // In production this can point at an internal reverse proxy. Locally the
 // API server listens on 8080.
-const internalApiBaseUrl =
-  process.env.INTERNAL_PROXY_BASE_URL ?? "http://localhost:8080";
+const internalApiBaseUrl = (
+  process.env.INTERNAL_PROXY_BASE_URL ?? "http://127.0.0.1:8080"
+).replace("://localhost", "://127.0.0.1");
 
 const isProduction = process.env.NODE_ENV === "production";
 const root = path.resolve(import.meta.dirname, "..");

@@ -69,6 +69,12 @@ export default function Home() {
     lastJudgment?: ItemFeedbackPayload["judgment"];
     lastCoachTip: string;
   }>({ tryCount: 0, lastCoachTip: "" });
+  const writingCoachRef = useRef<{
+    tryCount: number;
+    lastJudgment?: ItemFeedbackPayload["judgment"];
+    lastCoachTip: string;
+    lastStudentAnswer: string;
+  }>({ tryCount: 0, lastCoachTip: "", lastStudentAnswer: "" });
 
   // ─── Auth guard ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -159,6 +165,7 @@ export default function Home() {
     setProductionReview(null);
     setListenedOnce(false);
     speakingCoachRef.current = { tryCount: 0, lastCoachTip: "" };
+    writingCoachRef.current = { tryCount: 0, lastCoachTip: "", lastStudentAnswer: "" };
     stopSpeaking();
     setView("loading");
     try {
@@ -285,7 +292,7 @@ export default function Home() {
     }).then((feedback) => {
       if (feedback) {
         speakingCoachRef.current.lastJudgment = feedback.judgment;
-        speakingCoachRef.current.lastCoachTip = feedback.tryAgainTip || "";
+        speakingCoachRef.current.lastCoachTip = feedback.tryAgainTip || feedback.spokenText || "";
       }
       setProductionReview({ kind: "speaking", text: spoken, feedback, loading: false });
     });
@@ -529,6 +536,7 @@ export default function Home() {
       setWritingText,
       onSubmitWriting: (text) => {
         const data = session?.content?.data;
+        writingCoachRef.current.tryCount += 1;
         setProductionReview({ kind: "writing", text, feedback: null, loading: true });
         void loadItemFeedback({
           domain: "writing",
@@ -542,7 +550,17 @@ export default function Home() {
           imageTags: data?.imageTags ?? data?.tags,
           imageDescription: data?.imageDescription || undefined,
           minSentences: data?.minSentences,
+          options: data?.wordBank ?? data?.word_bank,
+          tryCount: writingCoachRef.current.tryCount,
+          lastJudgment: writingCoachRef.current.lastJudgment,
+          lastCoachTip: writingCoachRef.current.lastCoachTip || undefined,
+          lastStudentAnswer: writingCoachRef.current.lastStudentAnswer || undefined,
         }).then((feedback) => {
+          writingCoachRef.current.lastStudentAnswer = text;
+          if (feedback) {
+            writingCoachRef.current.lastJudgment = feedback.judgment;
+            writingCoachRef.current.lastCoachTip = feedback.tryAgainTip || feedback.spokenText || "";
+          }
           setProductionReview({ kind: "writing", text, feedback, loading: false });
         });
       },

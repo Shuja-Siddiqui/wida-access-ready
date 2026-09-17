@@ -108,6 +108,12 @@ export function useUpload(options: UseUploadOptions = {}) {
         setProgress(30);
         await uploadToPresignedUrl(file, uploadResponse.uploadURL);
 
+        setProgress(70);
+        await customFetch<{ objectPath: string }>(`${basePath}/uploads/complete`, {
+          method: "POST",
+          body: JSON.stringify({ objectPath: uploadResponse.objectPath }),
+        });
+
         setProgress(100);
         options.onSuccess?.(uploadResponse);
         return uploadResponse;

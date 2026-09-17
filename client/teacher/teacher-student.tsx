@@ -8,6 +8,7 @@ import { PageContainer } from "@/components/page-container";
 import { LoadingScreen } from "@/components/loading-screen";
 import { StudentDomainProgressBars } from "@/components/student-domain-progress-bars";
 import { StudentDomainChart } from "@/components/student-domain-chart";
+import { StudentAiUsageChart } from "@/components/student-ai-usage-chart";
 
 export default function TeacherStudentDetail() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -61,6 +62,8 @@ export default function TeacherStudentDetail() {
           </motion.div>
         ))}
       </div>
+
+      <StudentAiUsageChart studentId={student.id} />
 
       {/* Large screen: line chart */}
       <div className="hidden lg:block">

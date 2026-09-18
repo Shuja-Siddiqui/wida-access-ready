@@ -116,6 +116,16 @@ export function ItemCoachingCard({
       {bodyText && (
         <p className="text-sm font-medium text-foreground leading-relaxed">{bodyText}</p>
       )}
+      {nextAction === "retry" && feedback?.modelResponse?.trim() && (
+        <div className="rounded-lg border border-achieve-purple/25 bg-achieve-purple/5 px-3 py-2.5">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-achieve-purple mb-1">
+            Example fix
+          </p>
+          <p className="text-sm text-foreground leading-relaxed">
+            {visibleSpeech(feedback.modelResponse.trim())}
+          </p>
+        </div>
+      )}
       {(nextAction === "next" || nextAction === "save") && (
         <p className="text-sm font-semibold text-growth-green leading-snug">
           Tap Next.

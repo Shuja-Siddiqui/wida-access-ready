@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { OptionVisual, StemVisual } from "@/components/shape-glyph";
 import { LoadingScreen } from "@/components/loading-screen";
 import { cn } from "@/lib/utils";
+import { resolveSessionStartFromUiKey } from "@/home/home-types";
 
 type SessionState = "loading" | "error" | "active" | "finishing";
 
@@ -52,9 +53,10 @@ export default function Session() {
 
     setState("loading");
     try {
+      const { apiDomain, tier } = resolveSessionStartFromUiKey(domain ?? "");
       const data = await request(`/api/students/${studentId}/sessions/start`, {
         method: "POST",
-        body: JSON.stringify({ domain, sessionType: "single" }),
+        body: JSON.stringify({ domain: apiDomain, tier, sessionType: "single" }),
       });
       setSession(data);
       setState("active");

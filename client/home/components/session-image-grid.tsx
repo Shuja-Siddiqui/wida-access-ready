@@ -1,12 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useSessionContext } from "../session-context";
+import { SESSION_QUESTION } from "./session-ui-styles";
+import { cn } from "@/lib/utils";
 
 const PLACEHOLDER_GRADIENTS = [
-  "from-sky-300/60 to-indigo-300/60",
-  "from-rose-300/60 to-pink-300/60",
-  "from-amber-300/60 to-orange-300/60",
-  "from-emerald-300/60 to-teal-300/60",
+  "from-slate-200/80 to-slate-300/60 dark:from-slate-700/50 dark:to-slate-800/40",
+  "from-slate-200/80 to-slate-300/60 dark:from-slate-700/50 dark:to-slate-800/40",
+  "from-slate-200/80 to-slate-300/60 dark:from-slate-700/50 dark:to-slate-800/40",
+  "from-slate-200/80 to-slate-300/60 dark:from-slate-700/50 dark:to-slate-800/40",
 ];
 
 export function SessionImageGrid() {
@@ -16,10 +18,9 @@ export function SessionImageGrid() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold text-foreground leading-snug">{currentQ.question}</h3>
+      <h3 className={SESSION_QUESTION}>{currentQ.question}</h3>
 
-      {/* max-w-[340px] keeps each cell ≈ 162px — right-sized for 640px webformatURL images */}
-      <div className="grid grid-cols-2 gap-3 max-w-[340px]">
+      <div className="grid grid-cols-2 gap-3 w-full max-w-md sm:max-w-lg mx-auto lg:mx-0 lg:max-w-none">
         {(currentQ.options ?? []).map((opt, i) => {
           const imgSrc     = currentQ.imageUrls?.[i] ?? "";
           const isCorrect  = i === currentQ.correct;
@@ -30,33 +31,33 @@ export function SessionImageGrid() {
           let dimmed      = false;
 
           if (showFeedback) {
-            if (isCorrect)       { borderColor = "border-growth-green"; shadowColor = "shadow-growth-green/30"; }
-            else if (isSelected) { borderColor = "border-destructive";  shadowColor = "shadow-destructive/20"; dimmed = true; }
+            if (isCorrect)       { borderColor = "border-emerald-500/50"; shadowColor = "shadow-emerald-500/15"; }
+            else if (isSelected) { borderColor = "border-rose-500/45";  shadowColor = "shadow-rose-500/10"; dimmed = true; }
             else                 { dimmed = true; }
           } else if (isSelected) {
-            borderColor = "border-trust-blue";
-            shadowColor = "shadow-trust-blue/30";
+            borderColor = "border-sky-500/45";
+            shadowColor = "shadow-sky-500/15";
           }
 
           return (
-            <motion.button
+            <button
               key={i}
+              type="button"
               onClick={() => onAnswer(i)}
               disabled={showFeedback}
-              whileTap={{ scale: showFeedback ? 1 : 0.96 }}
-              animate={{ opacity: dimmed ? 0.38 : 1 }}
-              transition={{ duration: 0.2 }}
-              className={`
-                relative flex flex-col rounded-2xl overflow-hidden border-2 transition-colors duration-200
-                ${borderColor} ${shadowColor && `shadow-lg ${shadowColor}`}
-                ${!showFeedback ? "cursor-pointer hover:border-trust-blue/40" : "cursor-default"}
-              `}
+              className={cn(
+                "relative flex flex-col rounded-lg overflow-hidden border transition-all duration-200",
+                borderColor,
+                shadowColor && `shadow-md ${shadowColor}`,
+                dimmed && "opacity-40",
+                !showFeedback ? "cursor-pointer hover:border-sky-500/40" : "cursor-default",
+              )}
             >
               {/* Image area — landscape 4:3 */}
               <div className={`relative w-full aspect-[4/3] bg-gradient-to-br ${PLACEHOLDER_GRADIENTS[i]}`}>
                 {!imgSrc && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-black text-white/50">{["A", "B", "C"][i]}</span>
+                    <span className="text-sm font-medium text-muted-foreground">{["A", "B", "C"][i]}</span>
                   </div>
                 )}
                 {imgSrc && (
@@ -75,8 +76,8 @@ export function SessionImageGrid() {
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ type: "spring", stiffness: 500, damping: 22 }}
-                      className={`absolute bottom-2 right-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md ${
-                        isCorrect ? "bg-growth-green" : "bg-destructive"
+                      className={`absolute bottom-2 right-2 w-6 h-6 rounded-md flex items-center justify-center shadow-sm ${
+                        isCorrect ? "bg-emerald-600" : "bg-rose-600"
                       }`}
                     >
                       {isCorrect
@@ -89,22 +90,23 @@ export function SessionImageGrid() {
 
                 {/* Selected glow overlay (pre-feedback) */}
                 {isSelected && !showFeedback && (
-                  <div className="absolute inset-0 bg-trust-blue/10" />
+                  <div className="absolute inset-0 bg-sky-500/8" />
                 )}
               </div>
 
               {/* Caption */}
               <div
-                className={`px-3 py-2 text-center text-[13px] font-semibold leading-tight transition-colors duration-200 ${
-                  showFeedback && isCorrect  ? "bg-growth-green/10 text-growth-green"
-                  : showFeedback && isSelected ? "bg-destructive/10 text-destructive"
-                  : isSelected               ? "bg-trust-blue/8 text-trust-blue"
-                  : "bg-card text-foreground/80"
-                }`}
+                className={cn(
+                  "px-3 py-2 text-center text-[13px] font-medium leading-tight transition-colors duration-200 border-t border-border/40",
+                  showFeedback && isCorrect && "bg-emerald-500/[0.06] text-emerald-800 dark:text-emerald-200",
+                  showFeedback && isSelected && !isCorrect && "bg-rose-500/[0.05] text-rose-800 dark:text-rose-200",
+                  isSelected && !showFeedback && "bg-sky-500/[0.05] text-foreground",
+                  !isSelected && !showFeedback && "bg-card text-muted-foreground",
+                )}
               >
                 {opt}
               </div>
-            </motion.button>
+            </button>
           );
         })}
       </div>

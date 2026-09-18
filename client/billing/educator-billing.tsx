@@ -350,7 +350,7 @@ export function EducatorBilling({ teacherId }: { teacherId: string }) {
                   <button
                     onClick={() => setLocation(`/billing/checkout?plan=organization&seats=${seatCount}`)}
                     disabled={redirecting !== null}
-                    className="w-full flex items-center justify-center gap-2.5 bg-gradient-to-br from-primary to-[#c2185b] text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_22px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:pointer-events-none text-sm"
+                    className="btn-brand w-full flex items-center justify-center gap-2.5 font-bold py-3.5 rounded-xl disabled:opacity-50 disabled:pointer-events-none text-sm"
                   >
                     <CreditCard className="w-4 h-4" />
                     Subscribe Now
@@ -411,7 +411,7 @@ export function EducatorBilling({ teacherId }: { teacherId: string }) {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => { setShowManageWarning(false); void handleManageBilling(); }}
-              className="flex-1 h-11 rounded-xl font-bold bg-gradient-to-br from-primary to-[#c2185b] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_22px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 transition-all border-none"
+              className="btn-brand flex-1 h-11 rounded-xl font-bold border-none"
             >
               Continue to portal
             </AlertDialogAction>

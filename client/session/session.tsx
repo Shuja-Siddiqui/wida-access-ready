@@ -146,7 +146,10 @@ export default function Session() {
   const questions = data?.questions || [];
   const currentQ = questions[qIdx];
   const progressPct = questions.length > 0 ? (qIdx / questions.length) * 100 : 0;
-
+  const useSplitLayout =
+    Boolean(data?.illustrationUrl || data?.visual)
+    || (type === "reading" && Boolean(data?.passage))
+    || (type === "listening" && Boolean(data?.audioScript));
 
   const handleAnswer = (idx: number) => {
     if (showFeedback) return;
@@ -221,13 +224,13 @@ export default function Session() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              (data?.illustrationUrl || data?.visual || (type === "reading" && data?.passage) || (type === "listening" && data?.audioScript))
-                ? "lg:grid lg:grid-cols-2 lg:gap-10 lg:items-start"
+              useSplitLayout
+                ? "grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10 items-start w-full"
                 : "max-w-3xl mx-auto space-y-6",
             )}
           >
-            {(data?.illustrationUrl || data?.visual || (type === "reading" && data?.passage) || (type === "listening" && data?.audioScript)) && (
-              <div className="mb-6 lg:mb-0 lg:sticky lg:top-20 space-y-4">
+            {useSplitLayout && (
+              <div className="mb-6 md:mb-0 md:sticky md:top-20 space-y-4">
                 {(data?.illustrationUrl || data?.visual) && (
                   <div className="space-y-3">
                     {data.illustrationUrl && (

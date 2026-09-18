@@ -6,32 +6,7 @@ import { Flame, ArrowUpCircle, Star, BookOpen } from "lucide-react";
 import { LoadingScreen } from "@/components/loading-screen";
 import { AttemptFeedbackCard } from "@/home/components/attempt-feedback-card";
 import confetti from "canvas-confetti";
-
-const CONFETTI_TOKENS = [
-  "--color-trust-blue",
-  "--color-streak-gold",
-  "--color-growth-green",
-  "--color-achieve-purple",
-  "--color-energy-orange",
-];
-
-function cssVarToHex(varName: string): string | null {
-  const probe = document.createElement("span");
-  probe.style.color = `var(${varName})`;
-  probe.style.display = "none";
-  document.body.appendChild(probe);
-  const rgb = getComputedStyle(probe).color;
-  document.body.removeChild(probe);
-  const m = rgb.match(/\d+/g);
-  if (!m || m.length < 3) return null;
-  const [r, g, b] = m.map(Number);
-  return "#" + [r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("");
-}
-
-function getThemeConfettiColors(): string[] {
-  const colors = CONFETTI_TOKENS.map(cssVarToHex).filter(Boolean) as string[];
-  return colors.length ? colors : ["#FF4D8D"];
-}
+import { getThemeConfettiColors } from "@/lib/theme-colors";
 
 export default function SessionComplete() {
   const [, setLocation] = useLocation();

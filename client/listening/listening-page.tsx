@@ -1,5 +1,12 @@
+import { useMemo } from "react";
 import { useLocation } from "wouter";
 import { useUser } from "@/contexts/user-context";
+import {
+  getThemeAccentColor,
+  getThemeAccentGradient,
+  getThemePrimaryColor,
+  getThemePrimaryGradient,
+} from "@/lib/theme-colors";
 import {
   useGetStudentProgress, getGetStudentProgressQueryKey,
   useGetStudentStreak,   getGetStudentStreakQueryKey,
@@ -147,6 +154,11 @@ export default function ListeningPage() {
     setLocation(`/home?domain=${domain}`);
   };
 
+  const primaryGradient = useMemo(() => getThemePrimaryGradient(), []);
+  const primaryColor = useMemo(() => getThemePrimaryColor(), []);
+  const accentGradient = useMemo(() => getThemeAccentGradient(), []);
+  const accentColor = useMemo(() => getThemeAccentColor(), []);
+
   if (progressLoading || streakLoading) return <LoadingScreen />;
 
   const allDomains    = (progressData?.domains ?? []) as DomainProgress[];
@@ -171,10 +183,7 @@ export default function ListeningPage() {
   return (
     <PageContainer className="py-0 px-0">
       {/* ── Hero section ──────────────────────────────────────────── */}
-      <div
-        className="relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #FF4D8D 0%, #6366f1 100%)" }}
-      >
+      <div className="relative overflow-hidden bg-brand-gradient">
         {/* Decorative circles */}
         <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute -bottom-10 right-1/3 w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
@@ -249,8 +258,8 @@ export default function ListeningPage() {
             subtitle="Talk, stories, and daily life"
             domain="listening"
             progress={genProgress}
-            accentColor="linear-gradient(135deg, #FF4D8D, #e91e8c)"
-            stroke="#FF4D8D"
+            accentColor={primaryGradient}
+            stroke={primaryColor}
             onStart={handleStart}
             delay={0.05}
           />
@@ -259,8 +268,8 @@ export default function ListeningPage() {
             subtitle="Lessons, lectures, school talk"
             domain="listening_academic"
             progress={acProgress}
-            accentColor="linear-gradient(135deg, #6366f1, #4f46e5)"
-            stroke="#6366f1"
+            accentColor={accentGradient}
+            stroke={accentColor}
             onStart={handleStart}
             delay={0.12}
           />
@@ -291,10 +300,7 @@ export default function ListeningPage() {
         </div>
 
         {/* ── Quick start CTA ───────────────────────────────────────── */}
-        <div
-          className="rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6"
-          style={{ background: "linear-gradient(135deg, rgba(255,77,141,0.08), rgba(99,102,241,0.08))" }}
-        >
+        <div className="rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-br from-primary/8 to-accent/8">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-primary" />
@@ -308,7 +314,7 @@ export default function ListeningPage() {
           </div>
           <button
             onClick={() => handleStart("listening")}
-            className="flex-shrink-0 flex items-center gap-2.5 bg-gradient-to-br from-primary to-[#c2185b] text-white font-bold px-6 py-3.5 rounded-xl shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_22px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 transition-all text-sm"
+            className="flex-shrink-0 flex items-center gap-2.5 btn-brand font-bold px-6 py-3.5 rounded-xl text-sm"
           >
             <Play className="w-4 h-4 fill-white" />
             Start Everyday Listening

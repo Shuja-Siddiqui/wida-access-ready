@@ -80,10 +80,10 @@ export default function TeacherDashboard() {
                     <Upload className="w-4 h-4 mr-2" /> Import Students
                   </Button>
                 </PlanGatedAction>
-                <PlanGatedAction hasPlan={hasPlan} isLoading={planLoading} label="Add Student" icon={<Plus className="w-4 h-4" />} className="bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 border-none shadow-sm">
+                <PlanGatedAction hasPlan={hasPlan} isLoading={planLoading} label="Add Student" icon={<Plus className="w-4 h-4" />} className="btn-brand shadow-sm">
                   <Button
                     onClick={() => { setEditingStudent(null); setFormOpen(true); }}
-                    className="bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 border-none font-bold border border-border/40 shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all rounded-xl"
+                    className="btn-brand font-bold border border-border/40 shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all rounded-xl"
                   >
                     <Plus className="w-4 h-4 mr-2" /> Add Student
                   </Button>

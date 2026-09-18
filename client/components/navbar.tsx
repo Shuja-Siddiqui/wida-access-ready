@@ -1,10 +1,10 @@
-import { GraduationCap, Menu } from "lucide-react";
-import { Link } from "wouter";
+import { Menu } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useShowCapsule, useShowNav } from "@/components/app-shell";
 import { useNavConfig } from "@/components/nav-config";
 import { Breadcrumbs, useOptionalTrail, type Crumb } from "@/components/breadcrumbs";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AppLogo } from "@/components/app-logo";
+import { ThemeSelector } from "@/components/theme-selector";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -27,12 +27,7 @@ export function Navbar({ trail }: { trail?: Crumb[] } = {}) {
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border/40 transition-colors duration-200">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 h-20 flex items-center gap-4">
         <div className="flex items-center gap-3 sm:gap-6 min-w-0 flex-1">
-          <Link href={homePath as string} className="flex items-center gap-3 flex-shrink-0 group outline-none">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-trust-blue to-[#e91e8c] flex items-center justify-center shadow-[0_4px_14px_rgba(255,77,141,0.4)] group-hover:-translate-y-0.5 group-hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] transition-all duration-300">
-              <GraduationCap className="w-7 h-7 text-white stroke-[2]" />
-            </div>
-            <span className="font-black text-foreground text-2xl tracking-tight hidden sm:inline">Access Ready</span>
-          </Link>
+          <AppLogo href={homePath as string} imageClassName="h-11 sm:h-12" className="shrink-0" />
 
           <div className="h-8 w-px bg-border flex-shrink-0 hidden sm:block" aria-hidden="true" />
 
@@ -41,7 +36,7 @@ export function Navbar({ trail }: { trail?: Crumb[] } = {}) {
           </div>
         </div>
 
-        {!showNav && <ThemeToggle />}
+        <ThemeSelector className="shrink-0" />
 
         {showNav && !showCapsule && (
           <DropdownMenu>

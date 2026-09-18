@@ -492,7 +492,7 @@ export default function Onboarding() {
               </p>
 
               <Button
-                className="w-full h-14 text-lg font-bold bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all duration-300 rounded-xl mt-6 border-none"
+                className="btn-brand w-full h-14 text-lg rounded-xl mt-6"
                 onClick={handleNext}
               >
                 CONTINUE
@@ -527,7 +527,7 @@ export default function Onboarding() {
 
               <div className="space-y-4">
                 <Button
-                  className="w-full h-14 text-lg font-bold bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all duration-300 rounded-xl mt-6 border-none"
+                  className="btn-brand w-full h-14 text-lg rounded-xl mt-6"
                   onClick={handleNext}
                   disabled={isPending}
                 >
@@ -638,7 +638,7 @@ export default function Onboarding() {
 
               <div className="space-y-4">
                 <Button
-                  className="w-full h-14 text-lg font-bold bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all duration-300 rounded-xl mt-6 border-none"
+                  className="btn-brand w-full h-14 text-lg rounded-xl mt-6"
                   onClick={handleNext}
                   disabled={isPending}
                 >

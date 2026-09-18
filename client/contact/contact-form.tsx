@@ -102,7 +102,7 @@ export function ContactForm() {
               <Button
                 type="submit"
                 disabled={!canSubmit}
-                className="w-full h-14 mt-2 text-sm font-bold rounded-xl bg-gradient-to-br from-trust-blue to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all duration-300 disabled:opacity-50 disabled:shadow-none disabled:translate-y-0"
+                className="btn-brand w-full h-14 mt-2 text-sm rounded-xl disabled:opacity-50 disabled:shadow-none disabled:translate-y-0"
               >
                 {submitting ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

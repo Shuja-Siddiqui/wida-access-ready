@@ -129,7 +129,7 @@ export default function DistrictDashboard() {
           <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
             <Button
               onClick={() => setLocation("/district/schools")}
-              className="bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 border-none font-bold rounded-xl"
+              className="btn-brand font-bold rounded-xl"
             >
               <Plus className="w-4 h-4 mr-2" /> Add School
             </Button>

@@ -87,10 +87,7 @@ export function StudentBilling({ studentId }: { studentId: string }) {
         transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
         className="rounded-2xl overflow-hidden shadow-sm"
       >
-        <div
-          className="px-8 py-10 flex items-center justify-between"
-          style={{ background: "linear-gradient(135deg, #FF4D8D 0%, #c2185b 100%)" }}
-        >
+        <div className="px-8 py-10 flex items-center justify-between bg-brand-gradient">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-2">Personal Plan</p>
             <h1 className="text-4xl font-black text-white tracking-tight">Billing &amp; Plans</h1>
@@ -232,7 +229,7 @@ export function StudentBilling({ studentId }: { studentId: string }) {
                 <button
                   onClick={() => setLocation("/billing/checkout?plan=solo")}
                   disabled={redirecting !== null}
-                  className="w-full flex items-center justify-center gap-2.5 bg-gradient-to-br from-primary to-[#c2185b] text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_22px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:pointer-events-none text-sm"
+                  className="btn-brand w-full flex items-center justify-center gap-2.5 font-bold py-3.5 rounded-xl disabled:opacity-50 disabled:pointer-events-none text-sm"
                 >
                   <CreditCard className="w-4 h-4" />
                   Subscribe Now

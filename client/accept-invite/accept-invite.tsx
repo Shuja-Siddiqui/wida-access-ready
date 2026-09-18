@@ -209,7 +209,7 @@ export default function AcceptInvite() {
                   <Button
                     type="submit"
                     disabled={!passwordLongEnough || !passwordsMatch || submitting}
-                    className="w-full h-14 text-lg font-bold bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all duration-300 rounded-xl mt-6 border-none"
+                    className="btn-brand w-full h-14 text-lg rounded-xl mt-6"
                   >
                     {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : "Activate my account"}
                   </Button>
@@ -234,7 +234,7 @@ export default function AcceptInvite() {
                 </div>
                 {invite?.inviteeRole !== "teacher" && invite?.inviteeRole !== "principal" && (
                   <Button
-                    className="w-full h-14 text-lg font-bold bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all duration-300 rounded-xl mt-6 border-none"
+                    className="btn-brand w-full h-14 text-lg rounded-xl mt-6"
                     onClick={() => setLocation("/home")}
                   >
                     Start practicing

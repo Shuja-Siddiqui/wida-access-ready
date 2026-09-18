@@ -17,6 +17,14 @@
 :root {
   /* Shared, theme-independent tokens */
   --radius: 0.875rem;
+
+  /* Blossom brand accents (overridden by goELprep themes) */
+  --brand-trust-blue: 338 100% 65%;
+  --brand-growth-green: 150 62% 41%;
+  --brand-energy-orange: 14 86% 57%;
+  --brand-achieve-purple: 286 70% 58%;
+  --brand-streak-gold: 40 94% 52%;
+  --brand-deep-night: 328 32% 13%;
 }
 
 /* ---------------------- LIGHT (default) ---------------------- */
@@ -88,4 +96,88 @@
 
   --input: 0 0% 16%;
   --ring: 338 100% 65%;
+}
+
+/* ---------------------- goELprep LIGHT ---------------------- */
+[data-theme="goelprep-light"] {
+  --background: 210 40% 98%;
+  --foreground: 220 100% 12%;
+
+  --border: 214 32% 88%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 220 100% 12%;
+  --card-border: 214 32% 88%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 100% 12%;
+  --popover-border: 214 32% 88%;
+
+  --primary: 217 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 217 100% 44%;
+
+  --secondary: 210 35% 94%;
+  --secondary-foreground: 220 80% 18%;
+
+  --muted: 210 30% 95%;
+  --muted-foreground: 220 15% 40%;
+
+  --accent: 183 100% 34%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --input: 214 32% 88%;
+  --ring: 217 100% 50%;
+
+  --brand-trust-blue: 217 100% 50%;
+  --brand-growth-green: 95 74% 44%;
+  --brand-energy-orange: 38 95% 57%;
+  --brand-achieve-purple: 183 100% 34%;
+  --brand-streak-gold: 38 95% 57%;
+  --brand-deep-night: 220 100% 12%;
+}
+
+/* ---------------------- goELprep DARK ---------------------- */
+[data-theme="goelprep-dark"] {
+  --background: 220 65% 7%;
+  --foreground: 210 40% 96%;
+
+  --border: 220 30% 18%;
+
+  --card: 220 50% 11%;
+  --card-foreground: 210 40% 96%;
+  --card-border: 220 30% 18%;
+
+  --popover: 220 50% 11%;
+  --popover-foreground: 210 40% 96%;
+  --popover-border: 220 30% 18%;
+
+  --primary: 217 100% 55%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 217 100% 62%;
+
+  --secondary: 220 35% 16%;
+  --secondary-foreground: 210 30% 92%;
+
+  --muted: 220 28% 14%;
+  --muted-foreground: 215 15% 65%;
+
+  --accent: 95 74% 44%;
+  --accent-foreground: 220 65% 7%;
+
+  --destructive: 0 63% 52%;
+  --destructive-foreground: 0 0% 100%;
+
+  --input: 220 30% 18%;
+  --ring: 217 100% 55%;
+
+  --brand-trust-blue: 217 100% 55%;
+  --brand-growth-green: 95 74% 48%;
+  --brand-energy-orange: 38 95% 57%;
+  --brand-achieve-purple: 183 100% 40%;
+  --brand-streak-gold: 38 95% 57%;
+  --brand-deep-night: 220 65% 7%;
 }

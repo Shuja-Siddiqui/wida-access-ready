@@ -75,33 +75,33 @@ export function SessionFeedbackBar() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -8, scale: 0.98 }}
           transition={{ type: "spring", stiffness: 420, damping: 30 }}
-          className={`rounded-2xl border overflow-hidden ${
+          className={`rounded-xl border overflow-hidden shadow-sm ${
             coachLoading
-              ? "border-border/40 bg-card"
+              ? "border-border/50 bg-card"
               : passed
-                ? "border-growth-green/30 bg-growth-green/[0.06]"
-                : "border-destructive/25 bg-destructive/[0.05]"
+                ? "border-emerald-500/25 bg-emerald-500/[0.04]"
+                : "border-rose-500/20 bg-rose-500/[0.03]"
           }`}
         >
-          <div className={`h-1 w-full ${coachLoading ? "bg-border" : passed ? "bg-growth-green" : "bg-destructive"}`} />
+          <div className={`h-0.5 w-full ${coachLoading ? "bg-border" : passed ? "bg-emerald-500" : "bg-rose-500"}`} />
 
           <div className="px-4 py-3.5 space-y-3">
             <div className="flex items-start gap-3 min-w-0">
               <div
-                className={`mt-0.5 shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${
-                  coachLoading ? "bg-muted" : passed ? "bg-growth-green/15" : "bg-destructive/10"
+                className={`mt-0.5 shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                  coachLoading ? "bg-muted" : passed ? "bg-emerald-500/10" : "bg-rose-500/10"
                 }`}
               >
                 {coachLoading
                   ? null
                   : passed
-                    ? <CheckCircle2 className="w-4.5 h-4.5 text-growth-green" style={{ width: 18, height: 18 }} />
-                    : <XCircle      className="w-4.5 h-4.5 text-destructive"  style={{ width: 18, height: 18 }} />
+                    ? <CheckCircle2 className="text-emerald-600 dark:text-emerald-400" style={{ width: 18, height: 18 }} />
+                    : <XCircle      className="text-rose-600 dark:text-rose-400"  style={{ width: 18, height: 18 }} />
                 }
               </div>
               <div className="min-w-0 flex-1">
-                <p className={`font-bold text-sm ${coachLoading ? "text-muted-foreground" : passed ? "text-growth-green" : "text-destructive"}`}>
-                  {coachLoading ? "Checking your answer…" : passed ? "Correct!" : "Not quite"}
+                <p className={`font-medium text-sm ${coachLoading ? "text-muted-foreground" : passed ? "text-emerald-800 dark:text-emerald-200" : "text-rose-800 dark:text-rose-200"}`}>
+                  {coachLoading ? "Checking your answer…" : passed ? "Correct" : "Not quite"}
                 </p>
                 <div className="mt-2">
                   <ItemCoachingCard

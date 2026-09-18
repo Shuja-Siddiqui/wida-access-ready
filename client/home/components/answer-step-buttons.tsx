@@ -31,8 +31,8 @@ export function AnswerStepButtons({
           onClick={onAdvance}
           size={layout === "row" ? "sm" : "default"}
           className={cn(
-            "rounded-xl font-semibold text-white bg-growth-green hover:bg-growth-green/90",
-            layout === "row" ? "px-4 h-9 shadow-sm" : "w-full h-12",
+            "rounded-lg font-medium text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600",
+            layout === "row" ? "px-4 h-9" : "w-full h-10",
           )}
         >
           {nextLabel}
@@ -48,8 +48,8 @@ export function AnswerStepButtons({
         onClick={onRetry}
         size={layout === "row" ? "sm" : "default"}
         className={cn(
-          "rounded-xl font-semibold text-white bg-growth-green hover:bg-growth-green/90",
-          layout === "row" ? "px-4 h-9" : "w-full h-12",
+          "rounded-lg font-medium text-white bg-slate-900 hover:bg-slate-800 dark:bg-sky-600 dark:hover:bg-sky-500",
+          layout === "row" ? "px-4 h-9" : "w-full h-10",
         )}
       >
         <RotateCcw className={cn("mr-1", layout === "row" ? "w-3.5 h-3.5" : "w-4 h-4")} />
@@ -59,7 +59,7 @@ export function AnswerStepButtons({
         onClick={onAdvance}
         variant="outline"
         size={layout === "row" ? "sm" : "default"}
-        className={cn("rounded-xl font-semibold", layout === "row" ? "px-4 h-9" : "w-full h-12")}
+        className={cn("rounded-lg font-medium", layout === "row" ? "px-4 h-9" : "w-full h-10")}
       >
         Skip
       </Button>

@@ -207,7 +207,7 @@ function InviteSchoolModal({
           <Button
             onClick={() => void handleSave()}
             disabled={saving || overLimit || schools.length === 0}
-            className="bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 border-none font-bold rounded-lg"
+            className="btn-brand font-bold rounded-lg"
           >
             {saving ? (
               <>
@@ -288,7 +288,7 @@ export function DistrictPlanCard({
           <Button
             size="sm"
             onClick={() => setShowModal(true)}
-            className="bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 border-none font-bold rounded-xl text-xs shrink-0"
+            className="btn-brand font-bold rounded-xl text-xs shrink-0"
           >
             <Building2 className="w-3.5 h-3.5 mr-1.5" />
             Invite School

@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { prepareTextForSpeech } from "@/lib/prepare-text-for-speech";
 import {
   useTextToSpeech,
   type UseTextToSpeechOptions,
@@ -21,11 +22,11 @@ export type SpokenContent = {
 export function useSpokenContent(options: UseTextToSpeechOptions = {}): SpokenContent {
   const tts = useTextToSpeech(options);
   const speakPassage = useCallback(
-    (text: string) => tts.speak(text, "passage"),
+    (text: string) => tts.speak(prepareTextForSpeech(text), "passage"),
     [tts.speak],
   );
   const speakFeedback = useCallback(
-    (text: string) => tts.speak(text, "coaching"),
+    (text: string) => tts.speak(prepareTextForSpeech(text), "coaching"),
     [tts.speak],
   );
   return {
@@ -43,7 +44,10 @@ export function usePassageSpeech(options: UseTextToSpeechOptions = {}): Omit<Use
   speak: (text: string) => void;
 } {
   const tts = useTextToSpeech(options);
-  const speak = useCallback((text: string) => tts.speak(text, "passage"), [tts.speak]);
+  const speak = useCallback(
+    (text: string) => tts.speak(prepareTextForSpeech(text), "passage"),
+    [tts.speak],
+  );
   return { ...tts, speak };
 }
 
@@ -52,6 +56,9 @@ export function useFeedbackSpeech(options: UseTextToSpeechOptions = {}): Omit<Us
   speak: (text: string) => void;
 } {
   const tts = useTextToSpeech(options);
-  const speak = useCallback((text: string) => tts.speak(text, "coaching"), [tts.speak]);
+  const speak = useCallback(
+    (text: string) => tts.speak(prepareTextForSpeech(text), "coaching"),
+    [tts.speak],
+  );
   return { ...tts, speak };
 }

@@ -31,7 +31,7 @@ export function SessionErrorView({ errorMsg, onBack, onRetry }: SessionErrorView
             </Button>
             <Button 
               onClick={onRetry}
-              className="flex-1 h-12 text-sm font-bold rounded-xl bg-gradient-to-br from-trust-blue to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all duration-300"
+              className="btn-brand flex-1 h-12 text-sm rounded-xl"
             >
               <RefreshCw className="w-4 h-4 mr-2" /> Retry
             </Button>

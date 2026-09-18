@@ -334,7 +334,7 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
                 <Button
                   onClick={() => void handleImport()}
                   disabled={validRows.length === 0}
-                  className="font-bold border border-border/40 shadow-sm rounded-xl bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 border-none  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all disabled:opacity-50"
+                  className="font-bold border border-border/40 shadow-sm rounded-xl btn-brand  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all disabled:opacity-50"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Import {validRows.length} Student{validRows.length !== 1 ? "s" : ""}
@@ -483,7 +483,7 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
               <Button variant="outline" className="font-bold border border-border/40 shadow-sm rounded-xl  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all">
                 Import another file
               </Button>
-              <Button onClick={onBack} className="font-bold border border-border/40 shadow-sm rounded-xl bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 border-none  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all">
+              <Button onClick={onBack} className="font-bold border border-border/40 shadow-sm rounded-xl btn-brand  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all">
                 Back to Dashboard
               </Button>
             </div>

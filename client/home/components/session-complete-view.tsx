@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useEffect } from "react";
+import { getThemeConfettiColors } from "@/lib/theme-colors";
 import type { AnswerRecord } from "../home-types";
 import { AttemptFeedbackCard } from "./attempt-feedback-card";
 
@@ -80,14 +81,14 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
           angle: 60,
           spread: 55,
           origin: { x: 0 },
-          colors: ['#FF4D8D', '#27AA6B', '#FABB19']
+          colors: getThemeConfettiColors(),
         });
         confetti({
           particleCount: 6,
           angle: 120,
           spread: 55,
           origin: { x: 1 },
-          colors: ['#FF4D8D', '#27AA6B', '#FABB19']
+          colors: getThemeConfettiColors(),
         });
 
         if (Date.now() < end) {
@@ -220,7 +221,7 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
           {/* ── Continue ──────────────────────────────────────── */}
           <Button
             onClick={onContinue}
-            className="w-full h-14 text-sm font-bold rounded-xl bg-gradient-to-br from-trust-blue to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all duration-300"
+            className="btn-brand w-full h-14 text-sm rounded-xl"
           >
             Continue to Dashboard <ArrowRight className="w-5 h-5 ml-2" />
           </Button>

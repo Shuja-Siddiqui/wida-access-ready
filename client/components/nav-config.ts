@@ -13,7 +13,7 @@ export type NavItem = {
 
 export function useNavConfig() {
   const { studentId, teacherId, userType, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, isDark, setTheme } = useTheme();
   const [location, setLocation] = useLocation();
 
   const homePath = studentId
@@ -25,8 +25,6 @@ export function useNavConfig() {
         : teacherId
           ? "/teacher"
           : "/home";
-  const isDark = theme === "dark";
-
   const handleLogout = () => {
     logout();
     setLocation("/");
@@ -38,5 +36,5 @@ export function useNavConfig() {
     { key: "billing", label: "Billing", icon: CreditCard, onClick: () => setLocation("/billing"), active: location === "/billing" },
   ];
 
-  return { navItems, isDark, toggleTheme, handleLogout, homePath };
+  return { navItems, isDark, theme, setTheme, toggleTheme, handleLogout, homePath };
 }

@@ -126,7 +126,7 @@ export function HomeDashboardView({
               {avatarUrl && (
                 <AvatarImage src={`/api/storage${avatarUrl}`} alt={studentName} className="object-cover" />
               )}
-              <AvatarFallback className="bg-gradient-to-br from-primary to-[#e91e8c] text-white text-2xl font-black">
+              <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-black">
                 {(studentName || "S").charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -313,10 +313,7 @@ export function HomeDashboardView({
                           transition={{ delay: 0.1, duration: 0.3 }}
                           className="w-full rounded-3xl bg-card border border-border/40 overflow-hidden shadow-sm"
                         >
-                          <div
-                            className="relative px-5 py-5 text-white overflow-hidden"
-                            style={{ background: "linear-gradient(120deg, #ff4d8d 0%, #7c3aed 55%, #4f46e5 100%)" }}
-                          >
+                          <div className="relative px-5 py-5 text-white overflow-hidden bg-brand-spectrum">
                             <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
                             <div>
                               <h3 className="font-black text-2xl tracking-tight leading-none">Listening</h3>

@@ -14,7 +14,7 @@ export default function Contact() {
         className="w-full max-w-md relative z-10"
       >
         <div className="flex flex-col items-center text-center mb-10">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-trust-blue to-[#e91e8c] flex items-center justify-center shadow-[0_8px_16px_rgba(255,77,141,0.2)] mb-6">
+          <div className="w-16 h-16 rounded-2xl bg-brand-gradient flex items-center justify-center shadow-sm mb-6">
             <GraduationCap className="w-8 h-8 text-white stroke-[2]" />
           </div>
           <h1 className="text-3xl font-black tracking-tight mb-3">Contact us</h1>

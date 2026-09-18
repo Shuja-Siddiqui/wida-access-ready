@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { prepareTextForSpeech } from "@/lib/prepare-text-for-speech";
 
 export type ItemFeedbackPayload = {
   headline: string;
@@ -16,14 +17,6 @@ export type ItemFeedbackPayload = {
 
 function visibleSpeech(text: string): string {
   return text.replace(/\*([^*]+)\*/g, "$1");
-}
-
-/** TTS: scaffolds like "No, because _____" should be heard as "blank". */
-function forSpeech(text: string): string {
-  return visibleSpeech(text)
-    .replace(/_+/g, " blank ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function alreadySaid(haystack: string, needle: string): boolean {
@@ -70,7 +63,7 @@ export function coachingSpeech(
   if (!feedback) return navCue(extras?.nextAction);
 
   const parts: string[] = [];
-  const body = stripNavCues(forSpeech(feedback.spokenText ?? ""));
+  const body = stripNavCues(prepareTextForSpeech(feedback.spokenText ?? ""));
   if (body) parts.push(body);
 
   const cue = navCue(extras?.nextAction);
@@ -104,22 +97,22 @@ export function ItemCoachingCard({
 
   if (loading && !bodyText) {
     return (
-      <div className="rounded-xl border border-border/40 bg-card px-4 py-3 text-sm text-muted-foreground">
-        Getting a tip for your next try…
+      <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        Preparing feedback…
       </div>
     );
   }
   if (!bodyText && !nextAction) return null;
 
   return (
-    <div className="rounded-xl border border-border/40 bg-card px-4 py-3 text-left space-y-3">
+    <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5 text-left space-y-2.5">
       {bodyText && (
-        <p className="text-sm font-medium text-foreground leading-relaxed">{bodyText}</p>
+        <p className="text-sm text-foreground leading-relaxed">{bodyText}</p>
       )}
       {nextAction === "retry" && feedback?.modelResponse?.trim() && (
-        <div className="rounded-lg border border-achieve-purple/25 bg-achieve-purple/5 px-3 py-2.5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-achieve-purple mb-1">
-            Example fix
+        <div className="rounded-md border border-border/60 bg-background px-3 py-2">
+          <p className="text-[11px] font-medium text-muted-foreground mb-1">
+            Example
           </p>
           <p className="text-sm text-foreground leading-relaxed">
             {visibleSpeech(feedback.modelResponse.trim())}
@@ -127,13 +120,13 @@ export function ItemCoachingCard({
         </div>
       )}
       {(nextAction === "next" || nextAction === "save") && (
-        <p className="text-sm font-semibold text-growth-green leading-snug">
-          Tap Next.
+        <p className="text-xs text-muted-foreground">
+          Continue when ready.
         </p>
       )}
       {nextAction === "retry" && (
-        <p className="text-sm font-semibold text-trust-blue leading-snug">
-          Tap Try again, or Skip to move on.
+        <p className="text-xs text-muted-foreground">
+          Try again or skip to continue.
         </p>
       )}
     </div>

@@ -16,7 +16,7 @@ import confetti from "canvas-confetti";
 
 import type { AnswerRecord, View } from "./home-types";
 import { DOMAIN_CONFIG, domainLabel, resolveSessionStartFromUiKey } from "./home-types";
-import { SessionProvider } from "./session-context";
+import { SessionProvider, type SessionData } from "./session-context";
 import { ImageLibrarySession } from "./components/image-library-session";
 import type { ItemFeedbackPayload } from "./components/item-coaching-card";
 import type { DomainProgress, SessionPoint } from "./components/domain-charts";
@@ -170,10 +170,33 @@ export default function Home() {
     setView("loading");
     try {
       const { apiDomain, tier } = resolveSessionStartFromUiKey(domain);
-      const data = await request(`/api/students/${studentId}/sessions/start`, {
+      const raw = await request<Record<string, unknown>>(`/api/students/${studentId}/sessions/start`, {
         method: "POST",
         body: JSON.stringify({ domain: apiDomain, tier, sessionType: "single" }),
       });
+      const content = raw.content as SessionData["content"] | undefined;
+      const anchor = raw.anchorImage as SessionData["anchorImage"];
+      const inner = content?.data;
+      const illustrationUrl =
+        inner?.illustrationUrl
+        ?? (typeof anchor?.url === "string" ? anchor.url : undefined);
+      const data: SessionData = {
+        ...(raw as SessionData),
+        anchorImage: anchor ?? null,
+        content: content
+          ? {
+              ...content,
+              data: inner
+                ? {
+                    ...inner,
+                    illustrationUrl,
+                    imageTags: inner.imageTags ?? inner.tags ?? anchor?.tags,
+                    tags: inner.tags ?? anchor?.tags,
+                  }
+                : inner,
+            }
+          : content!,
+      };
       setSession(data);
       sessionStartTime.current = Date.now();
       setView("session");
@@ -510,6 +533,7 @@ export default function Home() {
       onNext:        handleNext,
       onRetryQuestion: handleRetryQuestion,
       speaking,
+      ttsLoading,
       speakPassage,
       speakFeedback,
       onSpeak:        speakPassage,

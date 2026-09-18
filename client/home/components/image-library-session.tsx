@@ -9,10 +9,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, BookOpen, ImageIcon, Volume2, Loader2, ThumbsUp, ThumbsDown } from "lucide-react";
+import { CheckCircle2, XCircle, BookOpen, ImageIcon, ThumbsUp, ThumbsDown } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
 import { ItemCoachingCard, coachingSpeech, aiItemPassed, type ItemFeedbackPayload } from "./item-coaching-card";
 import { AnswerStepButtons } from "./answer-step-buttons";
+import { ListenAgainButton } from "./listen-again-button";
 import type { CropBox } from "./image-crop";
 
 interface Detection {
@@ -439,29 +440,23 @@ export function ImageLibrarySession({
       </div>
 
       {/* Passage card — shows TTS state; passage names every answer */}
-      <div className={`rounded-2xl border bg-card px-4 py-3 flex gap-3 items-start transition-colors duration-300 ${
-        audioActive ? "border-rose-400/60 bg-rose-50/60 dark:bg-rose-950/20" : "border-border"
-      }`}>
-        <BookOpen className={`w-4 h-4 mt-0.5 shrink-0 ${audioActive ? "text-rose-400" : "text-muted-foreground"}`} />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-foreground leading-relaxed">{passageText}</p>
-          <div className="flex items-center gap-2 mt-2">
-            {audioActive ? (
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-500">
-                {isLoadingTts
-                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading audio…</>
-                  : <><Volume2 className="w-3.5 h-3.5 animate-pulse" /> Listening…</>}
-              </span>
-            ) : (
-              <button
-                onClick={handleReplay}
-                className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Volume2 className="w-3.5 h-3.5" /> Replay
-              </button>
-            )}
-          </div>
+      <div
+        className={`rounded-xl border bg-card/80 shadow-sm px-4 py-4 space-y-3 transition-colors duration-300 ${
+          audioActive ? "border-primary/25 bg-primary/[0.03]" : "border-border/60"
+        }`}
+      >
+        <div className="flex gap-3 items-start">
+          <BookOpen className="w-4 h-4 mt-0.5 shrink-0 text-sky-600 dark:text-sky-400" />
+          <p className="text-sm text-foreground leading-relaxed flex-1 min-w-0">{passageText}</p>
         </div>
+        <ListenAgainButton
+          onListen={handleReplay}
+          onStop={stopSpeaking}
+          speaking={isSpeaking}
+          loading={isLoadingTts}
+          domain="listening"
+          fullWidth
+        />
       </div>
 
       {/* "Listen first" hint while audio is playing */}

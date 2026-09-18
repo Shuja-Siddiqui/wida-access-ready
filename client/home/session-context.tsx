@@ -51,6 +51,8 @@ export interface SessionQuestion {
 
 export interface SessionData {
   sessionId: string;
+  /** Top-level library photo from session start (also copied into content.data.illustrationUrl). */
+  anchorImage?: { url: string; tags?: string[] } | null;
   content: {
     type: string;
     data: {
@@ -103,6 +105,7 @@ export interface SessionContextValue {
 
   // ── TTS ───────────────────────────────────────────────────────────────────
   speaking: boolean;
+  ttsLoading: boolean;
   /** Guy — passages, stems, replay. */
   speakPassage: (text: string) => void;
   /** Jenny — coaching and item feedback. */

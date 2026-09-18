@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAuthConfig } from "@/hooks/use-auth-config";
 import { useApi, ApiError } from "@/hooks/use-api";
 import { motion } from "framer-motion";
-import { GraduationCap, Mail, Lock, Loader2, Eye, EyeOff, Check } from "lucide-react";
+import { Mail, Lock, Loader2, Eye, EyeOff, Check } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { InputField } from "@/components/input-field";
@@ -103,21 +104,14 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* ── Left brand panel ─────────────────────────────────────── */}
-      <div
-        className="hidden lg:flex lg:w-[44%] flex-col justify-between p-12 relative overflow-hidden flex-shrink-0"
-        style={{ background: "linear-gradient(145deg, #FF4D8D 0%, #e91e8c 55%, #c2185b 100%)" }}
-      >
+      <div className="brand-panel-gradient hidden lg:flex lg:w-[44%] flex-col justify-between p-12 relative overflow-hidden flex-shrink-0">
         {/* Decorative blobs */}
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute bottom-0 -left-16 w-72 h-72 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute top-1/2 right-8 w-32 h-32 rounded-full bg-white/5 pointer-events-none" />
 
-        {/* Logo */}
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-black text-white text-xl tracking-tight">ACCESS Ready</span>
+        <div className="relative z-10">
+          <AppLogo href="/" imageClassName="h-12" />
         </div>
 
         {/* Central pitch */}
@@ -152,9 +146,7 @@ export default function Login() {
         {/* Top bar */}
         <div className="flex items-center justify-between px-6 py-5">
           <div className="flex items-center gap-2">
-            <div className="lg:hidden w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <AppLogo href="/" imageClassName="h-8 lg:hidden" className="lg:hidden" />
             <BackButton to="/" />
           </div>
           <ThemeToggle />
@@ -183,7 +175,7 @@ export default function Login() {
                   onClick={() => { setRole(t.id); setErrorMsg(""); setNeedsVerification(false); }}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${
                     role === t.id
-                      ? "bg-primary text-white shadow-[0_2px_8px_rgba(255,77,141,0.35)]"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -271,7 +263,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={!email.trim() || !password.trim() || submitting}
-                className="w-full h-12 rounded-xl font-bold text-white text-base bg-gradient-to-br from-primary to-[#c2185b] shadow-[0_4px_14px_rgba(255,77,141,0.35)] hover:shadow-[0_6px_22px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none mt-2"
+                className="btn-brand w-full h-12 rounded-xl text-base disabled:opacity-50 disabled:pointer-events-none mt-2"
               >
                 {submitting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Log in"}
               </button>

@@ -8,7 +8,7 @@ import type { InitialAuth } from "@/contexts/user-context";
 // No-flash init: pick the saved theme (any registered theme) before React mounts.
 const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-const initialTheme = isThemeId(stored) ? stored : prefersDark ? "dark" : DEFAULT_THEME;
+const initialTheme = isThemeId(stored) ? stored : prefersDark ? "goelprep-dark" : DEFAULT_THEME;
 document.documentElement.dataset.theme = initialTheme;
 
 const queryClient = new QueryClient();

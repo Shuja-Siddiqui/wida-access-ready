@@ -286,7 +286,7 @@ export function StudentFormDialog({
           <Button
             onClick={handleSubmit}
             disabled={isPending}
-            className="bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 border-none font-bold rounded-lg"
+            className="btn-brand font-bold rounded-lg"
           >
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {isEdit ? "Save changes" : "Add student"}

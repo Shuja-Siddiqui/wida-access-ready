@@ -135,7 +135,7 @@ export default function Landing() {
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/40">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-[#e91e8c] shadow-[0_4px_10px_rgba(255,77,141,0.3)] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-brand-gradient shadow-sm flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <span className="font-black text-lg tracking-tight">ACCESS Ready</span>
@@ -163,7 +163,7 @@ export default function Landing() {
             </button>
             <button
               onClick={goSignUp}
-              className="ml-1 font-bold text-sm px-4 py-2 rounded-lg bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all"
+              className="ml-1 font-bold text-sm px-4 py-2 rounded-lg btn-brand"
             >
               Get Started
             </button>
@@ -186,7 +186,7 @@ export default function Landing() {
 
           <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.05] max-w-4xl mx-auto">
             The fastest path to{" "}
-            <span className="bg-gradient-to-r from-primary to-[#e91e8c] bg-clip-text text-transparent">English proficiency.</span>
+            <span className="text-brand-gradient">English proficiency.</span>
           </h1>
 
           <p className="text-lg text-muted-foreground font-medium max-w-2xl mx-auto mt-8 leading-relaxed">
@@ -198,7 +198,7 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
             <button
               onClick={goSignUp}
-              className="flex items-center gap-2 font-bold bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all px-8 h-14 rounded-xl text-base w-full sm:w-auto justify-center"
+              className="flex items-center gap-2 font-bold btn-brand px-8 h-14 rounded-xl text-base w-full sm:w-auto justify-center"
             >
               Start practicing free <ArrowRight className="w-4 h-4" />
             </button>
@@ -443,7 +443,7 @@ export default function Landing() {
         <div className="flex flex-wrap items-center justify-center gap-3">
           {ASSESSMENTS.map((a) =>
             a.available ? (
-              <span key={a.name} className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-[#e91e8c] text-white rounded-xl px-5 py-2.5 font-bold text-sm shadow-[0_4px_14px_rgba(255,77,141,0.4)] transition-transform hover:-translate-y-0.5">
+              <span key={a.name} className="btn-brand inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm transition-transform hover:-translate-y-0.5">
                 <Check className="w-4 h-4" />{a.name}
               </span>
             ) : (
@@ -480,15 +480,15 @@ export default function Landing() {
               transition={{ delay: i * 0.1, duration: 0.5 }}
               className={`relative bg-card rounded-3xl p-10 flex flex-col border transition-all duration-300 ${
                 plan.featured
-                  ? "border-primary/30 shadow-[0_8px_30px_rgba(255,77,141,0.15)] hover:shadow-[0_12px_40px_rgba(255,77,141,0.25)] hover:-translate-y-1"
+                  ? "border-primary/30 shadow-[0_8px_30px_hsl(var(--primary)/0.15)] hover:shadow-[0_12px_40px_hsl(var(--primary)/0.25)] hover:-translate-y-1"
                   : "border-border/40 shadow-sm hover:shadow-xl hover:-translate-y-1"
               }`}
             >
               {plan.featured && (
-                <div className="absolute -top-px left-0 right-0 h-1.5 bg-gradient-to-r from-primary to-[#e91e8c] rounded-t-3xl" />
+                <div className="absolute -top-px left-0 right-0 h-1.5 bg-brand-gradient rounded-t-3xl" />
               )}
               {plan.featured && (
-                <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-[#e91e8c] text-white text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-[0_4px_14px_rgba(255,77,141,0.4)]">
+                <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-gradient text-primary-foreground text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-sm">
                   Best for teams
                 </span>
               )}
@@ -528,7 +528,7 @@ export default function Landing() {
                 onClick={plan.featured ? goLogIn : goSignUp}
                 className={`mt-10 h-14 font-bold rounded-xl transition-all text-base w-full flex items-center justify-center gap-2 ${
                   plan.featured 
-                    ? "bg-gradient-to-br from-primary to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm" 
+                    ? "btn-brand" 
                     : "bg-card border border-border/60 shadow-sm hover:bg-muted/60 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
                 }`}
               >
@@ -546,7 +546,7 @@ export default function Landing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.5 }}
-          className="bg-gradient-to-br from-primary via-[#e91e8c] to-[#c2185b] rounded-[2.5rem] px-8 py-16 md:py-24 text-center shadow-[0_20px_60px_rgba(255,77,141,0.3)] relative overflow-hidden"
+          className="bg-brand-gradient rounded-[2.5rem] px-8 py-16 md:py-24 text-center shadow-[0_20px_60px_hsl(var(--primary)/0.3)] relative overflow-hidden"
         >
           {/* Decorative glow elements */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -594,7 +594,7 @@ export default function Landing() {
       <footer className="border-t border-border/40 bg-card py-12">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-[#e91e8c] shadow-sm flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-brand-gradient shadow-sm flex items-center justify-center">
               <GraduationCap className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-sm tracking-tight text-foreground/80">ACCESS Ready</span>

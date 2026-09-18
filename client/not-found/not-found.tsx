@@ -16,7 +16,7 @@ export default function NotFound() {
         <Card className="border border-border/40 shadow-xl rounded-3xl overflow-hidden bg-card/80 backdrop-blur-xl">
           <CardContent className="p-10 text-center space-y-8">
             <div className="flex justify-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-trust-blue/10 to-[#e91e8c]/10 rounded-3xl flex items-center justify-center shadow-inner">
+              <div className="w-24 h-24 bg-brand-gradient-soft rounded-3xl flex items-center justify-center shadow-inner">
                 <Compass className="w-12 h-12 text-trust-blue" />
               </div>
             </div>
@@ -30,7 +30,7 @@ export default function NotFound() {
             </div>
 
             <Button 
-              className="w-full h-14 text-sm font-bold rounded-xl bg-gradient-to-br from-trust-blue to-[#e91e8c] text-white shadow-[0_4px_14px_rgba(255,77,141,0.4)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(255,77,141,0.5)] active:translate-y-0 active:shadow-sm transition-all duration-300 mt-4" 
+              className="btn-brand w-full h-14 text-sm rounded-xl mt-4" 
               onClick={() => setLocation("/")}
             >
               <ArrowLeft className="w-5 h-5 mr-2" /> Back to Safety

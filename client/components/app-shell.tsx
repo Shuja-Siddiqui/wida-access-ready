@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { LogOut as LogOutIcon, Moon as MoonIcon, Sun as SunIcon } from "lucide-react";
+import { LogOut as LogOutIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavConfig } from "@/components/nav-config";
@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [expanded, setExpanded] = useState(false);
   const canShowCapsule = useCanShowCapsule();
-  const { navItems, isDark, toggleTheme, handleLogout } = useNavConfig();
+  const { navItems, handleLogout } = useNavConfig();
 
   const isAuthed = !!studentId || !!teacherId;
   const showBar = !HIDDEN_PATHS.has(location);
@@ -107,13 +107,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
 
             <div className="mx-2.5 my-1 h-px bg-border" aria-hidden="true" />
-
-            <button type="button" onClick={toggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} className={itemClass(false)}>
-              <span className={iconSlotClass}>
-                {isDark ? <SunIcon /> : <MoonIcon />}
-              </span>
-              <span className={labelClass}>{isDark ? "Light mode" : "Dark mode"}</span>
-            </button>
 
             <button
               type="button"

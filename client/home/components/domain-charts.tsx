@@ -153,9 +153,7 @@ function MergedListeningCard({
       transition={{ delay: 0.1 + index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
       className="col-span-2 rounded-3xl border border-border/40 overflow-hidden bg-card shadow-sm hover:shadow-xl transition-shadow duration-300"
     >
-      <div className="relative px-6 md:px-8 py-6 text-white overflow-hidden"
-        style={{ background: "linear-gradient(120deg, #ff4d8d 0%, #7c3aed 55%, #4f46e5 100%)" }}
-      >
+      <div className="relative px-6 md:px-8 py-6 text-white overflow-hidden bg-brand-spectrum">
         <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-white/10" />
         <div className="absolute right-16 -bottom-16 h-32 w-32 rounded-full bg-white/5" />
         <div className="relative flex items-center justify-between gap-4">

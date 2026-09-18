@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { synthesizeSpeech } from "@/api-generated";
 import { getAzureSpeechAvailable } from "@/lib/speech-status";
-import { azureVoiceForDelivery, type SpeechDelivery } from "@/lib/speech-voices";
+import {
+  azureVoiceForDelivery,
+  COACHING_PLAYBACK_RATE,
+  PASSAGE_PLAYBACK_RATE,
+  type SpeechDelivery,
+} from "@/lib/speech-voices";
 
 export interface UseTextToSpeechOptions {
   rate?: number;
@@ -26,7 +31,7 @@ export interface UseTextToSpeechReturn {
  * Azure neural TTS only — never the browser SpeechSynthesis voice.
  */
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextToSpeechReturn {
-  const { onEnd } = options;
+  const { onEnd, rate: defaultRate } = options;
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,6 +130,10 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
             setIsSpeaking(false);
             cleanupSrc();
           };
+          audio.playbackRate =
+            delivery === "passage"
+              ? (defaultRate ?? PASSAGE_PLAYBACK_RATE)
+              : COACHING_PLAYBACK_RATE;
           audio.src = url;
           setIsSpeaking(true);
           void audio.play().catch(() => {
@@ -139,7 +148,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
           setIsSpeaking(false);
         });
     },
-    [azureAvailable, cleanupSrc, getAudio],
+    [azureAvailable, cleanupSrc, defaultRate, getAudio],
   );
 
   const stop = useCallback(() => {

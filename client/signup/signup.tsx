@@ -13,7 +13,7 @@ const ROLES = [
     href: "/onboarding",
     color: "text-primary",
     iconBg: "bg-primary/12",
-    accent: "#FF4D8D",
+    accent: "hsl(var(--primary))",
   },
   {
     id: "educator",
@@ -59,10 +59,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex">
       {/* ── Left brand panel ─────────────────────────────────────── */}
-      <div
-        className="hidden lg:flex lg:w-[44%] flex-col justify-between p-12 relative overflow-hidden flex-shrink-0"
-        style={{ background: "linear-gradient(145deg, #FF4D8D 0%, #e91e8c 55%, #c2185b 100%)" }}
-      >
+      <div className="brand-panel-gradient hidden lg:flex lg:w-[44%] flex-col justify-between p-12 relative overflow-hidden flex-shrink-0">
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute bottom-0 -left-16 w-72 h-72 rounded-full bg-white/10 pointer-events-none" />
 

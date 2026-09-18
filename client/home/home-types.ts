@@ -36,6 +36,8 @@ export const DOMAIN_CONFIG: Record<string, DomainConfig> = {
   speaking:           { icon: Mic,           color: "text-growth-green",    bg: "bg-growth-green/10",    border: "border-growth-green",    btnBg: "bg-growth-green",                                  apiDomain: "speaking",  tier: "general"  },
   reading:            { icon: BookOpen,      color: "text-energy-orange",   bg: "bg-energy-orange/10",   border: "border-energy-orange",   btnBg: "bg-energy-orange",                                 apiDomain: "reading",   tier: "general"  },
   writing:            { icon: PenLine,       color: "text-achieve-purple",  bg: "bg-achieve-purple/10",  border: "border-achieve-purple",  btnBg: "bg-achieve-purple",  label: "Writing",           apiDomain: "writing",   tier: "academic" },
+  // Alias — domainTierToKey("writing", "academic") would otherwise produce an unknown key.
+  writing_academic:   { icon: PenLine,       color: "text-achieve-purple",  bg: "bg-achieve-purple/10",  border: "border-achieve-purple",  btnBg: "bg-achieve-purple",  label: "Writing",           apiDomain: "writing",   tier: "academic" },
 };
 
 /** Returns the user-facing label for a domain config key. */
@@ -50,6 +52,25 @@ export function domainLabel(domainKey: string): string {
  * (speaking,  general)  → "speaking"
  */
 export function domainTierToKey(domain: string, tier: string = "general"): string {
+  // Writing is academic-only — UI key stays "writing" (matches progress API).
+  if (domain === "writing") return "writing";
   if (tier === "academic") return `${domain}_academic`;
   return domain;
+}
+
+/** Maps a dashboard / URL domain key to the POST /sessions/start payload. */
+export function resolveSessionStartFromUiKey(domainKey: string): {
+  apiDomain: string;
+  tier: "general" | "academic";
+} {
+  const cfg = DOMAIN_CONFIG[domainKey];
+  if (cfg) return { apiDomain: cfg.apiDomain, tier: cfg.tier };
+
+  if (domainKey === "writing" || domainKey === "writing_academic") {
+    return { apiDomain: "writing", tier: "academic" };
+  }
+  if (domainKey.endsWith("_academic")) {
+    return { apiDomain: domainKey.replace(/_academic$/, ""), tier: "academic" };
+  }
+  return { apiDomain: domainKey, tier: "general" };
 }

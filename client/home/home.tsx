@@ -15,7 +15,7 @@ import { LoadingScreen } from "@/components/loading-screen";
 import confetti from "canvas-confetti";
 
 import type { AnswerRecord, View } from "./home-types";
-import { DOMAIN_CONFIG, domainLabel } from "./home-types";
+import { DOMAIN_CONFIG, domainLabel, resolveSessionStartFromUiKey } from "./home-types";
 import { SessionProvider } from "./session-context";
 import { ImageLibrarySession } from "./components/image-library-session";
 import type { ItemFeedbackPayload } from "./components/item-coaching-card";
@@ -169,10 +169,7 @@ export default function Home() {
     stopSpeaking();
     setView("loading");
     try {
-      // Map the UI domain key (e.g. "listening_academic") → { apiDomain, tier } for the API.
-      const cfg       = DOMAIN_CONFIG[domain];
-      const apiDomain = cfg?.apiDomain ?? domain;
-      const tier      = cfg?.tier ?? "general";
+      const { apiDomain, tier } = resolveSessionStartFromUiKey(domain);
       const data = await request(`/api/students/${studentId}/sessions/start`, {
         method: "POST",
         body: JSON.stringify({ domain: apiDomain, tier, sessionType: "single" }),
@@ -216,6 +213,9 @@ export default function Home() {
       setSessionResult(data);
     } catch (err) {
       console.error("Session complete failed:", err);
+      setErrorMsg(extractErrorMessage(err, "Could not save your session results. Please try again."));
+      setView("error");
+      return;
     }
 
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });

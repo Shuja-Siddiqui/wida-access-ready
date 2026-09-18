@@ -176,26 +176,32 @@ export default function Home() {
       });
       const content = raw.content as SessionData["content"] | undefined;
       const anchor = raw.anchorImage as SessionData["anchorImage"];
-      const inner = content?.data;
+      const sessionId = typeof raw.sessionId === "string" ? raw.sessionId : "";
+      if (!sessionId || !content) {
+        throw new Error("Invalid session response");
+      }
+      const inner = content.data;
       const illustrationUrl =
         inner?.illustrationUrl
         ?? (typeof anchor?.url === "string" ? anchor.url : undefined);
       const data: SessionData = {
-        ...(raw as SessionData),
+        sessionId,
         anchorImage: anchor ?? null,
-        content: content
-          ? {
-              ...content,
-              data: inner
-                ? {
-                    ...inner,
-                    illustrationUrl,
-                    imageTags: inner.imageTags ?? inner.tags ?? anchor?.tags,
-                    tags: inner.tags ?? anchor?.tags,
-                  }
-                : inner,
-            }
-          : content!,
+        content: {
+          type: content.type,
+          data: inner
+            ? {
+                ...inner,
+                illustrationUrl,
+                imageTags: inner.imageTags ?? inner.tags ?? anchor?.tags,
+                tags: inner.tags ?? anchor?.tags,
+              }
+            : {
+                illustrationUrl,
+                imageTags: anchor?.tags,
+                tags: anchor?.tags,
+              },
+        },
       };
       setSession(data);
       sessionStartTime.current = Date.now();

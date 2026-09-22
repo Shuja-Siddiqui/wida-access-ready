@@ -22,7 +22,6 @@ interface WritingSessionViewProps {
     loading: boolean;
     tryCount?: number;
   } | null;
-  speakPassage: (text: string) => void;
   speakWritingSession: (data: Record<string, unknown>) => void;
   speakFeedback: (text: string) => void;
   onStopSpeaking: () => void;

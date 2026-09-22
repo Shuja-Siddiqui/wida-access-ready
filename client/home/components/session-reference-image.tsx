@@ -15,12 +15,15 @@ export function SessionReferenceImage({
   visual,
   domain = "writing",
   label = "Reference",
+  compact = false,
   className,
 }: {
   url?: string | null;
   visual?: string | null;
   domain?: SessionDomainKey;
   label?: string;
+  /** Smaller frame — more room for passage / prompt (writing sessions). */
+  compact?: boolean;
   className?: string;
 }) {
   if (!url && !visual) return null;
@@ -29,8 +32,8 @@ export function SessionReferenceImage({
   const theme = SESSION_THEMES[domain];
 
   return (
-    <figure className={cn("space-y-2 min-w-0", className)}>
-      <figcaption className={SESSION_LABEL}>{label}</figcaption>
+    <figure className={cn("min-w-0", compact ? "space-y-1" : "space-y-2", className)}>
+      {!compact && <figcaption className={SESSION_LABEL}>{label}</figcaption>}
       {url ? (
         <div
           className={cn(
@@ -38,8 +41,9 @@ export function SessionReferenceImage({
             "overflow-hidden p-0 flex items-center justify-center",
             "bg-card/60 backdrop-blur-sm ring-1",
             ring,
-            /* Mobile: full-width hero. Desktop: tall sidebar frame. */
-            "min-h-[11rem] max-h-[min(42vh,20rem)] lg:min-h-[14rem] lg:max-h-[min(72vh,36rem)]",
+            compact
+              ? "min-h-[6.5rem] max-h-[min(20vh,10rem)] sm:max-h-[min(22vh,11rem)] lg:min-h-[7rem] lg:max-h-[min(24vh,12rem)]"
+              : "min-h-[11rem] max-h-[min(42vh,20rem)] lg:min-h-[14rem] lg:max-h-[min(72vh,36rem)]",
           )}
         >
           <img

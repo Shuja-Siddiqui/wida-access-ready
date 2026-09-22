@@ -49,24 +49,27 @@ function stripNavCues(text: string): string {
     .trim();
 }
 
-function navCue(nextAction?: "next" | "retry" | "save"): string {
+function navCue(nextAction?: "next" | "retry" | "save", allowSkip = true): string {
   if (nextAction === "next" || nextAction === "save") return "Tap Next.";
-  if (nextAction === "retry") return "Tap Try again, or Skip to move on.";
+  if (nextAction === "retry") {
+    return allowSkip ? "Tap Try again, or Skip to move on." : "Tap Try again.";
+  }
   return "";
 }
 
 export function coachingSpeech(
   feedback: ItemFeedbackPayload | null,
-  extras?: { nextAction?: "next" | "retry" | "save"; loading?: boolean },
+  extras?: { nextAction?: "next" | "retry" | "save"; loading?: boolean; allowSkip?: boolean },
 ): string {
   if (extras?.loading) return "";
-  if (!feedback) return navCue(extras?.nextAction);
+  const allowSkip = extras?.allowSkip ?? true;
+  if (!feedback) return navCue(extras?.nextAction, allowSkip);
 
   const parts: string[] = [];
   const body = stripNavCues(prepareTextForSpeech(feedback.spokenText ?? ""));
   if (body) parts.push(body);
 
-  const cue = navCue(extras?.nextAction);
+  const cue = navCue(extras?.nextAction, allowSkip);
   if (cue && !alreadySaid(parts.join(" "), cue)) parts.push(cue);
 
   return parts.join(" ");
@@ -78,6 +81,7 @@ export function ItemCoachingCard({
   speakText,
   stopSpeaking: _stopSpeaking,
   nextAction,
+  allowSkip = true,
 }: {
   feedback: ItemFeedbackPayload | null;
   loading?: boolean;
@@ -85,9 +89,11 @@ export function ItemCoachingCard({
   stopSpeaking?: () => void;
   /** Tell the student whether to go Next or Try again / Skip. */
   nextAction?: "next" | "retry" | "save";
+  /** When false, coach and UI say Try again only (no skip yet). */
+  allowSkip?: boolean;
 }) {
   const bodyText = visibleSpeech((feedback?.spokenText ?? "").trim());
-  const spokenAloud = coachingSpeech(feedback, { nextAction, loading });
+  const spokenAloud = coachingSpeech(feedback, { nextAction, loading, allowSkip });
 
   useEffect(() => {
     if (loading || !spokenAloud) return;
@@ -126,7 +132,7 @@ export function ItemCoachingCard({
       )}
       {nextAction === "retry" && (
         <p className="text-xs text-muted-foreground">
-          Try again or skip to continue.
+          {allowSkip ? "Try again or skip to continue." : "Revise your answer and try again."}
         </p>
       )}
     </div>

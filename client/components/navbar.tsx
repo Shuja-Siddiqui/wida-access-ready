@@ -25,11 +25,11 @@ export function Navbar({ trail }: { trail?: Crumb[] } = {}) {
 
   return (
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border/40 transition-colors duration-200">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 h-20 flex items-center gap-4">
-        <div className="flex items-center gap-3 sm:gap-6 min-w-0 flex-1">
-          <AppLogo href={homePath as string} imageClassName="h-11 sm:h-12" className="shrink-0" />
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 h-14 flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-4 min-w-0 flex-1">
+          <AppLogo href={homePath as string} imageClassName="h-8 sm:h-9" className="shrink-0" />
 
-          <div className="h-8 w-px bg-border flex-shrink-0 hidden sm:block" aria-hidden="true" />
+          <div className="h-6 w-px bg-border flex-shrink-0 hidden sm:block" aria-hidden="true" />
 
           <div className="min-w-0 font-semibold text-muted-foreground">
             <Breadcrumbs userType={userType} items={crumbs} />
@@ -46,9 +46,9 @@ export function Navbar({ trail }: { trail?: Crumb[] } = {}) {
                 variant="outline"
                 size="icon"
                 aria-label="Open navigation menu"
-                className="w-12 h-12 rounded-xl border border-border/40 bg-card shadow-sm hover:bg-muted/60 hover:-translate-y-0.5 hover:shadow-md data-[state=open]:bg-muted/60 transition-all duration-300 flex-shrink-0"
+                className="w-10 h-10 rounded-lg border border-border/40 bg-card shadow-sm hover:bg-muted/60 hover:-translate-y-0.5 hover:shadow-md data-[state=open]:bg-muted/60 transition-all duration-300 flex-shrink-0"
               >
-                <Menu className="h-6 w-6 stroke-[2]" />
+                <Menu className="h-5 w-5 stroke-[2]" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 border border-border/40 rounded-2xl shadow-xl p-2 bg-card mt-2">

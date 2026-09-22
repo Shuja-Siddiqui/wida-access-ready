@@ -1,5 +1,7 @@
 /** Shared visual language for practice sessions — refined, not playful. */
 
+import { cn } from "@/lib/utils";
+
 export type SessionDomainKey = "listening" | "reading" | "speaking" | "writing";
 
 export function normalizeSessionDomain(key: string): SessionDomainKey {
@@ -101,7 +103,12 @@ export const SESSION_SINGLE_COLUMN = "max-w-2xl mx-auto w-full space-y-5";
 
 /** Sticky reference column — image, passage, audio, or prompt. */
 export const SESSION_REFERENCE_COLUMN =
-  "min-w-0 flex flex-col gap-4 sm:gap-5 lg:sticky lg:top-[4.75rem] lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1";
+  "min-w-0 flex flex-col gap-3 sm:gap-4 max-h-[calc(100vh-var(--nav-height)-0.5rem)] overflow-y-auto overscroll-contain lg:sticky lg:top-[var(--nav-height)] lg:self-start lg:max-h-[calc(100vh-var(--nav-height)-0.5rem)] lg:pr-1";
+
+/** Domain-themed scrollbar (see .session-scroll-* in client/index.css). */
+export function sessionScrollArea(domain: SessionDomainKey): string {
+  return cn("session-scroll", `session-scroll-${domain}`);
+}
 
 /** Questions, recorder, or composer. */
 export const SESSION_WORK_COLUMN = "min-w-0 flex flex-col gap-5";

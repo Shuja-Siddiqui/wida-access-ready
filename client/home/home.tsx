@@ -62,6 +62,7 @@ export default function Home() {
     text: string;
     feedback: ItemFeedbackPayload | null;
     loading: boolean;
+    tryCount?: number;
   } | null>(null);
   const sessionStartTime = useRef<number>(0);
   const speakingCoachRef = useRef<{
@@ -109,11 +110,17 @@ export default function Home() {
   }, [studentId, view, loadingProgress]);
 
   // ─── TTS / STT ────────────────────────────────────────────────────────────
-  const { isSpeaking: speaking, isLoadingTts: ttsLoading, speakPassage, speakFeedback, stopSpeaking } =
-    useSpokenContent({ onEnd: () => setListenedOnce(true) });
+  const {
+    isSpeaking: speaking,
+    isLoadingTts: ttsLoading,
+    speakPassage,
+    speakFeedback,
+    speakWritingSession,
+    stopSpeaking,
+  } = useSpokenContent({ onEnd: () => setListenedOnce(true) });
 
   // Auto-play spoken support once per session:
-  // listening = the passage; speaking/writing = the on-screen prompt.
+  // listening = audioScript; writing = passage + prompt (+ scaffolds); speaking = prompt.
   // Reading is never auto-played — the student must read the print themselves.
   const autoPlaySessionRef = useRef<string | null>(null);
   useEffect(() => {
@@ -121,15 +128,23 @@ export default function Home() {
     const kind = session.content?.type;
     if (kind === "reading") return;
     const data = session.content?.data;
+    const sessionId: string = session.sessionId;
+    if (autoPlaySessionRef.current === sessionId) return;
+
+    if (kind === "writing") {
+      if (!data || typeof data !== "object") return;
+      autoPlaySessionRef.current = sessionId;
+      speakWritingSession(data as Record<string, unknown>);
+      return;
+    }
+
     const spoken =
       kind === "listening"
         ? (data?.audioScript ?? "")
-        : kind === "speaking" || kind === "writing"
+        : kind === "speaking"
           ? [data?.prompt, data?.scaffold].filter(Boolean).join(". ")
           : "";
     if (!spoken) return;
-    const sessionId: string = session.sessionId;
-    if (autoPlaySessionRef.current === sessionId) return;
     autoPlaySessionRef.current = sessionId;
     speakPassage(spoken);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -542,6 +557,7 @@ export default function Home() {
       ttsLoading,
       speakPassage,
       speakFeedback,
+      speakWritingSession,
       onSpeak:        speakPassage,
       onStopSpeaking: stopSpeaking,
       sttSupported,
@@ -567,20 +583,22 @@ export default function Home() {
       onSubmitWriting: (text) => {
         const data = session?.content?.data;
         writingCoachRef.current.tryCount += 1;
-        setProductionReview({ kind: "writing", text, feedback: null, loading: true });
+        const tryCount = writingCoachRef.current.tryCount;
+        setProductionReview({ kind: "writing", text, feedback: null, loading: true, tryCount });
         void loadItemFeedback({
           domain: "writing",
           level: Number(session?.levelStart ?? 1),
           format: "writing",
-          question: data?.prompt ?? "",
+          question: String(data?.prompt ?? ""),
           studentAnswer: text,
-          prompt: data?.prompt,
-          scaffold: data?.sentenceFrame ?? data?.sentence_frame,
-          canDo: data?.canDoDescriptor,
-          imageTags: data?.imageTags ?? data?.tags,
+          prompt: data?.prompt ?? undefined,
+          passage: data?.passage ?? undefined,
+          scaffold: (data?.sentenceFrame ?? data?.sentence_frame) ?? undefined,
+          canDo: data?.canDoDescriptor ?? undefined,
+          imageTags: (data?.imageTags ?? data?.tags) ?? undefined,
           imageDescription: data?.imageDescription || undefined,
-          minSentences: data?.minSentences,
-          options: data?.wordBank ?? data?.word_bank,
+          minSentences: data?.minSentences != null ? Number(data.minSentences) : undefined,
+          options: (data?.wordBank ?? data?.word_bank) ?? undefined,
           tryCount: writingCoachRef.current.tryCount,
           lastJudgment: writingCoachRef.current.lastJudgment,
           lastCoachTip: writingCoachRef.current.lastCoachTip || undefined,
@@ -591,7 +609,13 @@ export default function Home() {
             writingCoachRef.current.lastJudgment = feedback.judgment;
             writingCoachRef.current.lastCoachTip = feedback.tryAgainTip || feedback.spokenText || "";
           }
-          setProductionReview({ kind: "writing", text, feedback, loading: false });
+          setProductionReview({
+            kind: "writing",
+            text,
+            feedback,
+            loading: false,
+            tryCount: writingCoachRef.current.tryCount,
+          });
         });
       },
     }}>

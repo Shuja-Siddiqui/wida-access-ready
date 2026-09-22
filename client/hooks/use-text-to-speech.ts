@@ -17,12 +17,19 @@ export interface UseTextToSpeechOptions {
 
 export type { SpeechDelivery } from "@/lib/speech-voices";
 
+export type SpeechSegment = {
+  text: string;
+  delivery: SpeechDelivery;
+};
+
 export interface UseTextToSpeechReturn {
   isSupported: boolean;
   isSpeaking: boolean;
   /** True while the server-generated audio is being fetched, before playback starts. */
   isLoading: boolean;
   speak: (text: string, delivery?: SpeechDelivery) => void;
+  /** Play segments in order — coaching (teacher) vs passage (content) voices. */
+  speakSequence: (segments: SpeechSegment[]) => void;
   stop: () => void;
 }
 
@@ -104,6 +111,50 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     };
   }, [cleanupSrc]);
 
+  const playSegment = useCallback(
+    (text: string, delivery: SpeechDelivery, myRequestId: number): Promise<void> =>
+      new Promise((resolve) => {
+        if (!text || azureAvailable === false || requestIdRef.current !== myRequestId) {
+          resolve();
+          return;
+        }
+
+        synthesizeSpeech({ text, delivery, voice: azureVoiceForDelivery(delivery) })
+          .then((blob) => {
+            if (requestIdRef.current !== myRequestId) {
+              resolve();
+              return;
+            }
+
+            setIsLoading(false);
+            const url = URL.createObjectURL(blob);
+            audioUrlRef.current = url;
+            const audio = getAudio();
+            const finish = () => {
+              setIsSpeaking(false);
+              cleanupSrc();
+              resolve();
+            };
+            audio.onended = finish;
+            audio.onerror = finish;
+            audio.playbackRate =
+              delivery === "passage"
+                ? (defaultRate ?? PASSAGE_PLAYBACK_RATE)
+                : COACHING_PLAYBACK_RATE;
+            audio.src = url;
+            setIsSpeaking(true);
+            void audio.play().catch(finish);
+          })
+          .catch(() => {
+            if (requestIdRef.current !== myRequestId) return;
+            setIsLoading(false);
+            setIsSpeaking(false);
+            resolve();
+          });
+      }),
+    [azureAvailable, cleanupSrc, defaultRate, getAudio],
+  );
+
   const speak = useCallback(
     (text: string, delivery: SpeechDelivery = "passage") => {
       if (!text) return;
@@ -111,44 +162,37 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
 
       const myRequestId = ++requestIdRef.current;
       cleanupSrc();
-
       setIsLoading(true);
-      synthesizeSpeech({ text, delivery, voice: azureVoiceForDelivery(delivery) })
-        .then((blob) => {
-          if (requestIdRef.current !== myRequestId) return;
-
-          setIsLoading(false);
-          const url = URL.createObjectURL(blob);
-          audioUrlRef.current = url;
-          const audio = getAudio();
-          audio.onended = () => {
-            setIsSpeaking(false);
-            cleanupSrc();
-            onEndRef.current?.();
-          };
-          audio.onerror = () => {
-            setIsSpeaking(false);
-            cleanupSrc();
-          };
-          audio.playbackRate =
-            delivery === "passage"
-              ? (defaultRate ?? PASSAGE_PLAYBACK_RATE)
-              : COACHING_PLAYBACK_RATE;
-          audio.src = url;
-          setIsSpeaking(true);
-          void audio.play().catch(() => {
-            if (requestIdRef.current !== myRequestId) return;
-            setIsSpeaking(false);
-            cleanupSrc();
-          });
-        })
-        .catch(() => {
-          if (requestIdRef.current !== myRequestId) return;
-          setIsLoading(false);
-          setIsSpeaking(false);
-        });
+      void playSegment(text, delivery, myRequestId).then(() => {
+        if (requestIdRef.current !== myRequestId) return;
+        onEndRef.current?.();
+      });
     },
-    [azureAvailable, cleanupSrc, defaultRate, getAudio],
+    [azureAvailable, cleanupSrc, playSegment],
+  );
+
+  const speakSequence = useCallback(
+    (segments: SpeechSegment[]) => {
+      const queue = segments.filter((s) => s.text.trim().length > 0);
+      if (queue.length === 0) return;
+      if (azureAvailable === false) return;
+
+      const myRequestId = ++requestIdRef.current;
+      cleanupSrc();
+      setIsLoading(true);
+
+      void (async () => {
+        for (const segment of queue) {
+          if (requestIdRef.current !== myRequestId) return;
+          setIsLoading(true);
+          await playSegment(segment.text, segment.delivery, myRequestId);
+        }
+        if (requestIdRef.current !== myRequestId) return;
+        setIsLoading(false);
+        onEndRef.current?.();
+      })();
+    },
+    [azureAvailable, cleanupSrc, playSegment],
   );
 
   const stop = useCallback(() => {
@@ -163,6 +207,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
     isSpeaking,
     isLoading,
     speak,
+    speakSequence,
     stop,
   };
 }

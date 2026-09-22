@@ -2,12 +2,12 @@ import { PenLine, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { prepareTextForSpeech } from "@/lib/prepare-text-for-speech";
+import { buildWritingSpeechSegments, writingSpeechPreview } from "@/lib/writing-speech";
 import { ItemCoachingCard, aiItemPassed, type ItemFeedbackPayload } from "./item-coaching-card";
-import { AnswerStepButtons } from "./answer-step-buttons";
+import { AnswerStepButtons, WRITING_ATTEMPTS_BEFORE_SKIP } from "./answer-step-buttons";
 import { ListenAgainButton } from "./listen-again-button";
 import { SessionResponsiveLayout } from "./session-responsive-layout";
-import type { SessionTheme } from "./session-ui-styles";
+import { sessionScrollArea, type SessionTheme } from "./session-ui-styles";
 
 interface WritingSessionViewProps {
   data: Record<string, unknown>;
@@ -20,8 +20,10 @@ interface WritingSessionViewProps {
     text: string;
     feedback: ItemFeedbackPayload | null;
     loading: boolean;
+    tryCount?: number;
   } | null;
   speakPassage: (text: string) => void;
+  speakWritingSession: (data: Record<string, unknown>) => void;
   speakFeedback: (text: string) => void;
   onStopSpeaking: () => void;
   speaking: boolean;
@@ -39,20 +41,12 @@ function wordCount(text: string): number {
   return trimmed ? trimmed.split(/\s+/).length : 0;
 }
 
-function writingPromptSpeech(data: Record<string, unknown>): string {
-  return prepareTextForSpeech(
-    [data.prompt, data.scaffold, data.sentenceFrame, data.sentence_frame]
-      .filter((part) => typeof part === "string" && part)
-      .join(". "),
-  );
-}
-
 function WritingTaskCard({
   data,
   theme,
   writingText,
   setWritingText,
-  speakPassage,
+  speakWritingSession,
   onStopSpeaking,
   speaking,
   ttsLoading,
@@ -61,40 +55,64 @@ function WritingTaskCard({
   theme: SessionTheme;
   writingText: string;
   setWritingText: (value: string) => void;
-  speakPassage: (text: string) => void;
+  speakWritingSession: (data: Record<string, unknown>) => void;
   onStopSpeaking: () => void;
   speaking: boolean;
   ttsLoading: boolean;
 }) {
+  const passage = typeof data.passage === "string" ? data.passage.trim() : "";
   const prompt = String(data.prompt ?? "");
-  const spoken = writingPromptSpeech(data);
+  const hasSpeech = buildWritingSpeechSegments(data).length > 0;
   const wordBank = (data.wordBank ?? data.word_bank) as string[] | undefined;
   const sentenceFrame = (data.sentenceFrame ?? data.sentence_frame) as string | undefined;
 
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-violet-500/20",
+        "relative flex flex-col min-h-0 rounded-2xl border border-violet-500/20",
         "bg-card/55 backdrop-blur-xl shadow-[0_8px_40px_-16px_rgba(139,92,246,0.45)]",
+        "max-h-[calc(100vh-var(--nav-height)-1rem)] sm:max-h-[calc(100vh-var(--nav-height)-1.25rem)]",
       )}
     >
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/70 to-transparent" />
-      <div className="p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5">
-          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", theme.iconWrap)}>
-            <PenLine className={cn("w-4 h-4", theme.icon)} />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/70 to-transparent pointer-events-none" />
+
+      <div className="shrink-0 px-4 sm:px-5 pt-4 sm:pt-5 pb-2">
+        <div className="flex items-center gap-2">
+          <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", theme.iconWrap)}>
+            <PenLine className={cn("w-3.5 h-3.5", theme.icon)} />
           </div>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-violet-400/90">
               Writing task
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">Read carefully, then compose your response</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Read carefully, then compose your response</p>
           </div>
         </div>
+      </div>
 
-        <p className="text-[15px] sm:text-base leading-[1.75] text-foreground/95 whitespace-pre-line">
-          {prompt}
-        </p>
+      <div
+        className={cn(
+          "flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-5 space-y-3.5",
+          sessionScrollArea("writing"),
+          hasSpeech ? "pb-3" : "pb-4 sm:pb-5",
+        )}
+      >
+        {passage && (
+          <div className="rounded-xl border border-violet-500/15 bg-violet-500/5 px-4 py-3 space-y-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-400/90 shrink-0">
+              Listen & read
+            </p>
+            <p className="text-[15px] sm:text-base leading-[1.75] text-foreground/95 whitespace-pre-line break-words">
+              {passage}
+            </p>
+          </div>
+        )}
+
+        {prompt && (
+          <p className="text-[15px] sm:text-base leading-[1.75] text-foreground/95 whitespace-pre-line break-words">
+            {prompt}
+          </p>
+        )}
 
         {Array.isArray(wordBank) && wordBank.length > 0 && (
           <div className="pt-1 space-y-2.5">
@@ -135,21 +153,24 @@ function WritingTaskCard({
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-400/80 mb-1.5">
               {/_{3,}|_____/.test(sentenceFrame) ? "Sentence frame" : "Starter"}
             </p>
-            <p className="text-sm text-foreground/90 whitespace-pre-line">{sentenceFrame}</p>
+            <p className="text-sm text-foreground/90 whitespace-pre-line break-words">{sentenceFrame}</p>
           </button>
         )}
+      </div>
 
-        {spoken && (
+      {hasSpeech && (
+        <div className="shrink-0 px-5 sm:px-6 pb-5 sm:pb-6 pt-2 border-t border-violet-500/10 bg-card/40">
           <ListenAgainButton
-            onListen={() => speakPassage(spoken)}
+            onListen={() => speakWritingSession(data)}
             onStop={onStopSpeaking}
             speaking={speaking}
             loading={ttsLoading}
             domain="writing"
             fullWidth
+            aria-label={`Listen again: ${writingSpeechPreview(data).slice(0, 80)}`}
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -161,7 +182,7 @@ export function WritingSessionView({
   setWritingText,
   onSubmitWriting,
   productionReview,
-  speakPassage,
+  speakWritingSession,
   speakFeedback,
   onStopSpeaking,
   speaking,
@@ -174,6 +195,10 @@ export function WritingSessionView({
   visual,
 }: WritingSessionViewProps) {
   const words = wordCount(writingText);
+  const writingTryCount = productionReview?.tryCount ?? 0;
+  const allowSkip =
+    aiItemPassed(productionReview?.feedback)
+    || writingTryCount >= WRITING_ATTEMPTS_BEFORE_SKIP;
 
   return (
     <div className="relative w-full">
@@ -193,7 +218,7 @@ export function WritingSessionView({
             theme={theme}
             writingText={writingText}
             setWritingText={setWritingText}
-            speakPassage={speakPassage}
+            speakWritingSession={speakWritingSession}
             onStopSpeaking={onStopSpeaking}
             speaking={speaking}
             ttsLoading={ttsLoading}
@@ -201,7 +226,7 @@ export function WritingSessionView({
         }
         className="relative"
       >
-        <div className="flex flex-col lg:min-h-[min(72vh,40rem)]">
+        <div className="flex flex-col min-h-[calc(100vh-var(--nav-height)-1.5rem)] lg:min-h-[calc(100vh-var(--nav-height)-2rem)]">
           <div
             className={cn(
               "flex-1 flex flex-col rounded-2xl border border-violet-500/15 overflow-hidden",
@@ -223,7 +248,7 @@ export function WritingSessionView({
               onChange={(e) => setWritingText(e.target.value)}
               placeholder="Compose your argument here…"
               className={cn(
-                "flex-1 min-h-[280px] lg:min-h-[min(50vh,28rem)] border-0 rounded-none resize-none",
+                "flex-1 min-h-[min(36vh,16rem)] lg:min-h-[calc(100vh-var(--nav-height)-14rem)] border-0 rounded-none resize-none",
                 "bg-transparent text-[15px] sm:text-base leading-[1.8] p-5 sm:p-6",
                 "focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50",
               )}
@@ -252,6 +277,7 @@ export function WritingSessionView({
                 loading={productionReview.loading}
                 speakText={speakFeedback}
                 stopSpeaking={onStopSpeaking}
+                allowSkip={allowSkip}
                 nextAction={
                   productionReview.loading
                     ? undefined
@@ -266,6 +292,7 @@ export function WritingSessionView({
                 isLast={qIdx >= questionCount - 1}
                 onAdvance={onContinueProduction}
                 onRetry={onRetryProduction}
+                allowSkip={allowSkip}
               />
             </div>
           )}

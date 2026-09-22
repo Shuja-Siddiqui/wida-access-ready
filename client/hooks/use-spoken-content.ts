@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { prepareTextForSpeech } from "@/lib/prepare-text-for-speech";
+import { buildWritingSpeechSegments } from "@/lib/writing-speech";
 import {
   useTextToSpeech,
   type UseTextToSpeechOptions,
@@ -9,6 +10,8 @@ import {
 export type SpokenContent = {
   speakPassage: (text: string) => void;
   speakFeedback: (text: string) => void;
+  /** Writing task: teacher intros (Jenny) then passage content (Guy), in order. */
+  speakWritingSession: (data: Record<string, unknown>) => void;
   stopSpeaking: () => void;
   isSpeaking: boolean;
   isLoadingTts: boolean;
@@ -29,9 +32,16 @@ export function useSpokenContent(options: UseTextToSpeechOptions = {}): SpokenCo
     (text: string) => tts.speak(prepareTextForSpeech(text), "coaching"),
     [tts.speak],
   );
+  const speakWritingSession = useCallback(
+    (data: Record<string, unknown>) => {
+      tts.speakSequence(buildWritingSpeechSegments(data));
+    },
+    [tts.speakSequence],
+  );
   return {
     speakPassage,
     speakFeedback,
+    speakWritingSession,
     stopSpeaking: tts.stop,
     isSpeaking: tts.isSpeaking,
     isLoadingTts: tts.isLoading,

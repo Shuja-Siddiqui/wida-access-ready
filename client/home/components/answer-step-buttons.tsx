@@ -2,8 +2,11 @@ import { ArrowRight, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+/** Writing: require this many submits before Skip is offered on a failed item. */
+export const WRITING_ATTEMPTS_BEFORE_SKIP = 2;
+
 /**
- * After AI item feedback: correct → Next only; incorrect → Try again + Skip.
+ * After AI item feedback: correct → Next only; incorrect → Try again (+ Skip when allowed).
  */
 export function AnswerStepButtons({
   loading,
@@ -12,6 +15,7 @@ export function AnswerStepButtons({
   onAdvance,
   onRetry,
   layout = "stack",
+  allowSkip = true,
 }: {
   loading?: boolean;
   passed: boolean;
@@ -19,6 +23,8 @@ export function AnswerStepButtons({
   onAdvance: () => void;
   onRetry: () => void;
   layout?: "stack" | "row";
+  /** When false, student must try again — no skip (writing early attempts). */
+  allowSkip?: boolean;
 }) {
   if (loading) return null;
 
@@ -49,20 +55,22 @@ export function AnswerStepButtons({
         size={layout === "row" ? "sm" : "default"}
         className={cn(
           "rounded-lg font-medium text-white bg-slate-900 hover:bg-slate-800 dark:bg-sky-600 dark:hover:bg-sky-500",
-          layout === "row" ? "px-4 h-9" : "w-full h-10",
+          allowSkip ? (layout === "row" ? "px-4 h-9" : "w-full h-10") : "w-full h-10",
         )}
       >
         <RotateCcw className={cn("mr-1", layout === "row" ? "w-3.5 h-3.5" : "w-4 h-4")} />
         Try again
       </Button>
-      <Button
-        onClick={onAdvance}
-        variant="outline"
-        size={layout === "row" ? "sm" : "default"}
-        className={cn("rounded-lg font-medium", layout === "row" ? "px-4 h-9" : "w-full h-10")}
-      >
-        Skip
-      </Button>
+      {allowSkip && (
+        <Button
+          onClick={onAdvance}
+          variant="outline"
+          size={layout === "row" ? "sm" : "default"}
+          className={cn("rounded-lg font-medium", layout === "row" ? "px-4 h-9" : "w-full h-10")}
+        >
+          Skip
+        </Button>
+      )}
     </div>
   );
 }

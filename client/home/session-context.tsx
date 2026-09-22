@@ -110,6 +110,8 @@ export interface SessionContextValue {
   speakPassage: (text: string) => void;
   /** Jenny — coaching and item feedback. */
   speakFeedback: (text: string) => void;
+  /** Writing — teacher intros then content, multi-voice sequence. */
+  speakWritingSession: (data: Record<string, unknown>) => void;
   onSpeak: (text: string) => void;
   onStopSpeaking: () => void;
 
@@ -143,6 +145,7 @@ export interface SessionContextValue {
       meetsTask: boolean;
     } | null;
     loading: boolean;
+    tryCount?: number;
   } | null;
   onContinueProduction: () => void;
   onRetryProduction: () => void;

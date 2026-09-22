@@ -115,7 +115,7 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
     onAnswer, onAnswerNonMC, onStartRecording, onStopRecording, onSubmitWriting,
     sttSupported, sttTranscript, sttInterim, sttLevel, sttError,
     productionReview, onContinueProduction, onRetryProduction,
-    speakPassage, speakFeedback, onStopSpeaking, speaking, ttsLoading,
+    speakPassage, speakFeedback, speakWritingSession, onStopSpeaking, speaking, ttsLoading,
   } = useSessionContext();
 
   // â”€â”€ Non-MC interaction state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -443,30 +443,38 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
     <>
       <div
         className={cn(
-          "min-h-[calc(100vh-5rem)] bg-background flex flex-col",
+          "min-h-[calc(100vh-var(--nav-height))] bg-background flex flex-col",
           showCapsule && "md:pl-14 lg:pl-14",
         )}
       >
-        {/* â”€â”€ Progress header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <div className="sticky top-0 z-30 bg-background/90 backdrop-blur-md border-b border-border/50">
-          <div
-            className={cn(
-              "mx-auto py-3.5 flex items-center gap-3",
-              useWideLayout
-                ? "max-w-[1680px] px-4 sm:px-8 lg:px-12"
-                : "max-w-[1440px] px-4 sm:px-6 lg:px-10",
-            )}
-          >
-            <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", theme.iconWrap)}>
-              <DomainIcon className={cn("w-4 h-4", theme.icon)} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-2">
+        {!isWriting && (
+          <div className="sticky top-0 z-30 bg-background/90 backdrop-blur-md border-b border-border/50">
+            <div
+              className={cn(
+                "mx-auto py-3 flex items-center gap-2.5 sm:gap-3",
+                useWideLayout
+                  ? "max-w-[1680px] px-4 sm:px-8 lg:px-12"
+                  : "max-w-[1440px] px-4 sm:px-6 lg:px-10",
+              )}
+            >
+              <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", theme.iconWrap)}>
+                <DomainIcon className={cn("w-4 h-4", theme.icon)} />
+              </div>
+              <div className="flex-1 min-w-0 flex items-center justify-between gap-3">
                 <span className={cn("text-sm font-medium capitalize", theme.title)}>{domainLabel}</span>
-                <span className="text-xs text-muted-foreground tabular-nums font-medium">
+                <span className="text-xs text-muted-foreground tabular-nums font-medium shrink-0">
                   {qIdx + 1} / {questions.length || 1}
                 </span>
               </div>
+            </div>
+            <div
+              className={cn(
+                "mx-auto pb-3",
+                useWideLayout
+                  ? "max-w-[1680px] px-4 sm:px-8 lg:px-12"
+                  : "max-w-[1440px] px-4 sm:px-6 lg:px-10",
+              )}
+            >
               <div className="h-1 rounded-full bg-muted overflow-hidden">
                 <motion.div
                   className={cn("h-full rounded-full", theme.progress)}
@@ -477,12 +485,13 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* â”€â”€ Question area: full-width writing workspace; split grid for other domains â”€â”€ */}
         <div
           className={cn(
-            "flex-1 w-full mx-auto py-6",
+            "flex-1 w-full mx-auto",
+            isWriting ? "py-1 sm:py-2" : "py-6",
             useWideLayout
               ? "max-w-[1680px] px-4 sm:px-8 lg:px-12"
               : "max-w-[1440px] px-4 sm:px-6 lg:px-10",
@@ -511,10 +520,11 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
                           text: productionReview.text,
                           feedback: productionReview.feedback,
                           loading: productionReview.loading,
+                          tryCount: productionReview.tryCount,
                         }
                       : null
                   }
-                  speakPassage={speakPassage}
+                  speakWritingSession={speakWritingSession}
                   speakFeedback={speakFeedback}
                   onStopSpeaking={onStopSpeaking}
                   speaking={speaking}

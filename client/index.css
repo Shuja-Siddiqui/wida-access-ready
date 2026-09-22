@@ -142,4 +142,90 @@
       hsl(var(--brand-trust-blue)) 100%
     );
   }
+
+  /* Themed scrollbars for session reference / writing panels */
+  .session-scroll {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+  }
+
+  .session-scroll-writing {
+    scrollbar-color: hsl(262 55% 58% / 0.55) hsl(262 25% 14% / 0.35);
+  }
+
+  .session-scroll-writing::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .session-scroll-writing::-webkit-scrollbar-track {
+    margin: 4px 0;
+    background: hsl(262 22% 12% / 0.45);
+    border-radius: 9999px;
+  }
+
+  .session-scroll-writing::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(262 58% 62%), hsl(280 52% 54%));
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .session-scroll-writing::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(262 62% 68%), hsl(280 58% 60%));
+  }
+
+  .session-scroll-listening {
+    scrollbar-color: hsl(199 75% 52% / 0.5) hsl(199 30% 14% / 0.35);
+  }
+
+  .session-scroll-listening::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .session-scroll-listening::-webkit-scrollbar-track {
+    background: hsl(199 25% 12% / 0.4);
+    border-radius: 9999px;
+  }
+
+  .session-scroll-listening::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(199 80% 55%), hsl(210 70% 48%));
+    border-radius: 9999px;
+  }
+
+  .session-scroll-reading {
+    scrollbar-color: hsl(38 85% 52% / 0.5) hsl(38 25% 14% / 0.35);
+  }
+
+  .session-scroll-reading::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .session-scroll-reading::-webkit-scrollbar-track {
+    background: hsl(38 22% 12% / 0.4);
+    border-radius: 9999px;
+  }
+
+  .session-scroll-reading::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(38 88% 56%), hsl(28 75% 48%));
+    border-radius: 9999px;
+  }
+
+  .session-scroll-speaking {
+    scrollbar-color: hsl(152 55% 45% / 0.5) hsl(152 25% 14% / 0.35);
+  }
+
+  .session-scroll-speaking::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .session-scroll-speaking::-webkit-scrollbar-track {
+    background: hsl(152 22% 12% / 0.4);
+    border-radius: 9999px;
+  }
+
+  .session-scroll-speaking::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(152 58% 48%), hsl(165 50% 40%));
+    border-radius: 9999px;
+  }
 }

@@ -16,6 +16,7 @@
 
 :root {
   /* Shared, theme-independent tokens */
+  --nav-height: 3.5rem;
   --radius: 0.875rem;
 
   /* Blossom brand accents (overridden by goELprep themes) */

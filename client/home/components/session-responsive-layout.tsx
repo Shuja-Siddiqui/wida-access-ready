@@ -4,6 +4,7 @@ import { SessionReferenceImage } from "./session-reference-image";
 import {
   SESSION_REFERENCE_COLUMN,
   SESSION_WORK_COLUMN,
+  sessionScrollArea,
   type SessionDomainKey,
 } from "./session-ui-styles";
 
@@ -45,13 +46,14 @@ export function SessionResponsiveLayout({
         className,
       )}
     >
-      <aside className={SESSION_REFERENCE_COLUMN}>
+      <aside className={cn(SESSION_REFERENCE_COLUMN, sessionScrollArea(domain))}>
         {hasMedia && (
           <SessionReferenceImage
             url={mediaUrl}
             visual={visual}
             domain={domain}
             label={referenceLabel}
+            compact={domain === "writing"}
           />
         )}
         {referencePanel}

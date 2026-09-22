@@ -9,3 +9,14 @@ export function prepareTextForSpeech(text: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/** Sentence frames only — one short "blank" per gap (never repeat "fill in the blank"). */
+export function prepareFrameForSpeech(text: string): string {
+  return text
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/_{2,}/g, " blank ")
+    .replace(/_/g, " blank ")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.!?])/g, "$1")
+    .trim();
+}

@@ -12,7 +12,7 @@ export const THEME_GROUPS = [
     label: "goELprep",
     themes: [
       { id: "goelprep-light", label: "Light", swatch: "bg-[#0066FF]" },
-      { id: "goelprep-dark", label: "Dark", swatch: "bg-[#001A3F] ring-1 ring-[#0066FF]/40" },
+      { id: "goelprep-dark", label: "Dark", swatch: "bg-[#272B33] ring-1 ring-[#3399FF]/40" },
     ],
   },
   {

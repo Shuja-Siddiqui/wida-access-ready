@@ -1,3 +1,4 @@
+import { useViewportPageLayout } from "@/components/app-layout";
 import { LoadingScreen } from "@/components/loading-screen";
 
 interface SessionLoadingViewProps {
@@ -5,5 +6,6 @@ interface SessionLoadingViewProps {
 }
 
 export function SessionLoadingView({ domain }: SessionLoadingViewProps) {
-  return <LoadingScreen fullHeight={false} message={`Preparing ${domain}`} />;
+  useViewportPageLayout();
+  return <LoadingScreen message={`Preparing ${domain}`} />;
 }

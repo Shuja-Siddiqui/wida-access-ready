@@ -9,7 +9,6 @@ import {
 } from "@/api-generated";
 import { useSpokenContent } from "@/hooks/use-spoken-content";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
-import { useShowCapsule } from "@/components/app-shell";
 import { Home as HomeIcon } from "lucide-react";
 import { LoadingScreen } from "@/components/loading-screen";
 import confetti from "canvas-confetti";
@@ -21,6 +20,7 @@ import { ImageLibrarySession } from "./components/image-library-session";
 import type { ItemFeedbackPayload } from "./components/item-coaching-card";
 import type { DomainProgress, SessionPoint } from "./components/domain-charts";
 import { HomeDashboardView }   from "./components/home-dashboard-view";
+import type { PracticeSuggestion } from "./components/dashboard-suggestions";
 import { SessionLoadingView }  from "./components/session-loading-view";
 import { SessionErrorView }    from "./components/session-error-view";
 import { SessionCompleteView } from "./components/session-complete-view";
@@ -37,7 +37,6 @@ export default function Home() {
     ready: authReady,
   } = useUser();
   const { request }   = useApi();
-  const showCapsule   = useShowCapsule();
   const [, setLocation] = useLocation();
 
   // ─── View state ───────────────────────────────────────────────────────────
@@ -98,6 +97,26 @@ export default function Home() {
       query: { enabled: !!studentId, queryKey: getGetStudentPathwayQueryKey(studentId || "") },
     });
 
+  const [suggestions, setSuggestions] = useState<PracticeSuggestion[]>([]);
+
+  const loadSuggestions = useCallback(async () => {
+    if (!studentId) return;
+    try {
+      const data = await request<{ suggestions: PracticeSuggestion[] }>(
+        `/api/students/${studentId}/suggestions`,
+      );
+      setSuggestions(data.suggestions ?? []);
+    } catch {
+      setSuggestions([]);
+    }
+  }, [studentId, request]);
+
+  useEffect(() => {
+    if (studentId && view === "home") {
+      void loadSuggestions();
+    }
+  }, [studentId, view, loadSuggestions]);
+
   // ─── Auto-start from ?domain= query param (e.g. from /listening page) ──────
   useEffect(() => {
     if (!studentId || view !== "home" || loadingProgress) return;
@@ -149,6 +168,19 @@ export default function Home() {
     speakPassage(spoken);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.sessionId]);
+
+  const exitToHome = useCallback(() => {
+    stopSpeaking();
+    autoPlaySessionRef.current = null;
+    setView("home");
+  }, [stopSpeaking]);
+
+  // Stop Azure TTS when leaving the active session (breadcrumb, nav, complete, etc.).
+  useEffect(() => {
+    if (view !== "session") {
+      stopSpeaking();
+    }
+  }, [view, stopSpeaking]);
 
   const {
     isSupported: sttSupported,
@@ -267,7 +299,8 @@ export default function Home() {
     refetchProgress();
     refetchStreak();
     refetchStudent();
-  }, [session, answers, studentId, refetchProgress, refetchStreak, refetchStudent, stopSpeaking, request]);
+    void loadSuggestions();
+  }, [session, answers, studentId, refetchProgress, refetchStreak, refetchStudent, stopSpeaking, request, loadSuggestions]);
 
   const loadItemFeedback = useCallback(async (body: Record<string, unknown>) => {
     if (!studentId) return null;
@@ -344,9 +377,16 @@ export default function Home() {
 
   const onContinueProduction = () => {
     if (!productionReview || !session) return;
+    const data = session.content?.data;
     const rec: AnswerRecord = {
-      question: session.content?.data?.prompt ?? "",
-      content: session.content?.data,
+      question: data?.prompt ?? "",
+      content: productionReview.kind === "writing"
+        ? {
+            ...(typeof data === "object" && data ? data : {}),
+            accessWritingScore: productionReview.feedback?.accessWritingScore,
+            minSentences: data?.minSentences != null ? Number(data.minSentences) : undefined,
+          }
+        : data,
       submittedAnswer: productionReview.text,
       correct: productionReview.feedback?.meetsTask ?? false,
     };
@@ -425,7 +465,7 @@ export default function Home() {
   const sessionTrail = (domain: string): Crumb[] => {
     const c = DOMAIN_CONFIG[domain] ?? DOMAIN_CONFIG.listening;
     return [
-      { label: "Practice", icon: HomeIcon, onClick: () => setView("home") },
+      { label: "Practice", icon: HomeIcon, onClick: exitToHome },
       { label: domainLabel(domain), icon: c.icon },
     ];
   };
@@ -464,9 +504,12 @@ export default function Home() {
         nextRankXp={streakData?.nextRankXp ?? 100}
         domains={domains}
         nudgeMessage={pathwayData?.nudgeMessage}
+        suggestions={suggestions}
+        speaking={speaking}
+        onSpeakSuggestion={speakPassage}
+        onStopSpeaking={stopSpeaking}
         canPractice={fullStudentData?.canPractice !== false}
         accessReason={fullStudentData?.accessReason}
-        showCapsule={showCapsule}
         onStartSession={startSession}
         onNavigateBilling={() => setLocation("/billing")}
         onDemoJump={handleDemoJump}
@@ -486,7 +529,7 @@ export default function Home() {
     return (
       <SessionErrorView
         errorMsg={errorMsg}
-        onBack={() => setView("home")}
+        onBack={exitToHome}
         onRetry={() => startSession(activeDomain)}
       />
     );
@@ -497,7 +540,7 @@ export default function Home() {
       <SessionCompleteView
         answers={answers}
         sessionResult={sessionResult}
-        onContinue={() => setView("home")}
+        onContinue={exitToHome}
       />
     );
   }
@@ -507,7 +550,7 @@ export default function Home() {
     return (
       <SessionErrorView
         errorMsg="This practice session could not be loaded. Please try again."
-        onBack={() => setView("home")}
+        onBack={exitToHome}
         onRetry={() => startSession(activeDomain)}
       />
     );
@@ -539,6 +582,7 @@ export default function Home() {
 
   // view === "session" — AI-generated content (levels 3–6)
   return (
+    <div className="flex flex-1 min-h-0 w-full flex-col">
     <SessionProvider value={{
       session,
       activeDomain,
@@ -619,9 +663,8 @@ export default function Home() {
         });
       },
     }}>
-      <SessionActiveView
-        showCapsule={showCapsule}
-      />
+      <SessionActiveView />
     </SessionProvider>
+    </div>
   );
 }

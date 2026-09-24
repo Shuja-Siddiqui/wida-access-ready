@@ -62,7 +62,7 @@ export function ProfilePageShell({
             <div className="flex flex-col items-center text-center lg:items-start lg:text-left gap-4">
               {avatar}
               <div className="min-w-0 w-full">
-                <h1 className="text-2xl font-black text-foreground tracking-tight truncate">
+                <h1 className="heading-page text-2xl truncate">
                   {displayName}
                 </h1>
                 <span

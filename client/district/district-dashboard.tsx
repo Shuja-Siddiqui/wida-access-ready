@@ -119,7 +119,7 @@ export default function DistrictDashboard() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
           <div className="space-y-1">
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
+            <h1 className="heading-page text-3xl">
               {district?.name ?? "My District"}
             </h1>
             <p className="text-sm font-medium text-muted-foreground">

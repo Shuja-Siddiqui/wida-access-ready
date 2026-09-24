@@ -49,6 +49,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
   const onEndRef = useRef(onEnd);
   onEndRef.current = onEnd;
   const requestIdRef = useRef<number>(0);
+  const mountedRef = useRef(true);
 
   const getAudio = useCallback(() => {
     if (!audioRef.current) {
@@ -105,54 +106,58 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
+      requestIdRef.current += 1;
       cleanupSrc();
       audioRef.current = null;
     };
   }, [cleanupSrc]);
 
-  const playSegment = useCallback(
-    (text: string, delivery: SpeechDelivery, myRequestId: number): Promise<void> =>
+  const fetchSegmentBlob = useCallback(
+    async (text: string, delivery: SpeechDelivery, myRequestId: number): Promise<Blob | null> => {
+      if (!text || azureAvailable === false || !mountedRef.current || requestIdRef.current !== myRequestId) {
+        return null;
+      }
+
+      try {
+        return await synthesizeSpeech({ text, delivery, voice: azureVoiceForDelivery(delivery) });
+      } catch {
+        return null;
+      }
+    },
+    [azureAvailable],
+  );
+
+  const playBlob = useCallback(
+    (blob: Blob, delivery: SpeechDelivery, myRequestId: number): Promise<void> =>
       new Promise((resolve) => {
-        if (!text || azureAvailable === false || requestIdRef.current !== myRequestId) {
+        if (!mountedRef.current || requestIdRef.current !== myRequestId) {
           resolve();
           return;
         }
 
-        synthesizeSpeech({ text, delivery, voice: azureVoiceForDelivery(delivery) })
-          .then((blob) => {
-            if (requestIdRef.current !== myRequestId) {
-              resolve();
-              return;
-            }
-
-            setIsLoading(false);
-            const url = URL.createObjectURL(blob);
-            audioUrlRef.current = url;
-            const audio = getAudio();
-            const finish = () => {
-              setIsSpeaking(false);
-              cleanupSrc();
-              resolve();
-            };
-            audio.onended = finish;
-            audio.onerror = finish;
-            audio.playbackRate =
-              delivery === "passage"
-                ? (defaultRate ?? PASSAGE_PLAYBACK_RATE)
-                : COACHING_PLAYBACK_RATE;
-            audio.src = url;
-            setIsSpeaking(true);
-            void audio.play().catch(finish);
-          })
-          .catch(() => {
-            if (requestIdRef.current !== myRequestId) return;
-            setIsLoading(false);
-            setIsSpeaking(false);
-            resolve();
-          });
+        setIsLoading(false);
+        const url = URL.createObjectURL(blob);
+        audioUrlRef.current = url;
+        const audio = getAudio();
+        const finish = () => {
+          setIsSpeaking(false);
+          cleanupSrc();
+          resolve();
+        };
+        audio.onended = finish;
+        audio.onerror = finish;
+        audio.playbackRate =
+          delivery === "passage"
+            ? (defaultRate ?? PASSAGE_PLAYBACK_RATE)
+            : COACHING_PLAYBACK_RATE;
+        audio.src = url;
+        setIsSpeaking(true);
+        void audio.play().catch(finish);
       }),
-    [azureAvailable, cleanupSrc, defaultRate, getAudio],
+    [cleanupSrc, defaultRate, getAudio],
   );
 
   const speak = useCallback(
@@ -163,12 +168,15 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
       const myRequestId = ++requestIdRef.current;
       cleanupSrc();
       setIsLoading(true);
-      void playSegment(text, delivery, myRequestId).then(() => {
-        if (requestIdRef.current !== myRequestId) return;
-        onEndRef.current?.();
+      void fetchSegmentBlob(text, delivery, myRequestId).then((blob) => {
+        if (!blob || requestIdRef.current !== myRequestId) return;
+        void playBlob(blob, delivery, myRequestId).then(() => {
+          if (requestIdRef.current !== myRequestId) return;
+          onEndRef.current?.();
+        });
       });
     },
-    [azureAvailable, cleanupSrc, playSegment],
+    [azureAvailable, cleanupSrc, fetchSegmentBlob, playBlob],
   );
 
   const speakSequence = useCallback(
@@ -182,17 +190,33 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
       setIsLoading(true);
 
       void (async () => {
-        for (const segment of queue) {
+        // Prefetch the next segment while the current one plays to avoid
+        // serial round-trips to Azure (writing tasks can have 6+ segments).
+        let pendingFetch = fetchSegmentBlob(queue[0].text, queue[0].delivery, myRequestId);
+
+        for (let i = 0; i < queue.length; i++) {
           if (requestIdRef.current !== myRequestId) return;
-          setIsLoading(true);
-          await playSegment(segment.text, segment.delivery, myRequestId);
+
+          const segment = queue[i];
+          const blob = await pendingFetch;
+          if (requestIdRef.current !== myRequestId) return;
+
+          if (i + 1 < queue.length) {
+            const next = queue[i + 1];
+            pendingFetch = fetchSegmentBlob(next.text, next.delivery, myRequestId);
+          }
+
+          if (!blob) continue;
+
+          await playBlob(blob, segment.delivery, myRequestId);
         }
+
         if (requestIdRef.current !== myRequestId) return;
         setIsLoading(false);
         onEndRef.current?.();
       })();
     },
-    [azureAvailable, cleanupSrc, playSegment],
+    [azureAvailable, cleanupSrc, fetchSegmentBlob, playBlob],
   );
 
   const stop = useCallback(() => {

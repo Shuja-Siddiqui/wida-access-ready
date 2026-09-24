@@ -453,7 +453,6 @@ export function ImageLibrarySession({
           onListen={handleReplay}
           onStop={stopSpeaking}
           speaking={isSpeaking}
-          loading={isLoadingTts}
           domain="listening"
           fullWidth
         />

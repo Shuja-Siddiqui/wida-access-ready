@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { GraduationCap, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InputField } from "@/components/input-field";
@@ -127,9 +128,7 @@ export default function AcceptInvite() {
         className="w-full max-w-md"
       >
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-primary border border-border/40  flex items-center justify-center mb-6 transform ">
-            <GraduationCap className="w-8 h-8 text-primary-foreground" />
-          </div>
+          <AppLogo href="/" imageClassName="h-14 mb-6" />
           <h1 className="text-4xl font-bold tracking-tight text-foreground ">Accept Invitation</h1>
           {invite && (
             <p className="text-muted-foreground text-sm font-bold mt-2 uppercase tracking-widest">

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Mic, Square, Volume2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { OptionVisual, StemVisual } from "@/components/shape-glyph";
+import { useViewportPageLayout } from "@/components/app-layout";
 import { LoadingScreen } from "@/components/loading-screen";
 import { cn } from "@/lib/utils";
 import { resolveSessionStartFromUiKey } from "@/home/home-types";
@@ -15,6 +16,8 @@ import { resolveSessionStartFromUiKey } from "@/home/home-types";
 type SessionState = "loading" | "error" | "active" | "finishing";
 
 export default function Session() {
+  useViewportPageLayout();
+
   const { domain } = useParams<{ domain: string }>();
   const { studentId } = useAuth();
   const { request } = useApi();
@@ -121,7 +124,7 @@ export default function Session() {
 
   if (state === "error") {
     return (
-      <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center bg-background gap-6 px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 text-center">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-6 py-3 sm:py-4 lg:py-5 text-center">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <p className="text-destructive font-bold text-lg max-w-sm">{errorMsg}</p>
         <div className="flex gap-3">
@@ -206,16 +209,16 @@ export default function Session() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-background flex flex-col">
-      <div className="p-4 bg-card border-b shadow-sm sticky top-0 z-10">
-        <div className="max-w-[1440px] mx-auto flex items-center gap-4">
+    <div className="h-full min-h-0 flex flex-col">
+      <div className="shrink-0 p-4 bg-card border-b shadow-sm z-10">
+        <div className="flex items-center gap-4">
           <span className="uppercase tracking-widest text-xs font-black text-muted-foreground">{domain}</span>
           <Progress value={progressPct} className="h-2 flex-1" />
           <span className="text-xs font-bold text-muted-foreground">{qIdx + 1}/{questions.length || 1}</span>
         </div>
       </div>
 
-      <div className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-4 sm:py-6">
+      <div className="flex-1 min-h-0 w-full py-4 sm:py-6 overflow-y-auto themed-scroll">
         <AnimatePresence mode="wait">
           <motion.div
             key={`q-${qIdx}`}
@@ -646,7 +649,7 @@ export default function Session() {
             exit={{ y: "100%" }}
             className={`fixed bottom-0 left-0 right-0 p-5 border-t-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50 ${lastCorrect ? "bg-growth-green/10 border-growth-green" : "bg-destructive/5 border-destructive"}`}
           >
-            <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 {lastCorrect ? (
                   <CheckCircle2 className="w-7 h-7 text-growth-green flex-shrink-0" />

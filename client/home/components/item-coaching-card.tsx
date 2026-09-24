@@ -13,6 +13,9 @@ export type ItemFeedbackPayload = {
   spokenText?: string;
   judgment?: "agree" | "partial" | "rejected";
   meetsTask: boolean;
+  /** ACCESS writing rubric 0–7 (writing sessions only). */
+  accessWritingScore?: number;
+  accessWritingLabel?: string;
 };
 
 function visibleSpeech(text: string): string {
@@ -110,8 +113,23 @@ export function ItemCoachingCard({
   }
   if (!bodyText && !nextAction) return null;
 
+  const rubricScore = feedback?.accessWritingScore;
+  const rubricLabel = feedback?.accessWritingLabel?.trim();
+
   return (
     <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5 text-left space-y-2.5">
+      {typeof rubricScore === "number" && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center rounded-full border border-violet-500/25 bg-violet-500/8 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-violet-700 dark:text-violet-300">
+            {rubricScore}/7
+          </span>
+          {rubricLabel && (
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {rubricLabel}
+            </span>
+          )}
+        </div>
+      )}
       {bodyText && (
         <p className="text-sm text-foreground leading-relaxed">{bodyText}</p>
       )}

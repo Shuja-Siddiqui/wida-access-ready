@@ -181,7 +181,7 @@ export default function ListeningPage() {
   const avgLevel = ((genProgress.currentLevel + acProgress.currentLevel) / 2).toFixed(1);
 
   return (
-    <PageContainer className="py-0 px-0">
+    <PageContainer pad={false}>
       {/* ── Hero section ──────────────────────────────────────────── */}
       <div className="relative overflow-hidden bg-brand-gradient">
         {/* Decorative circles */}

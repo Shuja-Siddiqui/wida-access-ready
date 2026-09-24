@@ -4,11 +4,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAuthConfig } from "@/hooks/use-auth-config";
 import { useApi, extractErrorMessage } from "@/hooks/use-api";
 import { AppInput } from "@/components/app-input";
+import { AppLogo } from "@/components/app-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BackButton } from "@/components/back-button";
 import { GoogleButton } from "@/components/google-button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Building2, Mail, Lock, Eye, EyeOff, Check, Loader2, GraduationCap, CheckCircle2 } from "lucide-react";
+import { Building2, Mail, Lock, Eye, EyeOff, Check, Loader2, CheckCircle2 } from "lucide-react";
 import { loadPendingGoogleAuth, clearPendingGoogleAuth } from "@/auth-callback/auth-callback";
 
 const slide = {
@@ -112,11 +113,8 @@ export default function SignupDistrict() {
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute bottom-0 -left-16 w-72 h-72 rounded-full bg-white/10 pointer-events-none" />
 
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-black text-white text-xl tracking-tight">ACCESS Ready</span>
+        <div className="relative z-10">
+          <AppLogo href="/" imageClassName="h-12" />
         </div>
 
         <div className="relative z-10 space-y-8">
@@ -150,9 +148,7 @@ export default function SignupDistrict() {
       <div className="flex-1 flex flex-col min-h-screen bg-background">
         <div className="flex items-center justify-between px-6 py-5">
           <div className="flex items-center gap-2">
-            <div className="lg:hidden w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <AppLogo href="/" imageClassName="h-8 lg:hidden" className="lg:hidden" />
             {step < 3 && <BackButton onClick={handleBack} />}
           </div>
           <ThemeToggle />
@@ -173,7 +169,7 @@ export default function SignupDistrict() {
               {step === 1 && (
                 <motion.div key="step1" {...slide} transition={{ duration: 0.22 }} className="space-y-6">
                   <div>
-                    <h1 className="text-3xl font-black tracking-tight text-foreground">
+                    <h1 className="heading-page text-3xl">
                       {isGoogleMode ? "About your district" : "District info"}
                     </h1>
                     <p className="text-muted-foreground font-medium mt-1.5">
@@ -233,7 +229,7 @@ export default function SignupDistrict() {
               {step === 2 && !isGoogleMode && (
                 <motion.div key="step2" {...slide} transition={{ duration: 0.22 }} className="space-y-6">
                   <div>
-                    <h1 className="text-3xl font-black tracking-tight text-foreground">Create your login</h1>
+                    <h1 className="heading-page text-3xl">Create your login</h1>
                     <p className="text-muted-foreground font-medium mt-1.5">Choose an email and password.</p>
                   </div>
 

@@ -26,6 +26,7 @@
   --brand-achieve-purple: 286 70% 58%;
   --brand-streak-gold: 40 94% 52%;
   --brand-deep-night: 328 32% 13%;
+  --heading-secondary: 240 6% 10%;
 }
 
 /* ---------------------- LIGHT (default) ---------------------- */
@@ -62,6 +63,8 @@
 
   --input: 326 85% 90%;
   --ring: 338 100% 65%;
+
+  --heading-secondary: 240 6% 10%;
 }
 
 /* ---------------------- DARK ---------------------- */
@@ -97,6 +100,8 @@
 
   --input: 0 0% 16%;
   --ring: 338 100% 65%;
+
+  --heading-secondary: 0 0% 93%;
 }
 
 /* ---------------------- goELprep LIGHT ---------------------- */
@@ -139,46 +144,51 @@
   --brand-achieve-purple: 183 100% 34%;
   --brand-streak-gold: 38 95% 57%;
   --brand-deep-night: 220 100% 12%;
+
+  --heading-secondary: 220 100% 12%;
 }
 
 /* ---------------------- goELprep DARK ---------------------- */
+/* Neutral slate (not navy) so the logo’s dark-navy wordmark stays readable. */
 [data-theme="goelprep-dark"] {
-  --background: 220 65% 7%;
-  --foreground: 210 40% 96%;
+  --background: 230 10% 17%;
+  --foreground: 210 30% 95%;
 
-  --border: 220 30% 18%;
+  --border: 230 9% 26%;
 
-  --card: 220 50% 11%;
-  --card-foreground: 210 40% 96%;
-  --card-border: 220 30% 18%;
+  --card: 230 9% 21%;
+  --card-foreground: 210 30% 95%;
+  --card-border: 230 9% 28%;
 
-  --popover: 220 50% 11%;
-  --popover-foreground: 210 40% 96%;
-  --popover-border: 220 30% 18%;
+  --popover: 230 9% 21%;
+  --popover-foreground: 210 30% 95%;
+  --popover-border: 230 9% 28%;
 
-  --primary: 217 100% 55%;
+  --primary: 217 100% 60%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 217 100% 62%;
+  --primary-hover: 217 100% 67%;
 
-  --secondary: 220 35% 16%;
-  --secondary-foreground: 210 30% 92%;
+  --secondary: 230 8% 25%;
+  --secondary-foreground: 210 25% 92%;
 
-  --muted: 220 28% 14%;
-  --muted-foreground: 215 15% 65%;
+  --muted: 230 8% 23%;
+  --muted-foreground: 215 10% 68%;
 
-  --accent: 95 74% 44%;
-  --accent-foreground: 220 65% 7%;
+  --accent: 95 74% 48%;
+  --accent-foreground: 230 10% 17%;
 
   --destructive: 0 63% 52%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 30% 18%;
-  --ring: 217 100% 55%;
+  --input: 230 9% 26%;
+  --ring: 217 100% 60%;
 
-  --brand-trust-blue: 217 100% 55%;
-  --brand-growth-green: 95 74% 48%;
+  --brand-trust-blue: 217 100% 60%;
+  --brand-growth-green: 95 74% 50%;
   --brand-energy-orange: 38 95% 57%;
-  --brand-achieve-purple: 183 100% 40%;
+  --brand-achieve-purple: 183 100% 42%;
   --brand-streak-gold: 38 95% 57%;
-  --brand-deep-night: 220 65% 7%;
+  --brand-deep-night: 230 12% 22%;
+
+  --heading-secondary: 210 22% 93%;
 }

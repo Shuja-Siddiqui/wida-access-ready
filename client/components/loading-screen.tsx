@@ -61,7 +61,7 @@ export function LoadingScreen({
     <div
       className={cn(
         "flex flex-col items-center justify-center bg-background px-6",
-        fillViewport ? "min-h-screen" : "min-h-[calc(100vh-5rem)]",
+        fillViewport ? "min-h-screen" : "flex-1 min-h-0 h-full",
       )}
     >
       <div className="relative flex flex-col items-center gap-5">

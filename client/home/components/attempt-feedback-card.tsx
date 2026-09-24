@@ -1,4 +1,5 @@
 import { Lightbulb, ListChecks, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type AttemptFeedbackPayload = {
   summary: string;
@@ -11,32 +12,43 @@ export type AttemptFeedbackPayload = {
   nextSteps: string[];
 };
 
-export function AttemptFeedbackCard({ feedback }: { feedback: AttemptFeedbackPayload }) {
+export function AttemptFeedbackCard({
+  feedback,
+  className,
+  compact = false,
+}: {
+  feedback: AttemptFeedbackPayload;
+  className?: string;
+  compact?: boolean;
+}) {
+  const mistakes = compact ? feedback.mistakes.slice(0, 2) : feedback.mistakes;
+  const strengths = compact ? feedback.strengths.slice(0, 2) : feedback.strengths;
+  const nextSteps = compact ? feedback.nextSteps.slice(0, 2) : feedback.nextSteps;
+
   return (
-    <div className="rounded-2xl border border-border/40 bg-card overflow-hidden mb-8 shadow-sm text-left">
-      <div className="flex items-center gap-2 px-5 py-4 border-b border-border/40 bg-trust-blue/5">
-        <Sparkles className="w-5 h-5 text-trust-blue" />
-        <span className="text-xs font-semibold uppercase tracking-widest text-foreground">
+    <div className={cn("rounded-2xl border border-border/40 bg-card overflow-hidden mb-8 shadow-sm text-left", className)}>
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-trust-blue/5">
+        <Sparkles className="w-4 h-4 text-trust-blue" />
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">
           Coach notes
         </span>
       </div>
-      <div className="px-5 py-4 space-y-4">
-        <p className="text-sm font-medium text-foreground leading-relaxed">{feedback.summary}</p>
+      <div className={cn("px-4 space-y-3", compact ? "py-3" : "py-4 space-y-4")}>
+        <p className={cn("font-medium text-foreground leading-snug", compact ? "text-sm line-clamp-3" : "text-sm leading-relaxed")}>
+          {feedback.summary}
+        </p>
 
-        {feedback.mistakes.length > 0 && (
+        {mistakes.length > 0 && (
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-destructive mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-destructive mb-1.5">
               Misses
             </p>
-            <ul className="space-y-3">
-              {feedback.mistakes.map((m, i) => (
-                <li key={`${m.question}-${i}`} className="text-sm leading-snug space-y-1">
-                  <p className="font-semibold text-foreground">{m.question}</p>
-                  {m.whatHappened && (
-                    <p className="text-muted-foreground">{m.whatHappened}</p>
-                  )}
+            <ul className="space-y-2">
+              {mistakes.map((m, i) => (
+                <li key={`${m.question}-${i}`} className="text-sm leading-snug space-y-0.5">
+                  <p className="font-semibold text-foreground line-clamp-1">{m.question}</p>
                   {m.howToImprove && (
-                    <p className="text-foreground/80">{m.howToImprove}</p>
+                    <p className="text-muted-foreground text-xs line-clamp-2">{m.howToImprove}</p>
                   )}
                 </li>
               ))}
@@ -44,33 +56,33 @@ export function AttemptFeedbackCard({ feedback }: { feedback: AttemptFeedbackPay
           </div>
         )}
 
-        {feedback.strengths.length > 0 && (
+        {strengths.length > 0 && (
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-growth-green mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-growth-green mb-1.5">
               What went well
             </p>
-            <ul className="space-y-1.5">
-              {feedback.strengths.map((item) => (
-                <li key={item} className="text-sm text-foreground/80 leading-snug flex gap-2">
-                  <ListChecks className="w-4 h-4 shrink-0 mt-0.5 text-growth-green" />
-                  <span>{item}</span>
+            <ul className="space-y-1">
+              {strengths.map((item) => (
+                <li key={item} className="text-xs text-foreground/80 leading-snug flex gap-2">
+                  <ListChecks className="w-3.5 h-3.5 shrink-0 mt-0.5 text-growth-green" />
+                  <span className="line-clamp-2">{item}</span>
                 </li>
               ))}
             </ul>
           </div>
         )}
 
-        {feedback.nextSteps.length > 0 && (
+        {nextSteps.length > 0 && (
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-trust-blue mb-2 flex items-center gap-1.5">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-trust-blue mb-1.5 flex items-center gap-1.5">
               <Lightbulb className="w-3.5 h-3.5" />
               Next time
             </p>
-            <ul className="space-y-1.5">
-              {feedback.nextSteps.map((item) => (
-                <li key={item} className="text-sm text-foreground/80 leading-snug flex gap-2">
-                  <ListChecks className="w-4 h-4 shrink-0 mt-0.5 text-trust-blue" />
-                  <span>{item}</span>
+            <ul className="space-y-1">
+              {nextSteps.map((item) => (
+                <li key={item} className="text-xs text-foreground/80 leading-snug flex gap-2">
+                  <ListChecks className="w-3.5 h-3.5 shrink-0 mt-0.5 text-trust-blue" />
+                  <span className="line-clamp-2">{item}</span>
                 </li>
               ))}
             </ul>

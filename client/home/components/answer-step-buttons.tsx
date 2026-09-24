@@ -1,6 +1,7 @@
 import { ArrowRight, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SESSION_THEMES, type SessionDomainKey } from "./session-ui-styles";
 
 /** Writing: require this many submits before Skip is offered on a failed item. */
 export const WRITING_ATTEMPTS_BEFORE_SKIP = 2;
@@ -16,6 +17,7 @@ export function AnswerStepButtons({
   onRetry,
   layout = "stack",
   allowSkip = true,
+  domain,
 }: {
   loading?: boolean;
   passed: boolean;
@@ -25,19 +27,23 @@ export function AnswerStepButtons({
   layout?: "stack" | "row";
   /** When false, student must try again — no skip (writing early attempts). */
   allowSkip?: boolean;
+  domain?: SessionDomainKey;
 }) {
   if (loading) return null;
 
   const nextLabel = isLast ? "Finish" : "Next";
+  const primaryBtn = domain ? SESSION_THEMES[domain].primaryBtn : "btn-brand";
 
   if (passed) {
     return (
       <div className={cn(layout === "row" ? "flex justify-end" : "flex flex-col")}>
         <Button
           onClick={onAdvance}
+          variant="ghost"
           size={layout === "row" ? "sm" : "default"}
           className={cn(
-            "rounded-lg font-medium text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600",
+            "rounded-xl font-semibold border-0",
+            primaryBtn,
             layout === "row" ? "px-4 h-9" : "w-full h-10",
           )}
         >
@@ -52,9 +58,11 @@ export function AnswerStepButtons({
     <div className={cn(layout === "row" ? "flex gap-2 justify-end" : "flex flex-col gap-2")}>
       <Button
         onClick={onRetry}
+        variant="ghost"
         size={layout === "row" ? "sm" : "default"}
         className={cn(
-          "rounded-lg font-medium text-white bg-slate-900 hover:bg-slate-800 dark:bg-sky-600 dark:hover:bg-sky-500",
+          "rounded-xl font-semibold border-0",
+          primaryBtn,
           allowSkip ? (layout === "row" ? "px-4 h-9" : "w-full h-10") : "w-full h-10",
         )}
       >

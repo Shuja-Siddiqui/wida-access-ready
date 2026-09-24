@@ -11,6 +11,8 @@ import {
 import {
   useGetBillingConfig,
   getGetBillingConfigQueryKey,
+  useGetBillingPlans,
+  getGetBillingPlansQueryKey,
   useCreateCheckoutIntent,
   useListPaymentMethods,
   getListPaymentMethodsQueryKey,
@@ -24,10 +26,12 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { PageContainer } from "@/components/page-container";
 import { LoadingScreen, PageLoader } from "@/components/loading-screen";
-import { Loader2, Lock, ArrowLeft, CreditCard, Plus, Check } from "lucide-react";
+import { Loader2, Lock, Plus, Check, Building2, User } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { BillingTrustFooter } from "@/billing/billing-shared";
 
 // Maps the app's hot-pink theme tokens into Stripe Elements' `appearance` API.
 function hsl(triple: string): string {
@@ -55,27 +59,25 @@ function useStripeAppearance(): Appearance {
         spacingUnit: "4px",
       },
       rules: {
-        ".Input": { 
-          border: `3px solid ${hsl(get("--foreground"))}`, 
-          boxShadow: `3px 3px 0 0 ${hsl(get("--foreground"))}`,
+        ".Input": {
+          border: `1px solid ${hsl(get("--border"))}`,
+          boxShadow: "none",
         },
         ".Input:focus": {
-          border: `3px solid ${hsl(get("--primary"))}`,
-          boxShadow: `3px 3px 0 0 ${hsl(get("--primary"))}`,
+          border: `1px solid ${hsl(get("--primary"))}`,
+          boxShadow: `0 0 0 3px ${hsl(get("--primary"))} / 0.15`,
         },
-        ".Label": { 
-          fontWeight: "900",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          fontSize: "0.85rem",
+        ".Label": {
+          fontWeight: "700",
+          fontSize: "0.875rem",
         },
-        ".Tab": { 
-          border: `3px solid ${hsl(get("--foreground"))}`,
-          boxShadow: `3px 3px 0 0 ${hsl(get("--foreground"))}`,
+        ".Tab": {
+          border: `1px solid ${hsl(get("--border"))}`,
+          boxShadow: "none",
         },
         ".Tab--selected": {
-          border: `3px solid ${hsl(get("--primary"))}`,
-          boxShadow: `3px 3px 0 0 ${hsl(get("--primary"))}`,
+          border: `1px solid ${hsl(get("--primary"))}`,
+          boxShadow: "none",
         },
       },
     });
@@ -121,31 +123,33 @@ function SavedCardSelector({
             type="button"
             onClick={() => onSelect(card.id)}
             className={cn(
-              "w-full flex items-center gap-4 px-5 py-4 rounded-xl border-4 transition-all text-left group",
+              "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all text-left group",
               active
-                ? "border-primary bg-primary/10 shadow-[4px_4px_0_0_hsl(var(--primary))]  -translate-y-1"
-                : "border-border/40 bg-card shadow-sm hover: hover:-translate-y-1 hover:shadow-sm"
+                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
+                : "border-border/50 bg-card hover:border-border hover:bg-muted/20",
             )}
           >
-            <div className="w-14 h-10 rounded-lg border border-border/40 bg-foreground text-background flex items-center justify-center text-xs font-black flex-shrink-0">
+            <div className="w-12 h-8 rounded-md border border-border/50 bg-foreground text-background flex items-center justify-center text-[10px] font-bold shrink-0">
               {brandLabel(card.brand)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-black text-lg text-foreground tracking-tight">
-                •••• •••• •••• {card.last4}
+              <p className="font-semibold text-foreground tracking-tight">
+                Ending in {card.last4}
               </p>
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+              <p className="text-sm text-muted-foreground">
                 Expires {String(card.expMonth).padStart(2, "0")}/{card.expYear}
                 {card.isDefault && (
-                  <span className="ml-3 text-primary font-black px-2 py-0.5 border border-primary rounded bg-primary/10">DEFAULT</span>
+                  <span className="ml-2 text-xs font-semibold text-primary">Default</span>
                 )}
               </p>
             </div>
-            <div className={cn(
-              "w-8 h-8 rounded-full border-4 flex items-center justify-center transition-colors",
-              active ? "border-primary bg-primary" : "border-muted-foreground bg-card group-hover:border-border/40"
-            )}>
-              {active && <Check className="w-4 h-4 text-primary-foreground" strokeWidth={4} />}
+            <div
+              className={cn(
+                "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                active ? "border-primary bg-primary" : "border-muted-foreground/40 bg-background",
+              )}
+            >
+              {active && <Check className="w-3 h-3 text-primary-foreground" strokeWidth={3} />}
             </div>
           </motion.button>
         );
@@ -159,23 +163,25 @@ function SavedCardSelector({
         type="button"
         onClick={() => onSelect(null)}
         className={cn(
-          "w-full flex items-center gap-4 px-5 py-4 rounded-xl border-4 transition-all text-left group",
+          "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all text-left group",
           selectedId === null
-            ? "border-primary bg-primary/10 shadow-[4px_4px_0_0_hsl(var(--primary))]  -translate-y-1"
-            : "border-border/40 bg-card shadow-sm hover: hover:-translate-y-1 hover:shadow-sm"
+            ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
+            : "border-border/50 bg-card hover:border-border hover:bg-muted/20",
         )}
       >
-        <div className="w-14 h-10 rounded-lg border border-border/40 bg-muted flex items-center justify-center flex-shrink-0">
-          <Plus className="w-6 h-6 text-foreground" strokeWidth={3} />
+        <div className="w-12 h-8 rounded-md border border-border/50 bg-muted flex items-center justify-center shrink-0">
+          <Plus className="w-4 h-4 text-foreground" strokeWidth={2.5} />
         </div>
         <div className="flex-1">
-          <p className="font-black text-lg text-foreground tracking-tight uppercase">Use a new card</p>
+          <p className="font-semibold text-foreground">Use a different card</p>
         </div>
-        <div className={cn(
-          "w-8 h-8 rounded-full border-4 flex items-center justify-center transition-colors",
-          selectedId === null ? "border-primary bg-primary" : "border-muted-foreground bg-card group-hover:border-border/40"
-        )}>
-          {selectedId === null && <Check className="w-4 h-4 text-primary-foreground" strokeWidth={4} />}
+        <div
+          className={cn(
+            "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+            selectedId === null ? "border-primary bg-primary" : "border-muted-foreground/40 bg-background",
+          )}
+        >
+          {selectedId === null && <Check className="w-3 h-3 text-primary-foreground" strokeWidth={3} />}
         </div>
       </motion.button>
     </div>
@@ -222,29 +228,29 @@ function NewCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       onSubmit={handleSubmit}
-      className="space-y-8 bg-card border border-border/40 p-6 rounded-2xl shadow-sm mt-6"
+      className="space-y-6 bg-card border border-border/50 p-6 rounded-2xl shadow-sm"
     >
-      <PaymentElement className="min-h-[250px]" />
-      <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-foreground bg-muted p-3 rounded-xl border border-border/40">
-        <Lock className="w-5 h-5 flex-shrink-0" strokeWidth={3} />
-        Secure checkout via Stripe
-      </div>
-      <div className="flex gap-4">
-        <button 
-          type="button" 
-          onClick={onCancel} 
-          disabled={submitting} 
-          className="flex-1 font-black uppercase tracking-wider bg-card border border-border/40 py-4 rounded-xl shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all disabled:opacity-50 disabled:pointer-events-none"
+      <PaymentElement className="min-h-[220px]" />
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Lock className="w-4 h-4 shrink-0" strokeWidth={2.25} />
+        Payments are secured by Stripe. Your card details are encrypted.
+      </p>
+      <div className="flex flex-col-reverse sm:flex-row gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={submitting}
+          className="flex-1 h-11 font-semibold bg-card border border-border/50 rounded-xl hover:bg-muted/40 transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!stripe || !elements || submitting}
-          className="flex-1 flex items-center justify-center bg-primary text-primary-foreground font-black uppercase tracking-wider border border-border/40 py-4 rounded-xl shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all disabled:opacity-50 disabled:pointer-events-none"
+          className="flex-1 h-11 flex items-center justify-center btn-brand rounded-xl font-semibold border-0 disabled:opacity-50"
         >
-          {submitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" strokeWidth={3} /> : null}
-          Subscribe Now
+          {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+          Complete subscription
         </button>
       </div>
     </motion.form>
@@ -378,44 +384,54 @@ export default function Checkout() {
     }
   };
 
+  const { data: plans } = useGetBillingPlans({
+    query: { queryKey: getGetBillingPlansQueryKey(), staleTime: 60_000, enabled: ready },
+  });
+
+  const selectedPlan = plans?.find((p) => p.planId === planId);
+  const PlanIcon = planId === "organization" ? Building2 : User;
+
   if (!ready || (!studentId && !teacherId) || savedLoading) {
     return <LoadingScreen />;
   }
 
   return (
-    <PageContainer maxWidth="max-w-2xl" className="space-y-10 py-12">
-      {/* Back button */}
-      <motion.button
-        initial={{ opacity: 0, x: -12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-        onClick={() => setLocation("/billing")}
-        className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-foreground hover:text-primary transition-colors group w-fit"
-      >
-        <div className="w-8 h-8 rounded-full border border-border/40 bg-card group-hover:border-primary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-          <ArrowLeft className="w-4 h-4" strokeWidth={3} />
-        </div>
-        Back to Billing
-      </motion.button>
+    <PageContainer maxWidth="max-w-2xl" className="space-y-8">
+      <BackButton to="/billing" label="Back to billing" />
 
-      {/* Checkout header */}
+      <header className="space-y-2 border-b border-border/40 pb-6">
+        <p className="heading-eyebrow">Checkout</p>
+        <h1 className="heading-page text-3xl">Complete your subscription</h1>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Review your plan, then confirm payment. You can manage billing anytime from your account.
+        </p>
+      </header>
+
       <motion.div
-        initial={{ opacity: 0, y: 18 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.38, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
-        className="space-y-3 bg-energy-orange/10 border border-border/40 p-8 rounded-2xl shadow-sm"
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="rounded-2xl border border-border/50 bg-card p-5 shadow-sm"
       >
-        <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter uppercase">Complete Checkout</h1>
-        {savedCards.length > 0 ? (
-          <p className="text-lg font-bold text-foreground flex items-center gap-2">
-            <CreditCard className="w-5 h-5" strokeWidth={3} />
-            You have {savedCards.length} saved card{savedCards.length > 1 ? "s" : ""}.
-          </p>
-        ) : (
-          <p className="text-lg font-bold text-foreground">
-            Enter your payment details below to get started.
-          </p>
-        )}
+        <div className="flex items-start gap-4">
+          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <PlanIcon className="w-5 h-5 text-primary" strokeWidth={2.25} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              {planId === "organization" ? "Organization plan" : "Personal plan"}
+            </p>
+            {planId === "organization" && seatCount != null && (
+              <p className="text-sm text-muted-foreground mt-0.5">{seatCount} seat{seatCount === 1 ? "" : "s"}</p>
+            )}
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-xl font-black tabular-nums text-primary">
+              {selectedPlan?.displayPrice ?? "—"}
+            </p>
+            <p className="text-xs text-muted-foreground">{selectedPlan?.displayPeriod ?? ""}</p>
+          </div>
+        </div>
       </motion.div>
 
       <AnimatePresence mode="wait">
@@ -426,10 +442,11 @@ export default function Checkout() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col items-center justify-center gap-6 py-24 bg-card border border-border/40 rounded-2xl shadow-sm"
+            className="flex flex-col items-center justify-center gap-5 py-20 bg-card border border-border/50 rounded-2xl shadow-sm"
           >
             <PageLoader />
-            <p className="text-xl font-black uppercase tracking-wider text-foreground">Finalizing your subscription</p>
+            <p className="text-base font-semibold text-foreground">Activating your subscription</p>
+            <p className="text-sm text-muted-foreground">This usually takes a few seconds.</p>
           </motion.div>
         ) : (
           <motion.div
@@ -443,9 +460,7 @@ export default function Checkout() {
             {/* Card selector — shown when there are saved cards */}
             {savedCards.length > 0 && (
               <div className="space-y-4">
-                <h2 className="text-xl font-black uppercase tracking-widest text-foreground">
-                  Payment Method
-                </h2>
+                <h2 className="heading-section text-base">Payment method</h2>
                 <SavedCardSelector
                   cards={savedCards}
                   selectedId={resolvedSelectedId}
@@ -461,28 +476,28 @@ export default function Checkout() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                 onSubmit={(e) => void handleSavedCardSubmit(e)}
-                className="space-y-6 bg-card border border-border/40 p-6 rounded-2xl shadow-sm mt-6"
+                className="space-y-5 bg-card border border-border/50 p-6 rounded-2xl shadow-sm"
               >
-                <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-foreground bg-muted p-3 rounded-xl border border-border/40">
-                  <Lock className="w-5 h-5 flex-shrink-0" strokeWidth={3} />
-                  Secure checkout via Stripe
-                </div>
-                <div className="flex gap-4">
-                  <button 
-                    type="button" 
-                    onClick={() => setLocation("/billing")} 
-                    disabled={savedCardSubmitting} 
-                    className="flex-1 font-black uppercase tracking-wider bg-card border border-border/40 py-4 rounded-xl shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all disabled:opacity-50 disabled:pointer-events-none"
+                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Lock className="w-4 h-4 shrink-0" strokeWidth={2.25} />
+                  Charged securely through Stripe.
+                </p>
+                <div className="flex flex-col-reverse sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setLocation("/billing")}
+                    disabled={savedCardSubmitting}
+                    className="flex-1 h-11 font-semibold bg-card border border-border/50 rounded-xl hover:bg-muted/40 transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={savedCardSubmitting}
-                    className="flex-1 flex items-center justify-center bg-primary text-primary-foreground font-black uppercase tracking-wider border border-border/40 py-4 rounded-xl shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all disabled:opacity-50 disabled:pointer-events-none"
+                    className="flex-1 h-11 flex items-center justify-center btn-brand rounded-xl font-semibold border-0 disabled:opacity-50"
                   >
-                    {savedCardSubmitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" strokeWidth={3} /> : null}
-                    Subscribe Now
+                    {savedCardSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Complete subscription
                   </button>
                 </div>
               </motion.form>
@@ -499,7 +514,7 @@ export default function Checkout() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="flex items-center justify-center py-24 bg-card border border-border/40 rounded-2xl shadow-sm"
+                  className="flex items-center justify-center py-20 bg-card border border-border/50 rounded-2xl shadow-sm"
                 >
                   <PageLoader />
                 </motion.div>
@@ -508,6 +523,8 @@ export default function Checkout() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <BillingTrustFooter />
     </PageContainer>
   );
 }

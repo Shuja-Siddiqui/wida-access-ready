@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useViewportPageLayout } from "@/components/app-layout";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import {
@@ -116,6 +117,8 @@ const QUESTIONS: AnyQuestion[] = [
 type Screen = "session" | "complete";
 
 export default function ListeningDemo() {
+  useViewportPageLayout();
+
   const [, setLocation] = useLocation();
   const [screen, setScreen] = useState<Screen>("session");
   const [qIdx, setQIdx] = useState(0);
@@ -168,7 +171,7 @@ export default function ListeningDemo() {
   if (screen === "complete") {
     const pct = Math.round((score / QUESTIONS.length) * 100);
     return (
-      <div className="min-h-[calc(100vh-5rem)] bg-background flex flex-col items-center justify-center p-6 text-center">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-6 text-center overflow-y-auto themed-scroll">
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm space-y-5">
           <div className="flex justify-center">
             {pct >= 80
@@ -206,10 +209,9 @@ export default function ListeningDemo() {
 
   // ── SESSION SCREEN ────────────────────────────────────────────────────────
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-background flex flex-col">
-      {/* Sticky header */}
-      <div className="sticky top-0 z-30 bg-card/90 backdrop-blur-md border-b border-border shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+    <div className="h-full min-h-0 flex flex-col">
+      <div className="shrink-0 z-30 bg-card/90 backdrop-blur-md border-b border-border shadow-sm">
+        <div className="max-w-2xl mx-auto py-3 flex items-center gap-3">
           <div className="w-7 h-7 rounded-lg bg-trust-blue/10 flex items-center justify-center flex-shrink-0">
             <Headphones className="w-4 h-4 text-trust-blue" />
           </div>

@@ -51,6 +51,8 @@ export interface SessionQuestion {
 
 export interface SessionData {
   sessionId: string;
+  /** WIDA key language use for this session (Narrate, Inform, Explain, Argue). */
+  keyUse?: string | null;
   /** Top-level library photo from session start (also copied into content.data.illustrationUrl). */
   anchorImage?: { url: string; tags?: string[] } | null;
   content: {
@@ -75,6 +77,7 @@ export interface SessionData {
       canDoDescriptor?: string;
       responseLength?: string;
       minSentences?: number;
+      keyUse?: string;
       questions?: SessionQuestion[];
     };
   };

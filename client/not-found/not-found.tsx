@@ -8,7 +8,7 @@ export default function NotFound() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] w-full flex items-center justify-center bg-background px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 relative overflow-hidden">
+    <div className="min-h-full w-full flex items-center justify-center py-3 sm:py-4 lg:py-5 relative overflow-hidden">
       {/* Subtle background element */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-trust-blue/5 rounded-full blur-[120px] pointer-events-none" />
 

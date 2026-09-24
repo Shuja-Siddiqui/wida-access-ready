@@ -15,7 +15,6 @@ import {
   TrendingUp,
   ShieldCheck,
   Sparkles,
-  GraduationCap,
   Check,
   User,
   Building2,
@@ -26,6 +25,7 @@ import {
   PenLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppLogo } from "@/components/app-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ContactForm } from "@/contact/contact-form";
 import { useGetBillingPlans, getGetBillingPlansQueryKey, type Plan } from "@/api-generated";
@@ -134,12 +134,7 @@ export default function Landing() {
       {/* ── Nav ──────────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/40">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-brand-gradient shadow-sm flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-black text-lg tracking-tight">ACCESS Ready</span>
-          </div>
+          <AppLogo href="/" imageClassName="h-9 sm:h-10" />
           <nav className="flex items-center gap-1">
             {[
               { label: "Features", id: "features" },
@@ -190,7 +185,7 @@ export default function Landing() {
           </h1>
 
           <p className="text-lg text-muted-foreground font-medium max-w-2xl mx-auto mt-8 leading-relaxed">
-            ACCESS Ready gives every student a personalized daily practice plan
+            goELprep gives every student a personalized daily practice plan
             built around their state's exit test — across listening, speaking,
             reading, and writing.
           </p>
@@ -593,12 +588,7 @@ export default function Landing() {
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer className="border-t border-border/40 bg-card py-12">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-brand-gradient shadow-sm flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-sm tracking-tight text-foreground/80">ACCESS Ready</span>
-          </div>
+          <AppLogo href="/" imageClassName="h-8" />
           <p className="text-sm font-medium text-muted-foreground">
             Built for ELL students and their educators.
           </p>

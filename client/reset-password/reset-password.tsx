@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { GraduationCap, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { AppInput } from "@/components/app-input";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -70,9 +71,7 @@ export default function ResetPassword() {
         className="w-full max-w-md"
       >
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-primary border border-border/40 flex items-center justify-center mb-6">
-            <GraduationCap className="w-8 h-8 text-primary-foreground" />
-          </div>
+          <AppLogo href="/" imageClassName="h-14" />
         </div>
 
         <div className="bg-card border border-border/40 shadow-sm rounded-2xl p-8">

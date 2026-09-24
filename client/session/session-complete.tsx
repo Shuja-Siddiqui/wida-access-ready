@@ -3,12 +3,15 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Flame, ArrowUpCircle, Star, BookOpen } from "lucide-react";
+import { useViewportPageLayout } from "@/components/app-layout";
 import { LoadingScreen } from "@/components/loading-screen";
 import { AttemptFeedbackCard } from "@/home/components/attempt-feedback-card";
 import confetti from "canvas-confetti";
 import { getThemeConfettiColors } from "@/lib/theme-colors";
 
 export default function SessionComplete() {
+  useViewportPageLayout();
+
   const [, setLocation] = useLocation();
   const [result, setResult] = useState<any>(null);
 
@@ -57,7 +60,7 @@ export default function SessionComplete() {
   if (!result) return <LoadingScreen />;
 
   return (
-    <div className={`min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 ${result.domainAtExit ? 'bg-streak-gold/5' : 'bg-background'}`}>
+    <div className={`flex-1 min-h-0 flex flex-col items-center justify-center py-3 sm:py-4 lg:py-5 overflow-y-auto themed-scroll ${result.domainAtExit ? "bg-streak-gold/5" : ""}`}>
       
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}

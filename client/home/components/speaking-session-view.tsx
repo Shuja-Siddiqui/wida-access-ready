@@ -31,7 +31,6 @@ interface SpeakingSessionViewProps {
   speakFeedback: (text: string) => void;
   onStopSpeaking: () => void;
   speaking: boolean;
-  ttsLoading: boolean;
   onContinueProduction: () => void;
   onRetryProduction: () => void;
   qIdx: number;
@@ -50,14 +49,12 @@ function SpeakingPromptCard({
   speakPassage,
   onStopSpeaking,
   speaking,
-  ttsLoading,
 }: {
   data: Record<string, unknown>;
   theme: SessionTheme;
   speakPassage: (text: string) => void;
   onStopSpeaking: () => void;
   speaking: boolean;
-  ttsLoading: boolean;
 }) {
   const spoken = promptSpeechText(data);
 
@@ -76,7 +73,6 @@ function SpeakingPromptCard({
           onListen={() => speakPassage(spoken)}
           onStop={onStopSpeaking}
           speaking={speaking}
-          loading={ttsLoading}
           domain="speaking"
           fullWidth
         />
@@ -104,7 +100,6 @@ export function SpeakingSessionView({
   speakFeedback,
   onStopSpeaking,
   speaking,
-  ttsLoading,
   onContinueProduction,
   onRetryProduction,
   qIdx,
@@ -126,7 +121,6 @@ export function SpeakingSessionView({
             speakPassage={speakPassage}
             onStopSpeaking={onStopSpeaking}
             speaking={speaking}
-            ttsLoading={ttsLoading}
           />
         ) : undefined
       }

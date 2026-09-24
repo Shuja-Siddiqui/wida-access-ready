@@ -164,7 +164,7 @@ export function downloadImportTemplate(showOrgColumns: boolean) {
   ).map((w) => ({ wch: w }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Students");
-  XLSX.writeFile(wb, "ACCESS_Ready_Student_Import_Template.xlsx");
+  XLSX.writeFile(wb, "goELprep_Student_Import_Template.xlsx");
 }
 
 type Step = "upload" | "preview" | "importing" | "results";
@@ -258,7 +258,7 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
       </div>
 
       <div className="space-y-1">
-        <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Import Students</h1>
+        <h1 className="heading-page text-3xl">Import Students</h1>
         <p className="text-sm text-muted-foreground font-medium">Upload a spreadsheet to add multiple students at once.</p>
       </div>
 

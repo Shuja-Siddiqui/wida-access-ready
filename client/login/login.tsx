@@ -162,7 +162,7 @@ export default function Login() {
           >
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-black tracking-tight text-foreground">Welcome back</h1>
+              <h1 className="heading-page text-3xl">Welcome back</h1>
               <p className="text-muted-foreground font-medium mt-1.5">Sign in to your account to continue.</p>
             </div>
 
@@ -281,7 +281,7 @@ export default function Login() {
             )}
 
             <p className="text-center text-sm text-muted-foreground font-medium mt-8">
-              New to ACCESS Ready?{" "}
+              New to goELprep?{" "}
               <button
                 onClick={() => setLocation("/signup")}
                 className="font-bold text-primary hover:underline"

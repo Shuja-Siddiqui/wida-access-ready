@@ -100,7 +100,7 @@ export default function DistrictSchools() {
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to dashboard
             </button>
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Schools</h1>
+            <h1 className="heading-page text-3xl">Schools</h1>
             <p className="text-sm font-medium text-muted-foreground">
               {district?.name ?? "My District"} · Manage schools and principals
             </p>

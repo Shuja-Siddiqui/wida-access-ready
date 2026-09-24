@@ -46,6 +46,7 @@
   --color-deep-night: hsl(var(--brand-deep-night));
   --color-quiet-gray: hsl(220 12% 44%);
   --color-cloud-white: hsl(210 40% 98%);
+  --color-heading-secondary: hsl(var(--heading-secondary));
 
   --font-sans: "Nunito", sans-serif;
   --font-serif: Georgia, serif;
@@ -79,10 +80,35 @@
     cursor: not-allowed;
   }
 
+  html {
+    @apply themed-scroll;
+  }
+
+  /* App shell pages scroll inside #app-main, not the document. */
+  html:has([data-app-shell="viewport"]) {
+    height: 100%;
+    overflow: hidden;
+    scrollbar-gutter: auto;
+  }
+
+  html:has([data-app-shell="viewport"]) body {
+    height: 100%;
+    overflow: hidden;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
     background-image: radial-gradient(125% 120% at 50% -10%, hsl(var(--primary) / 0.08) 0%, transparent 45%);
     background-attachment: fixed;
+  }
+
+  /* Softer top glow in goELprep dark — keeps UI blue without washing into logo navy. */
+  [data-theme="goelprep-dark"] body {
+    background-image: radial-gradient(
+      125% 120% at 50% -10%,
+      hsl(var(--primary) / 0.05) 0%,
+      transparent 42%
+    );
   }
 }
 
@@ -134,6 +160,19 @@
     color: transparent;
   }
 
+  /* Page title = theme primary (blue goELprep / pink Blossom). Section titles = soft off-white in dark. */
+  .heading-page {
+    @apply font-black tracking-tight text-primary;
+  }
+
+  .heading-section {
+    @apply font-bold tracking-tight text-heading-secondary;
+  }
+
+  .heading-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-widest text-primary/80;
+  }
+
   .bg-brand-spectrum {
     background: linear-gradient(
       120deg,
@@ -143,89 +182,48 @@
     );
   }
 
-  /* Themed scrollbars for session reference / writing panels */
+  /*
+   * Global themed scrollbars — follow --primary / --muted from theme.css
+   * (goELprep light = blue, Blossom = pink, etc.)
+   */
+  .themed-scroll,
   .session-scroll {
     scrollbar-gutter: stable;
     scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.55) hsl(var(--muted) / 0.85);
   }
 
-  .session-scroll-writing {
-    scrollbar-color: hsl(262 55% 58% / 0.55) hsl(262 25% 14% / 0.35);
-  }
-
-  .session-scroll-writing::-webkit-scrollbar {
+  .themed-scroll::-webkit-scrollbar,
+  .session-scroll::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
-  .session-scroll-writing::-webkit-scrollbar-track {
+  .themed-scroll::-webkit-scrollbar-track,
+  .session-scroll::-webkit-scrollbar-track {
     margin: 4px 0;
-    background: hsl(262 22% 12% / 0.45);
+    background: hsl(var(--muted) / 0.65);
     border-radius: 9999px;
   }
 
-  .session-scroll-writing::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, hsl(262 58% 62%), hsl(280 52% 54%));
+  .themed-scroll::-webkit-scrollbar-thumb,
+  .session-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.85),
+      hsl(var(--primary-hover) / 0.9)
+    );
     border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: padding-box;
   }
 
-  .session-scroll-writing::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, hsl(262 62% 68%), hsl(280 58% 60%));
-  }
-
-  .session-scroll-listening {
-    scrollbar-color: hsl(199 75% 52% / 0.5) hsl(199 30% 14% / 0.35);
-  }
-
-  .session-scroll-listening::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .session-scroll-listening::-webkit-scrollbar-track {
-    background: hsl(199 25% 12% / 0.4);
-    border-radius: 9999px;
-  }
-
-  .session-scroll-listening::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, hsl(199 80% 55%), hsl(210 70% 48%));
-    border-radius: 9999px;
-  }
-
-  .session-scroll-reading {
-    scrollbar-color: hsl(38 85% 52% / 0.5) hsl(38 25% 14% / 0.35);
-  }
-
-  .session-scroll-reading::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .session-scroll-reading::-webkit-scrollbar-track {
-    background: hsl(38 22% 12% / 0.4);
-    border-radius: 9999px;
-  }
-
-  .session-scroll-reading::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, hsl(38 88% 56%), hsl(28 75% 48%));
-    border-radius: 9999px;
-  }
-
-  .session-scroll-speaking {
-    scrollbar-color: hsl(152 55% 45% / 0.5) hsl(152 25% 14% / 0.35);
-  }
-
-  .session-scroll-speaking::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .session-scroll-speaking::-webkit-scrollbar-track {
-    background: hsl(152 22% 12% / 0.4);
-    border-radius: 9999px;
-  }
-
-  .session-scroll-speaking::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, hsl(152 58% 48%), hsl(165 50% 40%));
-    border-radius: 9999px;
+  .themed-scroll::-webkit-scrollbar-thumb:hover,
+  .session-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary-hover) / 0.95),
+      hsl(var(--primary) / 0.95)
+    );
   }
 }

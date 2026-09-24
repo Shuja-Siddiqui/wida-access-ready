@@ -64,7 +64,7 @@ export default function TeacherDashboard() {
     <PageContainer className="space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
           <div className="space-y-1">
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Dashboard</h1>
+            <h1 className="heading-page text-3xl">Dashboard</h1>
             <p className="text-sm font-medium text-muted-foreground">
               Track every learner's progress toward their exit goal.
             </p>

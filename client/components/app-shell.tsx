@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavConfig } from "@/components/nav-config";
 import { BreadcrumbTrailProvider } from "@/components/breadcrumbs";
+import { AppLayoutProvider, AppMain, useAppLayout } from "@/components/app-layout";
 import { Navbar } from "@/components/navbar";
 import { cn } from "@/lib/utils";
 
@@ -58,12 +59,13 @@ export function useShowBar() {
   return useContext(NavContext).showBar;
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+function AppShellFrame({ children }: { children: React.ReactNode }) {
   const { studentId, teacherId, ready } = useAuth();
   const [location] = useLocation();
   const [expanded, setExpanded] = useState(false);
   const canShowCapsule = useCanShowCapsule();
   const { navItems, handleLogout } = useNavConfig();
+  const { mode } = useAppLayout();
 
   const isAuthed = !!studentId || !!teacherId;
   const showBar = !HIDDEN_PATHS.has(location);
@@ -85,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <BreadcrumbTrailProvider>
+    <>
       {showCapsule && (
         <nav
           aria-label="Primary"
@@ -123,9 +125,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       )}
       <NavContext.Provider value={{ showNav, showCapsule, showBar }}>
-        {showBar && <Navbar />}
-        {children}
+        <div
+          className={cn(showBar ? "flex h-dvh flex-col overflow-hidden" : "min-h-dvh")}
+          data-app-shell={showBar ? "viewport" : "flow"}
+        >
+          {showBar && <Navbar />}
+          {showBar ? <AppMain mode={mode}>{children}</AppMain> : children}
+        </div>
       </NavContext.Provider>
-    </BreadcrumbTrailProvider>
+    </>
+  );
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AppLayoutProvider>
+      <BreadcrumbTrailProvider>
+        <AppShellFrame>{children}</AppShellFrame>
+      </BreadcrumbTrailProvider>
+    </AppLayoutProvider>
   );
 }

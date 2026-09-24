@@ -9,6 +9,7 @@
  */
 
 import { useState, useRef, useCallback } from "react";
+import { PageContainer } from "@/components/page-container";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Scan, ImageIcon, Loader2, AlertCircle } from "lucide-react";
 
@@ -170,8 +171,7 @@ export default function DetectPage() {
 
   return (
     <>
-      <div className="min-h-[calc(100vh-5rem)] bg-background">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <PageContainer maxWidth="max-w-2xl" className="space-y-6">
 
           {/* Header */}
           <div className="space-y-1">
@@ -362,8 +362,7 @@ export default function DetectPage() {
             )}
           </AnimatePresence>
 
-        </div>
-      </div>
+      </PageContainer>
     </>
   );
 }

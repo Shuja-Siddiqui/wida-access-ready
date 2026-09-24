@@ -1,11 +1,13 @@
 import { BookOpen, ChevronRight, Flame, Lock, PenLine, Sparkles, Star, Zap, Trophy } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { PageContainer } from "@/components/page-container";
 import { domainTierToKey } from "../home-types";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { DomainCharts, ListeningTracksPanel, type DomainProgress, type SessionPoint } from "./domain-charts";
 import { DOMAIN_CONFIG, domainLabel } from "../home-types";
+import { DashboardSuggestions, type PracticeSuggestion } from "./dashboard-suggestions";
 
 // ─── Mobile domain card ───────────────────────────────────────────────────────
 
@@ -72,9 +74,12 @@ interface HomeDashboardViewProps {
   nextRankXp:       number;
   domains:          DomainProgress[];
   nudgeMessage?:    string;
+  suggestions?:     PracticeSuggestion[];
+  speaking?:        boolean;
+  onSpeakSuggestion?: (text: string) => void;
+  onStopSpeaking?:  () => void;
   canPractice:      boolean;
   accessReason?:    string;
-  showCapsule:      boolean;
   onStartSession:   (domain: string) => void;
   onNavigateBilling: () => void;
   onDemoJump?:      (domain: string, level: number) => Promise<void>;
@@ -91,9 +96,12 @@ export function HomeDashboardView({
   nextRankXp,
   domains,
   nudgeMessage,
+  suggestions = [],
+  speaking = false,
+  onSpeakSuggestion,
+  onStopSpeaking,
   canPractice,
   accessReason,
-  showCapsule,
   onStartSession,
   onNavigateBilling,
   onDemoJump,
@@ -101,24 +109,18 @@ export function HomeDashboardView({
   const xpProgress = nextRankXp > 0 ? Math.min(100, (totalXp / nextRankXp) * 100) : 0;
 
   return (
-    <>
-      <div
-        className={cn(
-          "min-h-[calc(100vh-5rem)] bg-background px-4 sm:px-6 lg:pr-10 py-6 sm:py-10 pb-32",
-          showCapsule ? "md:pl-24 lg:pl-24" : "lg:pl-10",
-        )}
+    <PageContainer shellClassName="py-6 sm:py-10">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="space-y-10"
       >
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="max-w-[1440px] mx-auto space-y-10"
-        >
           {/* ── Header ─────────────────────────────────────────────────────── */}
           <header className="flex items-center justify-between">
             <div>
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Welcome Back</h2>
-              <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground leading-none">
+              <h2 className="heading-eyebrow mb-2">Welcome Back</h2>
+              <h1 className="heading-page text-4xl sm:text-5xl leading-none">
                 {studentName || "Student"}
               </h1>
             </div>
@@ -200,25 +202,14 @@ export function HomeDashboardView({
                 </div>
               </div>
 
-              {/* Nudge */}
-              {nudgeMessage && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 25 }}
-                  className="bg-card rounded-2xl shadow-sm border border-primary/30 p-6 flex items-start gap-4 relative overflow-hidden" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.05), transparent)" }}
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-                  </div>
-                  <div className="relative z-10">
-                     <div className="font-semibold text-xs uppercase tracking-widest text-muted-foreground mb-1.5">New Message</div>
-                     <div className="font-medium text-lg leading-tight text-foreground">
-                        {nudgeMessage}
-                     </div>
-                  </div>
-                </motion.div>
+              {(suggestions.length > 0 || nudgeMessage) && onSpeakSuggestion && onStopSpeaking && (
+                <DashboardSuggestions
+                  suggestions={suggestions}
+                  nudgeMessage={nudgeMessage}
+                  speaking={speaking}
+                  onSpeak={onSpeakSuggestion}
+                  onStopSpeaking={onStopSpeaking}
+                />
               )}
             </div>
 
@@ -357,8 +348,7 @@ export function HomeDashboardView({
               </div>
             </div>
           </div>
-        </motion.div>
-      </div>
-    </>
+      </motion.div>
+    </PageContainer>
   );
 }

@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from "react";
+import { useViewportPageLayout } from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -24,10 +25,6 @@ import {
   normalizeSessionDomain,
   type SessionTheme,
 } from "./session-ui-styles";
-
-interface SessionActiveViewProps {
-  showCapsule: boolean;
-}
 
 // â”€â”€ Answer-evaluation helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -106,7 +103,9 @@ function McOptions({
 
 // â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
+export function SessionActiveView() {
+  useViewportPageLayout();
+
   const {
     session, activeDomain, qIdx, questions, currentQ,
     showFeedback, selectedIdx, lastCorrect,
@@ -148,8 +147,7 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
   const isWriting      = type === "writing";
   const isSpeaking     = type === "speaking";
   const domainKey      = normalizeSessionDomain(type ?? activeDomain);
-  const useWideLayout  = isWriting || isSpeaking || hasVisual || hasPassage || hasAudio;
-  const layoutClass    = "w-full";
+  const layoutClass    = isWriting ? "w-full flex-1 min-h-0 flex flex-col" : "w-full";
 
   // â”€â”€ Sequence renderer (reading: sequence_order / listening: sequence_ordering) â”€â”€
   const SequenceRenderer = ({ items, correctOrder }: { items: string[]; correctOrder: number[] }) => {
@@ -441,22 +439,10 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
 
   return (
     <>
-      <div
-        className={cn(
-          "min-h-[calc(100vh-var(--nav-height))] bg-background flex flex-col",
-          showCapsule && "md:pl-14 lg:pl-14",
-        )}
-      >
+      <div className="flex flex-1 min-h-0 w-full flex-col">
         {!isWriting && (
-          <div className="sticky top-0 z-30 bg-background/90 backdrop-blur-md border-b border-border/50">
-            <div
-              className={cn(
-                "mx-auto py-3 flex items-center gap-2.5 sm:gap-3",
-                useWideLayout
-                  ? "max-w-[1680px] px-4 sm:px-8 lg:px-12"
-                  : "max-w-[1440px] px-4 sm:px-6 lg:px-10",
-              )}
-            >
+          <div className="shrink-0 z-30 bg-background/90 backdrop-blur-md border-b border-border/50">
+            <div className="py-3 flex items-center gap-2.5 sm:gap-3">
               <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", theme.iconWrap)}>
                 <DomainIcon className={cn("w-4 h-4", theme.icon)} />
               </div>
@@ -467,14 +453,7 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
                 </span>
               </div>
             </div>
-            <div
-              className={cn(
-                "mx-auto pb-3",
-                useWideLayout
-                  ? "max-w-[1680px] px-4 sm:px-8 lg:px-12"
-                  : "max-w-[1440px] px-4 sm:px-6 lg:px-10",
-              )}
-            >
+            <div className="pb-3">
               <div className="h-1 rounded-full bg-muted overflow-hidden">
                 <motion.div
                   className={cn("h-full rounded-full", theme.progress)}
@@ -490,11 +469,8 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
         {/* â”€â”€ Question area: full-width writing workspace; split grid for other domains â”€â”€ */}
         <div
           className={cn(
-            "flex-1 w-full mx-auto",
+            "flex flex-1 min-h-0 w-full flex-col",
             isWriting ? "py-1 sm:py-2" : "py-6",
-            useWideLayout
-              ? "max-w-[1680px] px-4 sm:px-8 lg:px-12"
-              : "max-w-[1440px] px-4 sm:px-6 lg:px-10",
           )}
         >
           <AnimatePresence mode="wait">
@@ -508,7 +484,10 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
             >
               {isWriting ? (
                 <WritingSessionView
-                  data={data}
+                  data={{
+                    ...data,
+                    keyUse: (data as { keyUse?: string }).keyUse ?? (session as { keyUse?: string }).keyUse,
+                  }}
                   theme={theme}
                   writingText={writingText}
                   setWritingText={setWritingText}
@@ -528,7 +507,6 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
                   speakFeedback={speakFeedback}
                   onStopSpeaking={onStopSpeaking}
                   speaking={speaking}
-                  ttsLoading={ttsLoading}
                   onContinueProduction={onContinueProduction}
                   onRetryProduction={onRetryProduction}
                   qIdx={qIdx}
@@ -565,7 +543,6 @@ export function SessionActiveView({ showCapsule }: SessionActiveViewProps) {
                   speakFeedback={speakFeedback}
                   onStopSpeaking={onStopSpeaking}
                   speaking={speaking}
-                  ttsLoading={ttsLoading}
                   onContinueProduction={onContinueProduction}
                   onRetryProduction={onRetryProduction}
                   qIdx={qIdx}

@@ -24,7 +24,7 @@ export function Navbar({ trail }: { trail?: Crumb[] } = {}) {
   const crumbs = trail ?? contextTrail;
 
   return (
-    <header className="sticky top-0 z-40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border/40 transition-colors duration-200">
+    <header className="shrink-0 z-40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border/40 transition-colors duration-200">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 h-14 flex items-center gap-3">
         <div className="flex items-center gap-2.5 sm:gap-4 min-w-0 flex-1">
           <AppLogo href={homePath as string} imageClassName="h-8 sm:h-9" className="shrink-0" />

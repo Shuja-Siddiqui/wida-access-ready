@@ -1,119 +1,141 @@
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
-import { Check, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface PlanCardProps {
-  icon: LucideIcon;
   name: string;
   displayPrice: string;
   displayPeriod: string;
   tagline: string;
   features: string[];
   isCurrent: boolean;
+  recommended?: boolean;
   locked?: boolean;
   lockedMessage?: string;
   footer?: ReactNode;
-  highlightColor?: string;
+  accentClass?: string;
 }
 
 export function PlanCard({
-  icon: Icon,
   name,
   displayPrice,
   displayPeriod,
   tagline,
   features,
   isCurrent,
+  recommended = false,
   locked = false,
   lockedMessage,
   footer,
-  highlightColor = "bg-primary",
+  accentClass = "from-primary to-primary-hover",
 }: PlanCardProps) {
+  const highlighted = !locked && (isCurrent || recommended);
+
   return (
-    <div
+    <article
       className={cn(
-        "rounded-2xl bg-card flex flex-col overflow-hidden transition-all duration-200",
-        locked
-          ? "opacity-60 shadow-sm border border-border/40"
-          : isCurrent
-            ? "shadow-lg border border-primary/30 ring-1 ring-primary/20"
-            : "shadow-sm border border-border/40 hover:shadow-md",
+        "group relative flex flex-col rounded-2xl border overflow-hidden transition-all duration-300",
+        locked && "border-border/40 bg-card/80 opacity-80",
+        highlighted && !locked && "border-primary/40 bg-card shadow-lg shadow-primary/10 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/15",
+        !locked && !highlighted && "border-border/50 bg-card shadow-sm hover:-translate-y-0.5 hover:shadow-md",
       )}
     >
-      {/* Accent top bar */}
+      {/* Header band */}
       <div
-        className={cn("h-1", isCurrent ? highlightColor : "bg-border/30")}
-      />
-
-      <div className="p-6 flex flex-col flex-1">
-        {/* Header row */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                "w-11 h-11 rounded-xl flex items-center justify-center",
-                isCurrent ? highlightColor : "bg-muted",
-              )}
-            >
-              <Icon
-                className={cn("w-5 h-5", isCurrent ? "text-white" : "text-foreground")}
-                strokeWidth={2.5}
-              />
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-foreground tracking-tight">{name}</h3>
-              <p className="text-xs font-medium text-muted-foreground mt-0.5">{tagline}</p>
-            </div>
+        className={cn(
+          "relative px-6 pt-6 pb-5 border-b border-border/30",
+          highlighted && !locked
+            ? cn("bg-gradient-to-br text-primary-foreground", accentClass)
+            : "bg-muted/25",
+        )}
+      >
+        {(recommended || isCurrent) && !locked && (
+          <div className="absolute top-4 right-4">
+            {isCurrent ? (
+              <Badge className="bg-white/20 text-white border-white/25 hover:bg-white/20 backdrop-blur-sm">
+                Current plan
+              </Badge>
+            ) : (
+              <Badge className="bg-white/20 text-white border-white/25 hover:bg-white/20 backdrop-blur-sm">
+                Recommended
+              </Badge>
+            )}
           </div>
-          {isCurrent && (
-            <span className="text-xs font-bold bg-growth-green/15 text-growth-green px-2.5 py-1 rounded-full flex-shrink-0">
-              Current
-            </span>
+        )}
+
+        <p
+          className={cn(
+            "text-xs font-semibold uppercase tracking-widest mb-2",
+            highlighted && !locked ? "text-white/75" : "text-primary/80",
           )}
+        >
+          {locked ? "Unavailable" : highlighted ? "Best fit" : "Plan option"}
+        </p>
+        <h3
+          className={cn(
+            "text-2xl font-black tracking-tight pr-28",
+            highlighted && !locked ? "text-white" : "heading-section",
+          )}
+        >
+          {name}
+        </h3>
+        <p
+          className={cn(
+            "text-sm mt-2 leading-relaxed max-w-[95%]",
+            highlighted && !locked ? "text-white/85" : "text-muted-foreground",
+          )}
+        >
+          {tagline}
+        </p>
+      </div>
+
+      <div className="flex flex-col flex-1 p-6">
+        {/* Price block */}
+        <div
+          className={cn(
+            "rounded-xl px-4 py-4 mb-6",
+            highlighted && !locked ? "bg-primary/8 border border-primary/15" : "bg-muted/35 border border-border/40",
+          )}
+        >
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-4xl font-black text-primary tabular-nums tracking-tight leading-none">
+              {displayPrice}
+            </span>
+            <span className="text-sm font-medium text-muted-foreground">{displayPeriod}</span>
+          </div>
         </div>
 
-        {/* Price */}
-        <div className="flex items-end gap-1.5 mb-6">
-          <span className="text-4xl font-black text-foreground tracking-tighter tabular-nums">
-            {displayPrice}
-          </span>
-          <span className="text-sm font-semibold text-muted-foreground mb-1.5">
-            {displayPeriod}
-          </span>
+        {/* Features — text only */}
+        <div className="flex-1 mb-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+            What is included
+          </p>
+          <ul className="space-y-2.5">
+            {features.map((feature) => (
+              <li
+                key={feature}
+                className="text-sm text-foreground/90 leading-snug pl-3 border-l-2 border-primary/25"
+              >
+                {feature}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-border/50 mb-5" />
-
-        {/* Feature list */}
-        <ul className="space-y-3 flex-1 mb-6">
-          {features.map((f) => (
-            <li key={f} className="flex items-start gap-2.5">
-              <div className="w-5 h-5 rounded-full bg-growth-green/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Check className="w-3 h-3 text-growth-green" strokeWidth={3} />
-              </div>
-              <span className="text-sm font-medium text-foreground leading-snug">{f}</span>
-            </li>
-          ))}
-        </ul>
-
-        {/* CTA */}
         <div className="mt-auto">
           {locked ? (
-            <div className="flex items-center justify-center gap-2 bg-muted rounded-xl px-4 py-3 text-sm font-semibold text-muted-foreground">
-              <Lock className="w-4 h-4 flex-shrink-0" />
+            <p className="rounded-xl border border-dashed border-border/60 bg-muted/30 px-4 py-3.5 text-sm font-medium text-muted-foreground text-center leading-relaxed">
               {lockedMessage}
-            </div>
+            </p>
           ) : isCurrent ? (
-            <div className="w-full text-center text-sm font-semibold text-muted-foreground py-3 bg-muted/60 rounded-xl">
-              Your current plan
-            </div>
+            <p className="rounded-xl bg-muted/45 px-4 py-3.5 text-center text-sm font-medium text-muted-foreground">
+              Included in your subscription
+            </p>
           ) : (
             footer
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

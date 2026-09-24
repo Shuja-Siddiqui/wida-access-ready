@@ -11,7 +11,6 @@ export function SessionAudioPlayer() {
   const {
     session,
     speaking,
-    ttsLoading,
     listenedOnce,
     speakPassage,
     onStopSpeaking,
@@ -19,7 +18,7 @@ export function SessionAudioPlayer() {
 
   const audioScript = session.content?.data?.audioScript ?? "";
   const handleListen = () => speakPassage(audioScript);
-  const audioActive = speaking || ttsLoading;
+  const audioActive = speaking;
 
   return (
     <div className={cn(SESSION_CARD, "p-4 sm:p-5 border-l-2 border-l-sky-500/40")}>
@@ -83,7 +82,6 @@ export function SessionAudioPlayer() {
         onListen={handleListen}
         onStop={onStopSpeaking}
         speaking={speaking}
-        loading={ttsLoading}
         domain="listening"
         fullWidth
       />

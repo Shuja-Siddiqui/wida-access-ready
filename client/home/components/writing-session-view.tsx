@@ -26,7 +26,6 @@ interface WritingSessionViewProps {
   speakFeedback: (text: string) => void;
   onStopSpeaking: () => void;
   speaking: boolean;
-  ttsLoading: boolean;
   onContinueProduction: () => void;
   onRetryProduction: () => void;
   qIdx: number;
@@ -48,7 +47,6 @@ function WritingTaskCard({
   speakWritingSession,
   onStopSpeaking,
   speaking,
-  ttsLoading,
 }: {
   data: Record<string, unknown>;
   theme: SessionTheme;
@@ -57,9 +55,9 @@ function WritingTaskCard({
   speakWritingSession: (data: Record<string, unknown>) => void;
   onStopSpeaking: () => void;
   speaking: boolean;
-  ttsLoading: boolean;
 }) {
   const passage = typeof data.passage === "string" ? data.passage.trim() : "";
+  const keyUse = typeof data.keyUse === "string" ? data.keyUse.trim() : "";
   const prompt = String(data.prompt ?? "");
   const hasSpeech = buildWritingSpeechSegments(data).length > 0;
   const wordBank = (data.wordBank ?? data.word_bank) as string[] | undefined;
@@ -68,9 +66,8 @@ function WritingTaskCard({
   return (
     <div
       className={cn(
-        "relative flex flex-col min-h-0 rounded-2xl border border-violet-500/20",
+        "relative flex flex-col shrink-0 rounded-2xl border border-violet-500/20",
         "bg-card/55 backdrop-blur-xl shadow-[0_8px_40px_-16px_rgba(139,92,246,0.45)]",
-        "max-h-[calc(100vh-var(--nav-height)-1rem)] sm:max-h-[calc(100vh-var(--nav-height)-1.25rem)]",
       )}
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/70 to-transparent pointer-events-none" />
@@ -82,79 +79,80 @@ function WritingTaskCard({
           </div>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-violet-400/90">
-              Writing task
+              Writing{keyUse ? ` · ${keyUse}` : ""}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Read carefully, then compose your response</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {keyUse ? "Key language use — why this prompt looks the way it does" : "Read carefully, then compose your response"}
+            </p>
           </div>
         </div>
       </div>
 
       <div
         className={cn(
-          "flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-5 space-y-3.5",
-          sessionScrollArea("writing"),
+          "px-4 sm:px-5 space-y-3.5",
           hasSpeech ? "pb-3" : "pb-4 sm:pb-5",
         )}
       >
-        {passage && (
-          <div className="rounded-xl border border-violet-500/15 bg-violet-500/5 px-4 py-3 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-400/90 shrink-0">
-              Listen & read
-            </p>
-            <p className="text-[15px] sm:text-base leading-[1.75] text-foreground/95 whitespace-pre-line break-words">
-              {passage}
-            </p>
-          </div>
-        )}
-
-        {prompt && (
-          <p className="text-[15px] sm:text-base leading-[1.75] text-foreground/95 whitespace-pre-line break-words">
-            {prompt}
-          </p>
-        )}
-
-        {Array.isArray(wordBank) && wordBank.length > 0 && (
-          <div className="pt-1 space-y-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-violet-400" />
-              Vocabulary
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {wordBank.map((word, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() =>
-                    setWritingText(writingText ? `${writingText.trimEnd()} ${word}` : word)
-                  }
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
-                    "border border-violet-500/25 bg-violet-500/6",
-                    "hover:border-violet-400/50 hover:bg-violet-500/12 hover:shadow-[0_0_20px_-6px_rgba(139,92,246,0.55)]",
-                  )}
-                >
-                  {word}
-                </button>
-              ))}
+          {passage && (
+            <div className="rounded-xl border border-violet-500/15 bg-violet-500/5 px-4 py-3 space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-400/90 shrink-0">
+                Listen & read
+              </p>
+              <p className="text-[15px] sm:text-base leading-[1.75] text-foreground/95 whitespace-pre-line break-words">
+                {passage}
+              </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {sentenceFrame && (
-          <button
-            type="button"
-            onClick={() => setWritingText(writingText || sentenceFrame)}
-            className={cn(
-              "w-full text-left rounded-xl border border-dashed border-violet-500/30",
-              "bg-violet-500/4 px-4 py-3 transition-colors hover:bg-violet-500/8",
-            )}
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-400/80 mb-1.5">
-              {/_{3,}|_____/.test(sentenceFrame) ? "Sentence frame" : "Starter"}
+          {prompt && (
+            <p className="text-[15px] sm:text-base leading-[1.75] text-foreground/95 whitespace-pre-line break-words">
+              {prompt}
             </p>
-            <p className="text-sm text-foreground/90 whitespace-pre-line break-words">{sentenceFrame}</p>
-          </button>
-        )}
+          )}
+
+          {Array.isArray(wordBank) && wordBank.length > 0 && (
+            <div className="pt-1 space-y-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-violet-400" />
+                Vocabulary
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {wordBank.map((word, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() =>
+                      setWritingText(writingText ? `${writingText.trimEnd()} ${word}` : word)
+                    }
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+                      "border border-violet-500/25 bg-violet-500/6",
+                      "hover:border-violet-400/50 hover:bg-violet-500/12 hover:shadow-[0_0_20px_-6px_rgba(139,92,246,0.55)]",
+                    )}
+                  >
+                    {word}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sentenceFrame && (
+            <button
+              type="button"
+              onClick={() => setWritingText(writingText || sentenceFrame)}
+              className={cn(
+                "w-full text-left rounded-xl border border-dashed border-violet-500/30",
+                "bg-violet-500/4 px-4 py-3 transition-colors hover:bg-violet-500/8",
+              )}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-400/80 mb-1.5">
+                {/_{3,}|_____/.test(sentenceFrame) ? "Sentence frame" : "Starter"}
+              </p>
+              <p className="text-sm text-foreground/90 whitespace-pre-line break-words">{sentenceFrame}</p>
+            </button>
+          )}
       </div>
 
       {hasSpeech && (
@@ -163,7 +161,6 @@ function WritingTaskCard({
             onListen={() => speakWritingSession(data)}
             onStop={onStopSpeaking}
             speaking={speaking}
-            loading={ttsLoading}
             domain="writing"
             fullWidth
             aria-label={`Listen again: ${writingSpeechPreview(data).slice(0, 80)}`}
@@ -185,7 +182,6 @@ export function WritingSessionView({
   speakFeedback,
   onStopSpeaking,
   speaking,
-  ttsLoading,
   onContinueProduction,
   onRetryProduction,
   qIdx,
@@ -200,7 +196,7 @@ export function WritingSessionView({
     || writingTryCount >= WRITING_ATTEMPTS_BEFORE_SKIP;
 
   return (
-    <div className="relative w-full">
+    <div className="relative flex flex-1 min-h-0 w-full flex-col">
       <div
         aria-hidden
         className="pointer-events-none absolute -inset-x-4 -top-6 bottom-0 rounded-4xl bg-[radial-gradient(ellipse_at_top_left,rgba(139,92,246,0.14),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(217,70,239,0.08),transparent_50%)]"
@@ -220,20 +216,19 @@ export function WritingSessionView({
             speakWritingSession={speakWritingSession}
             onStopSpeaking={onStopSpeaking}
             speaking={speaking}
-            ttsLoading={ttsLoading}
           />
         }
-        className="relative"
+        className="relative flex-1 min-h-0"
       >
-        <div className="flex flex-col min-h-[calc(100vh-var(--nav-height)-1.5rem)] lg:min-h-[calc(100vh-var(--nav-height)-2rem)]">
+        <div className="flex flex-col min-h-0 gap-4 lg:h-full lg:max-h-full">
           <div
             className={cn(
-              "flex-1 flex flex-col rounded-2xl border border-violet-500/15 overflow-hidden",
+              "flex flex-col min-h-[12rem] lg:flex-1 lg:min-h-0 overflow-hidden rounded-2xl border border-violet-500/15",
               "bg-background/70 backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]",
               "ring-1 ring-white/4",
             )}
           >
-            <div className="flex items-center justify-between px-5 py-3 border-b border-border/40 bg-muted/20">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border/40 bg-muted/20 shrink-0">
               <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Your response
               </span>
@@ -247,21 +242,18 @@ export function WritingSessionView({
               onChange={(e) => setWritingText(e.target.value)}
               placeholder="Compose your argument here…"
               className={cn(
-                "flex-1 min-h-[min(36vh,16rem)] lg:min-h-[calc(100vh-var(--nav-height)-14rem)] border-0 rounded-none resize-none",
+                "flex-1 min-h-0 h-full border-0 rounded-none resize-none overflow-y-auto",
                 "bg-transparent text-[15px] sm:text-base leading-[1.8] p-5 sm:p-6",
                 "focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50",
+                sessionScrollArea("writing"),
               )}
             />
           </div>
 
-          <div className="mt-4 flex justify-end">
+          <div className="shrink-0 flex justify-end">
             <Button
-              className={cn(
-                "h-11 px-8 rounded-xl font-semibold text-white border-0",
-                "bg-gradient-to-r from-violet-600 to-fuchsia-600",
-                "hover:from-violet-500 hover:to-fuchsia-500",
-                "shadow-lg shadow-violet-600/25",
-              )}
+              variant="ghost"
+              className="btn-brand h-11 px-8 rounded-xl font-semibold border-0"
               onClick={() => onSubmitWriting(writingText)}
               disabled={writingText.trim().length < 1 || productionReview?.loading}
             >
@@ -270,7 +262,7 @@ export function WritingSessionView({
           </div>
 
           {productionReview?.kind === "writing" && (
-            <div className="mt-6 space-y-3">
+            <div className="shrink-0 space-y-3 pb-2">
               <ItemCoachingCard
                 feedback={productionReview.feedback}
                 loading={productionReview.loading}
@@ -292,6 +284,7 @@ export function WritingSessionView({
                 onAdvance={onContinueProduction}
                 onRetry={onRetryProduction}
                 allowSkip={allowSkip}
+                domain="writing"
               />
             </div>
           )}

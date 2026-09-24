@@ -1,3 +1,4 @@
+import { useViewportPageLayout } from "@/components/app-layout";
 import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -8,8 +9,10 @@ interface SessionErrorViewProps {
 }
 
 export function SessionErrorView({ errorMsg, onBack, onRetry }: SessionErrorViewProps) {
+  useViewportPageLayout();
+
   return (
-      <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center bg-background p-6">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-md bg-card border border-border/40 rounded-3xl p-8 shadow-xl text-center relative overflow-hidden">
           
           <div className="w-20 h-20 bg-destructive/10 rounded-2xl flex items-center justify-center mx-auto mb-6 mt-2">

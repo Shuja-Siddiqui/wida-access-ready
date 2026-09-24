@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { GraduationCap, BookOpen, Building2, Users, ChevronRight, Check } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BackButton } from "@/components/back-button";
 
@@ -63,11 +64,8 @@ export default function Signup() {
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute bottom-0 -left-16 w-72 h-72 rounded-full bg-white/10 pointer-events-none" />
 
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-black text-white text-xl tracking-tight">ACCESS Ready</span>
+        <div className="relative z-10">
+          <AppLogo href="/" imageClassName="h-12" />
         </div>
 
         <div className="relative z-10 space-y-8">
@@ -98,9 +96,7 @@ export default function Signup() {
       <div className="flex-1 flex flex-col min-h-screen bg-background">
         <div className="flex items-center justify-between px-6 py-5">
           <div className="flex items-center gap-2">
-            <div className="lg:hidden w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <AppLogo href="/" imageClassName="h-8 lg:hidden" className="lg:hidden" />
             <BackButton onClick={() => setLocation("/login")} />
           </div>
           <ThemeToggle />
@@ -109,7 +105,7 @@ export default function Signup() {
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           <div className="w-full max-w-md">
             <div className="mb-8">
-              <h1 className="text-3xl font-black tracking-tight text-foreground">Create your account</h1>
+              <h1 className="heading-page text-3xl">Create your account</h1>
               <p className="text-muted-foreground font-medium mt-1.5">Choose what best describes you.</p>
             </div>
 

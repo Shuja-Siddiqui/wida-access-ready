@@ -9,11 +9,19 @@ interface AppLogoProps {
 
 export function AppLogo({ href = "/home", className, imageClassName }: AppLogoProps) {
   const img = (
-    <img
-      src="/goelprep-logo.png"
-      alt="goELprep"
-      className={cn("h-10 w-auto object-contain object-left", imageClassName)}
-    />
+    <span
+      className={cn(
+        "inline-flex items-center rounded-lg",
+        /* Logo PNG uses dark navy “go/prep” — lift it off dark UI surfaces. */
+        "dark:bg-white dark:px-2.5 dark:py-1 dark:shadow-sm dark:ring-1 dark:ring-white/15",
+      )}
+    >
+      <img
+        src="/goelprep-logo.png"
+        alt="goELprep"
+        className={cn("h-10 w-auto object-contain object-left", imageClassName)}
+      />
+    </span>
   );
 
   if (!href) {

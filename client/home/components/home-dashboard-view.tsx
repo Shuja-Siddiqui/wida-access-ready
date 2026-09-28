@@ -1,11 +1,10 @@
 import { BookOpen, ChevronRight, Flame, Lock, PenLine, Sparkles, Star, Zap, Trophy } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PageContainer } from "@/components/page-container";
-import { domainTierToKey } from "../home-types";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { DomainCharts, ListeningTracksPanel, type DomainProgress, type SessionPoint } from "./domain-charts";
+import { DomainCharts, type DomainProgress, type SessionPoint } from "./domain-charts";
 import { DOMAIN_CONFIG, domainLabel } from "../home-types";
 import { DashboardSuggestions, type PracticeSuggestion } from "./dashboard-suggestions";
 
@@ -82,7 +81,6 @@ interface HomeDashboardViewProps {
   accessReason?:    string;
   onStartSession:   (domain: string) => void;
   onNavigateBilling: () => void;
-  onDemoJump?:      (domain: string, level: number) => Promise<void>;
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -104,7 +102,6 @@ export function HomeDashboardView({
   accessReason,
   onStartSession,
   onNavigateBilling,
-  onDemoJump,
 }: HomeDashboardViewProps) {
   const xpProgress = nextRankXp > 0 ? Math.min(100, (totalXp / nextRankXp) * 100) : 0;
 
@@ -253,27 +250,6 @@ export function HomeDashboardView({
                 </motion.div>
               )}
 
-              {/* Demo jump controls */}
-              {onDemoJump && domains.some((d) => d.domain === "listening") && (
-                <div className="mb-8 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-5 rounded-2xl flex flex-wrap items-center gap-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-semibold uppercase tracking-widest text-xs mr-2">
-                    Demo Jump
-                  </div>
-                  <button
-                    onClick={() => onDemoJump("listening", 1.0)}
-                    className="bg-card border border-border text-foreground font-semibold text-xs px-4 py-2 rounded-lg hover:bg-muted/60 transition-all shadow-sm"
-                  >
-                    L1–2 (Image)
-                  </button>
-                  <button
-                    onClick={() => onDemoJump("listening", 3.0)}
-                    className="bg-card border border-border text-foreground font-semibold text-xs px-4 py-2 rounded-lg hover:bg-muted/60 transition-all shadow-sm"
-                  >
-                    L3+ (Text)
-                  </button>
-                </div>
-              )}
-
               {/* Desktop chart grid */}
               <div className="hidden lg:block">
                 <DomainCharts
@@ -286,65 +262,18 @@ export function HomeDashboardView({
 
               {/* Mobile card list */}
               <div className={`flex flex-col gap-6 lg:hidden ${!canPractice ? "opacity-50 grayscale pointer-events-none" : ""}`}>
-                {(() => {
-                  const genL  = domains.find((d) => d.domain === "listening");
-                  const acL   = domains.find((d) => d.domain === "listening_academic");
-                  const rest  = domains.filter((d) => d.domain !== "listening" && d.domain !== "listening_academic");
-                  const genCfg = DOMAIN_CONFIG.listening;
-                  const acCfg  = DOMAIN_CONFIG.listening_academic ?? DOMAIN_CONFIG.listening;
-
+                {domains.map((d, i) => {
+                  const cfg = DOMAIN_CONFIG[d.domain] ?? DOMAIN_CONFIG.listening;
                   return (
-                    <>
-                      {/* Merged listening card */}
-                      {genL && acL && (
-                        <motion.div
-                          key="listening-merged"
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.1, duration: 0.3 }}
-                          className="w-full rounded-3xl bg-card border border-border/40 overflow-hidden shadow-sm"
-                        >
-                          <div className="relative px-5 py-5 text-white overflow-hidden bg-brand-spectrum">
-                            <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
-                            <div>
-                              <h3 className="font-black text-2xl tracking-tight leading-none">Listening</h3>
-                              <p className="text-xs text-white/80 mt-1.5">Everyday talk or classroom English</p>
-                            </div>
-                          </div>
-                          <div className="p-4">
-                            <ListeningTracksPanel
-                              general={genL}
-                              academic={acL}
-                              compact
-                              onSelectEveryday={() => onStartSession(domainTierToKey("listening", "general"))}
-                              onSelectAcademic={() => onStartSession(domainTierToKey("listening", "academic"))}
-                            />
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {genL && !acL && (
-                        <MobileDomainCard key="listening" d={genL} cfg={genCfg} index={0} onStart={onStartSession} />
-                      )}
-                      {acL && !genL && (
-                        <MobileDomainCard key="listening_academic" d={acL} cfg={acCfg} index={0} onStart={onStartSession} />
-                      )}
-
-                      {rest.map((d, i) => {
-                        const cfg = DOMAIN_CONFIG[d.domain] ?? DOMAIN_CONFIG.listening;
-                        return (
-                          <MobileDomainCard
-                            key={d.domain}
-                            d={d}
-                            cfg={cfg}
-                            index={(genL && acL ? 1 : 0) + i + 1}
-                            onStart={onStartSession}
-                          />
-                        );
-                      })}
-                    </>
+                    <MobileDomainCard
+                      key={d.domain}
+                      d={d}
+                      cfg={cfg}
+                      index={i}
+                      onStart={onStartSession}
+                    />
                   );
-                })()}
+                })}
               </div>
             </div>
           </div>

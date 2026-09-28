@@ -451,16 +451,6 @@ export default function Home() {
     setLastCorrect(false);
   };
 
-  // ─── Demo jump (must be before any early return to satisfy Rules of Hooks) ──
-  const handleDemoJump = useCallback(async (domain: string, level: number) => {
-    if (!studentId) return;
-    await request(`/api/students/${studentId}/demo-jump`, {
-      method: "POST",
-      body: JSON.stringify({ domain, level }),
-    });
-    await refetchProgress();
-  }, [studentId, request, refetchProgress]);
-
   // ─── Shared helpers ───────────────────────────────────────────────────────
   const sessionTrail = (domain: string): Crumb[] => {
     const c = DOMAIN_CONFIG[domain] ?? DOMAIN_CONFIG.listening;
@@ -512,7 +502,6 @@ export default function Home() {
         accessReason={fullStudentData?.accessReason}
         onStartSession={startSession}
         onNavigateBilling={() => setLocation("/billing")}
-        onDemoJump={handleDemoJump}
       />
     );
   }

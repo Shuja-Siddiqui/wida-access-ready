@@ -1,4 +1,4 @@
-import { Headphones, Mic, BookOpen, PenLine, GraduationCap } from "lucide-react";
+import { Headphones, Mic, BookOpen, PenLine } from "lucide-react";
 
 export type AnswerRecord = {
   question: string;
@@ -16,8 +16,8 @@ export type View = "home" | "loading" | "session" | "error" | "complete" | "fini
  * apiDomain — the core skill sent to POST /sessions/start  (always one of the 4 base domains)
  * tier      — the curriculum track sent alongside the domain ("general" | "academic")
  *
- * The config key (e.g. "listening_academic") is a UI-layer identifier only;
- * the actual API call uses { domain: apiDomain, tier }.
+ * The actual API call uses { domain: apiDomain, tier }.
+ * Listening tier (general/academic) is chosen server-side when starting a session.
  */
 export interface DomainConfig {
   icon: typeof Headphones;
@@ -31,8 +31,7 @@ export interface DomainConfig {
 }
 
 export const DOMAIN_CONFIG: Record<string, DomainConfig> = {
-  listening:          { icon: Headphones,    color: "text-trust-blue",      bg: "bg-trust-blue/10",      border: "border-trust-blue",      btnBg: "bg-trust-blue",      label: "Everyday Listening",  apiDomain: "listening", tier: "general"  },
-  listening_academic: { icon: GraduationCap, color: "text-indigo-600",      bg: "bg-indigo-100",         border: "border-indigo-400",      btnBg: "bg-indigo-500",      label: "Academic Listening",  apiDomain: "listening", tier: "academic" },
+  listening:          { icon: Headphones,    color: "text-trust-blue",      bg: "bg-trust-blue/10",      border: "border-trust-blue",      btnBg: "bg-trust-blue",      label: "Listening",           apiDomain: "listening", tier: "general"  },
   speaking:           { icon: Mic,           color: "text-growth-green",    bg: "bg-growth-green/10",    border: "border-growth-green",    btnBg: "bg-growth-green",                                  apiDomain: "speaking",  tier: "general"  },
   reading:            { icon: BookOpen,      color: "text-energy-orange",   bg: "bg-energy-orange/10",   border: "border-energy-orange",   btnBg: "bg-energy-orange",                                 apiDomain: "reading",   tier: "general"  },
   writing:            { icon: PenLine,       color: "text-achieve-purple",  bg: "bg-achieve-purple/10",  border: "border-achieve-purple",  btnBg: "bg-achieve-purple",  label: "Writing",           apiDomain: "writing",   tier: "academic" },
@@ -47,13 +46,12 @@ export function domainLabel(domainKey: string): string {
 
 /**
  * Derives a UI domain config key from a (domain, tier) pair returned by the API.
- * (listening, academic) → "listening_academic"
- * (listening, general)  → "listening"
- * (speaking,  general)  → "speaking"
  */
 export function domainTierToKey(domain: string, tier: string = "general"): string {
   // Writing is academic-only — UI key stays "writing" (matches progress API).
   if (domain === "writing") return "writing";
+  // Single listening card — tier rotates server-side on session start.
+  if (domain === "listening") return "listening";
   if (tier === "academic") return `${domain}_academic`;
   return domain;
 }
@@ -68,6 +66,10 @@ export function resolveSessionStartFromUiKey(domainKey: string): {
 
   if (domainKey === "writing" || domainKey === "writing_academic") {
     return { apiDomain: "writing", tier: "academic" };
+  }
+  // Legacy URLs — treat as unified listening (server picks tier).
+  if (domainKey === "listening_academic") {
+    return { apiDomain: "listening", tier: "general" };
   }
   if (domainKey.endsWith("_academic")) {
     return { apiDomain: domainKey.replace(/_academic$/, ""), tier: "academic" };

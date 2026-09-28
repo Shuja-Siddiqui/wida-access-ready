@@ -1,12 +1,7 @@
 import { useMemo } from "react";
 import { useLocation } from "wouter";
 import { useUser } from "@/contexts/user-context";
-import {
-  getThemeAccentColor,
-  getThemeAccentGradient,
-  getThemePrimaryColor,
-  getThemePrimaryGradient,
-} from "@/lib/theme-colors";
+import { getThemePrimaryColor, getThemePrimaryGradient } from "@/lib/theme-colors";
 import {
   useGetStudentProgress, getGetStudentProgressQueryKey,
   useGetStudentStreak,   getGetStudentStreakQueryKey,
@@ -20,8 +15,6 @@ import {
 import { motion } from "framer-motion";
 import { LevelRing, SessionBars } from "@/components/level-ring";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type SessionPoint = { date: string; level: number; score: number };
 
 type DomainProgress = {
@@ -33,11 +26,6 @@ type DomainProgress = {
   scaleMax?: number;
   sessionHistory?: SessionPoint[];
 };
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-
-// ─── Tips ─────────────────────────────────────────────────────────────────────
 
 const TIPS = [
   {
@@ -53,89 +41,9 @@ const TIPS = [
   {
     icon: Lightbulb,
     title: "What to expect",
-    body: "Sessions include audio passages, comprehension questions, and image-based activities. Academic sessions feature classroom and lecture scenarios.",
+    body: "Sessions mix everyday talk and classroom English. The app alternates content types so you practice both real-world and academic listening.",
   },
 ];
-
-// ─── Track card ───────────────────────────────────────────────────────────────
-
-function TrackCard({
-  title,
-  subtitle,
-  domain,
-  progress,
-  accentColor,
-  stroke,
-  onStart,
-  delay,
-}: {
-  title: string;
-  subtitle: string;
-  domain: string;
-  progress: DomainProgress;
-  accentColor: string;
-  stroke: string;
-  onStart: (domain: string) => void;
-  delay: number;
-}) {
-  const pct = Math.min(100, Math.max(0, (progress.currentLevel / progress.exitThreshold) * 100));
-  const sessionCount = progress.sessionHistory?.length ?? 0;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.4, type: "spring", stiffness: 300, damping: 25 }}
-      className="relative overflow-hidden rounded-3xl border border-border/40 bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
-    >
-      <div className="h-1.5" style={{ background: accentColor }} />
-      <div className="p-6 flex-1 flex flex-col">
-        <div className="flex items-start justify-between gap-3 mb-5">
-          <div>
-            <h3 className="font-black text-xl text-foreground tracking-tight">{title}</h3>
-            <p className="text-xs font-medium text-muted-foreground mt-0.5">{subtitle}</p>
-          </div>
-          <div className="text-right">
-            <span className="text-3xl font-black tabular-nums leading-none" style={{ color: stroke }}>
-              {progress.currentLevel.toFixed(1)}
-            </span>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mt-1">
-              / {progress.exitThreshold} exit
-            </p>
-          </div>
-        </div>
-
-        <div className="flex justify-center py-2">
-          <LevelRing
-            pct={pct}
-            level={progress.currentLevel}
-            exitThreshold={progress.exitThreshold}
-            color={stroke}
-            size={132}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5 mt-2">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            {sessionCount > 0 ? `Last ${Math.min(sessionCount, 12)} sessions` : "No sessions yet"}
-          </p>
-          <SessionBars history={progress.sessionHistory ?? []} color={stroke} />
-        </div>
-
-        <button
-          onClick={() => onStart(domain)}
-          className="mt-6 w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
-          style={{ background: stroke, boxShadow: `0 8px 20px ${stroke}40` }}
-        >
-          <Play className="w-4 h-4 fill-white" />
-          Start {title}
-        </button>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ListeningPage() {
   const [, setLocation] = useLocation();
@@ -150,23 +58,19 @@ export default function ListeningPage() {
     { query: { enabled: !!studentId, queryKey: getGetStudentStreakQueryKey(studentId ?? "") } },
   );
 
-  const handleStart = (domain: string) => {
-    setLocation(`/home?domain=${domain}`);
+  const handleStart = () => {
+    setLocation("/home?domain=listening");
   };
 
   const primaryGradient = useMemo(() => getThemePrimaryGradient(), []);
   const primaryColor = useMemo(() => getThemePrimaryColor(), []);
-  const accentGradient = useMemo(() => getThemeAccentGradient(), []);
-  const accentColor = useMemo(() => getThemeAccentColor(), []);
 
   if (progressLoading || streakLoading) return <LoadingScreen />;
 
-  const allDomains    = (progressData?.domains ?? []) as DomainProgress[];
-  const general       = allDomains.find((d) => d.domain === "listening");
-  const academic      = allDomains.find((d) => d.domain === "listening_academic");
+  const allDomains = (progressData?.domains ?? []) as DomainProgress[];
+  const listening  = allDomains.find((d) => d.domain === "listening");
 
-  // Fallback if domain data not yet available
-  const fallbackProgress: DomainProgress = {
+  const progress: DomainProgress = listening ?? {
     domain: "listening",
     currentLevel: 0,
     exitThreshold: 4.7,
@@ -174,22 +78,16 @@ export default function ListeningPage() {
     sessionHistory: [],
   };
 
-  const genProgress = general   ?? fallbackProgress;
-  const acProgress  = academic  ?? { ...fallbackProgress, domain: "listening_academic" };
-
-  const totalSessions = (genProgress.sessionHistory?.length ?? 0) + (acProgress.sessionHistory?.length ?? 0);
-  const avgLevel = ((genProgress.currentLevel + acProgress.currentLevel) / 2).toFixed(1);
+  const sessionCount = progress.sessionHistory?.length ?? 0;
+  const pct = Math.min(100, Math.max(0, (progress.currentLevel / progress.exitThreshold) * 100));
 
   return (
     <PageContainer pad={false}>
-      {/* ── Hero section ──────────────────────────────────────────── */}
       <div className="relative overflow-hidden bg-brand-gradient">
-        {/* Decorative circles */}
         <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 pointer-events-none" />
         <div className="absolute -bottom-10 right-1/3 w-48 h-48 rounded-full bg-white/5 pointer-events-none" />
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
-          {/* Back button */}
           <button
             onClick={() => setLocation("/home")}
             className="flex items-center gap-1.5 text-white/80 hover:text-white font-semibold text-sm mb-8 transition-colors"
@@ -198,7 +96,6 @@ export default function ListeningPage() {
             Back to Practice
           </button>
 
-          {/* Domain header */}
           <div className="flex items-start gap-5">
             <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
               <Headphones className="w-8 h-8 text-white" />
@@ -212,15 +109,14 @@ export default function ListeningPage() {
             </div>
           </div>
 
-          {/* Quick stats */}
           <div className="flex gap-6 mt-10 flex-wrap">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="text-white/60 text-[10px] font-semibold uppercase tracking-widest">Avg Level</p>
-                <p className="text-white font-black text-lg tabular-nums leading-tight">{avgLevel}</p>
+                <p className="text-white/60 text-[10px] font-semibold uppercase tracking-widest">Level</p>
+                <p className="text-white font-black text-lg tabular-nums leading-tight">{progress.currentLevel.toFixed(1)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2.5">
@@ -238,44 +134,65 @@ export default function ListeningPage() {
               </div>
               <div>
                 <p className="text-white/60 text-[10px] font-semibold uppercase tracking-widest">Sessions</p>
-                <p className="text-white font-black text-lg tabular-nums leading-tight">{totalSessions}</p>
+                <p className="text-white font-black text-lg tabular-nums leading-tight">{sessionCount}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Track cards ───────────────────────────────────────────── */}
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Practice Tracks</p>
-          <h2 className="text-2xl font-black text-foreground tracking-tight">Choose a track to practice</h2>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, type: "spring", stiffness: 300, damping: 25 }}
+          className="relative overflow-hidden rounded-3xl border border-border/40 bg-card shadow-sm hover:shadow-xl transition-all duration-300"
+        >
+          <div className="h-1.5" style={{ background: primaryGradient }} />
+          <div className="p-6">
+            <div className="flex items-start justify-between gap-3 mb-5">
+              <div>
+                <h3 className="font-black text-xl text-foreground tracking-tight">Your progress</h3>
+                <p className="text-xs font-medium text-muted-foreground mt-0.5">{progress.levelLabel}</p>
+              </div>
+              <div className="text-right">
+                <span className="text-3xl font-black tabular-nums leading-none" style={{ color: primaryColor }}>
+                  {progress.currentLevel.toFixed(1)}
+                </span>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mt-1">
+                  / {progress.exitThreshold} exit
+                </p>
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <TrackCard
-            title="Everyday"
-            subtitle="Talk, stories, and daily life"
-            domain="listening"
-            progress={genProgress}
-            accentColor={primaryGradient}
-            stroke={primaryColor}
-            onStart={handleStart}
-            delay={0.05}
-          />
-          <TrackCard
-            title="Academic"
-            subtitle="Lessons, lectures, school talk"
-            domain="listening_academic"
-            progress={acProgress}
-            accentColor={accentGradient}
-            stroke={accentColor}
-            onStart={handleStart}
-            delay={0.12}
-          />
-        </div>
+            <div className="flex justify-center py-2">
+              <LevelRing
+                pct={pct}
+                level={progress.currentLevel}
+                exitThreshold={progress.exitThreshold}
+                color={primaryColor}
+                size={148}
+              />
+            </div>
 
-        {/* ── Tips section ──────────────────────────────────────────── */}
+            <div className="flex flex-col gap-1.5 mt-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {sessionCount > 0 ? `Last ${Math.min(sessionCount, 12)} sessions` : "No sessions yet"}
+              </p>
+              <SessionBars history={progress.sessionHistory ?? []} color={primaryColor} />
+            </div>
+
+            <button
+              onClick={handleStart}
+              className="mt-6 w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+              style={{ background: primaryColor, boxShadow: `0 8px 20px ${primaryColor}40` }}
+            >
+              <Play className="w-4 h-4 fill-white" />
+              Start Listening Practice
+            </button>
+          </div>
+        </motion.div>
+
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">About This Domain</p>
           <h2 className="text-2xl font-black text-foreground tracking-tight mb-6">What you should know</h2>
@@ -299,25 +216,24 @@ export default function ListeningPage() {
           </div>
         </div>
 
-        {/* ── Quick start CTA ───────────────────────────────────────── */}
         <div className="rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-br from-primary/8 to-accent/8">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h3 className="font-black text-foreground text-lg">Not sure where to start?</h3>
+              <h3 className="font-black text-foreground text-lg">Ready to practice?</h3>
               <p className="text-muted-foreground font-medium text-sm mt-0.5">
-                Everyday Listening is the best starting point for most learners.
+                Each session mixes everyday and academic listening content.
               </p>
             </div>
           </div>
           <button
-            onClick={() => handleStart("listening")}
+            onClick={handleStart}
             className="flex-shrink-0 flex items-center gap-2.5 btn-brand font-bold px-6 py-3.5 rounded-xl text-sm"
           >
             <Play className="w-4 h-4 fill-white" />
-            Start Everyday Listening
+            Start Listening
           </button>
         </div>
       </div>

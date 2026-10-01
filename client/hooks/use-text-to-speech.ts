@@ -17,9 +17,12 @@ export interface UseTextToSpeechOptions {
 
 export type { SpeechDelivery } from "@/lib/speech-voices";
 
+export type CoachingTone = "default" | "praise" | "mistake" | "teach" | "action";
+
 export type SpeechSegment = {
   text: string;
   delivery: SpeechDelivery;
+  tone?: CoachingTone;
 };
 
 export interface UseTextToSpeechReturn {
@@ -116,13 +119,22 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
   }, [cleanupSrc]);
 
   const fetchSegmentBlob = useCallback(
-    async (text: string, delivery: SpeechDelivery, myRequestId: number): Promise<Blob | null> => {
+    async (
+      segment: SpeechSegment,
+      myRequestId: number,
+    ): Promise<Blob | null> => {
+      const { text, delivery, tone } = segment;
       if (!text || azureAvailable === false || !mountedRef.current || requestIdRef.current !== myRequestId) {
         return null;
       }
 
       try {
-        return await synthesizeSpeech({ text, delivery, voice: azureVoiceForDelivery(delivery) });
+        return await synthesizeSpeech({
+          text,
+          delivery,
+          voice: azureVoiceForDelivery(delivery),
+          ...(tone && tone !== "default" ? { tone } : {}),
+        } as Parameters<typeof synthesizeSpeech>[0]);
       } catch {
         return null;
       }
@@ -168,7 +180,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
       const myRequestId = ++requestIdRef.current;
       cleanupSrc();
       setIsLoading(true);
-      void fetchSegmentBlob(text, delivery, myRequestId).then((blob) => {
+      void fetchSegmentBlob({ text, delivery }, myRequestId).then((blob) => {
         if (!blob || requestIdRef.current !== myRequestId) return;
         void playBlob(blob, delivery, myRequestId).then(() => {
           if (requestIdRef.current !== myRequestId) return;
@@ -192,7 +204,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
       void (async () => {
         // Prefetch the next segment while the current one plays to avoid
         // serial round-trips to Azure (writing tasks can have 6+ segments).
-        let pendingFetch = fetchSegmentBlob(queue[0].text, queue[0].delivery, myRequestId);
+        let pendingFetch = fetchSegmentBlob(queue[0], myRequestId);
 
         for (let i = 0; i < queue.length; i++) {
           if (requestIdRef.current !== myRequestId) return;
@@ -202,8 +214,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
           if (requestIdRef.current !== myRequestId) return;
 
           if (i + 1 < queue.length) {
-            const next = queue[i + 1];
-            pendingFetch = fetchSegmentBlob(next.text, next.delivery, myRequestId);
+            pendingFetch = fetchSegmentBlob(queue[i + 1], myRequestId);
           }
 
           if (!blob) continue;

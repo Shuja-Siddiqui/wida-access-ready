@@ -10,6 +10,14 @@ export function prepareTextForSpeech(text: string): string {
     .trim();
 }
 
+/** Coaching TTS — keeps *stress* markers for Azure SSML emphasis. */
+export function prepareCoachingForSpeech(text: string): string {
+  return text
+    .replace(/_{1,}/g, " blank ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Sentence frames only — one short "blank" per gap (never repeat "fill in the blank"). */
 export function prepareFrameForSpeech(text: string): string {
   return text

@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { buildCoachingSpeechSegments } from "@/lib/coaching-speech";
 import { prepareTextForSpeech } from "@/lib/prepare-text-for-speech";
 import { buildWritingSpeechSegments } from "@/lib/writing-speech";
 import {
@@ -29,8 +30,12 @@ export function useSpokenContent(options: UseTextToSpeechOptions = {}): SpokenCo
     [tts.speak],
   );
   const speakFeedback = useCallback(
-    (text: string) => tts.speak(prepareTextForSpeech(text), "coaching"),
-    [tts.speak],
+    (text: string) => {
+      const segments = buildCoachingSpeechSegments(text);
+      if (segments.length === 0) return;
+      tts.speakSequence(segments);
+    },
+    [tts.speakSequence],
   );
   const speakWritingSession = useCallback(
     (data: Record<string, unknown>) => {
@@ -67,8 +72,12 @@ export function useFeedbackSpeech(options: UseTextToSpeechOptions = {}): Omit<Us
 } {
   const tts = useTextToSpeech(options);
   const speak = useCallback(
-    (text: string) => tts.speak(prepareTextForSpeech(text), "coaching"),
-    [tts.speak],
+    (text: string) => {
+      const segments = buildCoachingSpeechSegments(text);
+      if (segments.length === 0) return;
+      tts.speakSequence(segments);
+    },
+    [tts.speakSequence],
   );
   return { ...tts, speak };
 }

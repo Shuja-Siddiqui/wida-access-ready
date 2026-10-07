@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["client/**/*", "../shared/**/*"],
+  "include": ["client/**/*"],
   "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
     "noEmit": true,
@@ -11,8 +11,7 @@
     "moduleResolution": "bundler",
     "types": ["node", "vite/client"],
     "paths": {
-      "@/*": ["./client/*"],
-      "@shared/*": ["../shared/*"]
+      "@/*": ["./client/*"]
     }
   }
 }

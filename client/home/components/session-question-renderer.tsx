@@ -1,4 +1,4 @@
-import { resolveQuestionUi, type SessionDomain } from "@shared/session-content-schema";
+import { resolveQuestionUi, type SessionDomain } from "@/lib/session-content-schema";
 import { StemVisual } from "@/components/shape-glyph";
 import type { SessionQuestion } from "../session-context";
 import { SessionImageGrid } from "./session-image-grid";

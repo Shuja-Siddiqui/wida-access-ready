@@ -12,7 +12,7 @@ import {
   SESSION_LABEL,
   type SessionTheme,
 } from "./session-ui-styles";
-import { resolveQuestionUi } from "@shared/session-content-schema";
+import { resolveQuestionUi } from "@/lib/session-content-schema";
 import type { SessionQuestion } from "../session-context";
 
 export const READING_QUESTIONS_PER_PAGE = 2;

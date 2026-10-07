@@ -123,8 +123,8 @@ export default function TeacherDashboard() {
                 <TableHead className="font-extrabold text-foreground h-12">Assessment</TableHead>
                 <TableHead className="font-extrabold text-trust-blue text-center h-12">Listening</TableHead>
                 <TableHead className="font-extrabold text-growth-green text-center h-12">Speaking</TableHead>
-                <TableHead className="font-extrabold text-energy-orange text-center h-12">Reading</TableHead>
-                <TableHead className="font-extrabold text-achieve-purple text-center h-12">Writing</TableHead>
+                <TableHead className="font-extrabold text-logo-gold text-center h-12">Reading</TableHead>
+                <TableHead className="font-extrabold text-logo-teal text-center h-12">Writing</TableHead>
                 <TableHead className="font-extrabold text-foreground text-center h-12">Streak</TableHead>
                 <TableHead className="font-extrabold text-foreground text-right h-12">Status</TableHead>
                 <TableHead className="font-extrabold text-foreground text-right h-12 pr-4">Actions</TableHead>

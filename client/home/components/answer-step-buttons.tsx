@@ -13,6 +13,7 @@ export function AnswerStepButtons({
   loading,
   passed,
   isLast = false,
+  advanceLabel,
   onAdvance,
   onRetry,
   layout = "stack",
@@ -22,6 +23,7 @@ export function AnswerStepButtons({
   loading?: boolean;
   passed: boolean;
   isLast?: boolean;
+  advanceLabel?: string;
   onAdvance: () => void;
   onRetry: () => void;
   layout?: "stack" | "row";
@@ -31,7 +33,7 @@ export function AnswerStepButtons({
 }) {
   if (loading) return null;
 
-  const nextLabel = isLast ? "Finish" : "Next";
+  const nextLabel = advanceLabel ?? (isLast ? "Finish" : "Next");
   const primaryBtn = domain ? SESSION_THEMES[domain].primaryBtn : "btn-brand";
 
   if (passed) {

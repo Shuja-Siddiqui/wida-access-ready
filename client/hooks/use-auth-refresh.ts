@@ -13,16 +13,14 @@ import { configureSessionRefresher, REFRESH_TOKEN_KEY } from "@/lib/session-refr
 interface UseAuthRefreshOptions {
   /** Called on successful refresh — update the in-memory token in context. */
   onRefreshed: (accessToken: string, refreshToken: string) => void;
-  /** Called when refresh fails — clear the session and redirect to login. */
-  onLogout: () => void;
+  /** Called when the session cannot be renewed — toast + redirect to login. */
+  onSessionExpired: () => void;
 }
 
-export function useAuthRefresh({ onRefreshed, onLogout }: UseAuthRefreshOptions): void {
+export function useAuthRefresh({ onRefreshed, onSessionExpired }: UseAuthRefreshOptions): void {
   useEffect(() => {
-    configureSessionRefresher({ onRefreshed, onLogout });
-    // Re-register whenever the callbacks change identity (i.e. first mount).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    configureSessionRefresher({ onRefreshed, onSessionExpired });
+  }, [onRefreshed, onSessionExpired]);
 }
 
 /** Read the stored refresh token — used by UserContext to persist it on login. */

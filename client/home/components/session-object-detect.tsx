@@ -9,6 +9,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { SESSION_QUESTION } from "./session-ui-styles";
 
 interface Detection {
   label: string;
@@ -146,10 +147,10 @@ export function SessionObjectDetect({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold text-foreground leading-snug">{question}</h3>
+      <h3 className={SESSION_QUESTION}>{question}</h3>
 
       {/* Scene image with overlay boxes */}
-      <div className="relative w-full rounded-2xl overflow-hidden border border-border/40 bg-muted/20 select-none">
+      <div className="relative w-full rounded-xl overflow-hidden bg-muted/20 select-none">
         <img src={imageSrc} alt="Scene" className="w-full block" draggable={false} />
 
         {/* 3 choice boxes drawn on the image */}

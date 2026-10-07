@@ -2,10 +2,16 @@ import { Mic, Square, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ItemCoachingCard, aiItemPassed, type ItemFeedbackPayload } from "./item-coaching-card";
 import { AnswerStepButtons } from "./answer-step-buttons";
-import { ListenAgainButton } from "./listen-again-button";
 import { SessionResponsiveLayout } from "./session-responsive-layout";
-import { SESSION_CARD, SESSION_LABEL, SESSION_QUESTION, type SessionTheme } from "./session-ui-styles";
-import { prepareTextForSpeech } from "@/lib/prepare-text-for-speech";
+import { SessionTaskCard } from "./session-task-card";
+import { SessionWorkScroll } from "./session-work-scroll";
+import {
+  SESSION_LABEL,
+  SESSION_QUESTION,
+  sessionScrollArea,
+  type SessionDomainKey,
+  type SessionTheme,
+} from "./session-ui-styles";
 
 interface SpeakingSessionViewProps {
   data: Record<string, unknown>;
@@ -27,7 +33,7 @@ interface SpeakingSessionViewProps {
   sttError: string;
   onStartRecording: () => void;
   onStopRecording: () => void;
-  speakPassage: (text: string) => void;
+  speakTaskSession: (domain: SessionDomainKey, data: Record<string, unknown>) => void;
   speakFeedback: (text: string) => void;
   onStopSpeaking: () => void;
   speaking: boolean;
@@ -37,46 +43,150 @@ interface SpeakingSessionViewProps {
   questionCount: number;
 }
 
-function promptSpeechText(data: Record<string, unknown>): string {
-  return prepareTextForSpeech(
-    [data.prompt, data.scaffold].filter((part) => typeof part === "string" && part).join(". "),
+function SpeakingRecorderWorkspace({
+  theme,
+  recording,
+  finalizingSpeaking,
+  sttSupported,
+  sttTranscript,
+  sttInterim,
+  sttLevel,
+  sttError,
+  onStartRecording,
+  onStopRecording,
+}: {
+  theme: SessionTheme;
+  recording: boolean;
+  finalizingSpeaking: boolean;
+  sttSupported: boolean;
+  sttTranscript: string;
+  sttInterim: string;
+  sttLevel: number;
+  sttError: string;
+  onStartRecording: () => void;
+  onStopRecording: () => void;
+}) {
+  const active = recording || finalizingSpeaking;
+  const hasTranscript = Boolean(sttTranscript || sttInterim);
+
+  return (
+    <div className="flex flex-col min-h-0 flex-1 gap-5">
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          disabled={finalizingSpeaking}
+          className={cn(
+            "relative shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white transition-colors disabled:opacity-60",
+            recording ? "bg-rose-600 hover:bg-rose-700" : theme.primaryBtn,
+          )}
+          onClick={recording ? onStopRecording : onStartRecording}
+        >
+          {finalizingSpeaking ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : recording ? (
+            <Square className="w-4 h-4" />
+          ) : (
+            <Mic className="w-5 h-5" />
+          )}
+        </button>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground">
+            {finalizingSpeaking
+              ? "Processing speech…"
+              : recording
+                ? "Recording — tap to stop"
+                : "Your turn — record your answer"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {recording
+              ? "Speak clearly, then stop when finished."
+              : "Tap the mic when you are ready to respond."}
+          </p>
+        </div>
+      </div>
+
+      {recording && (
+        <div className="flex items-end gap-0.5 h-5" aria-hidden>
+          {Array.from({ length: 16 }, (_, i) => {
+            const on = sttLevel > (i + 1) / 16;
+            return (
+              <span
+                key={i}
+                className={cn("w-0.5 rounded-full transition-all", on ? "bg-emerald-500" : "bg-border")}
+                style={{ height: `${8 + (i % 5) * 4}px` }}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      <div className={cn("flex flex-col flex-1 min-h-[8rem] gap-2", sessionScrollArea("speaking"))}>
+        <p className={SESSION_LABEL}>Your response</p>
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+          <p className="text-[15px] sm:text-base text-foreground leading-[1.8] whitespace-pre-wrap">
+            {sttTranscript}
+            {sttInterim && <span className="text-muted-foreground"> {sttInterim}</span>}
+            {!hasTranscript && (
+              <span className="text-muted-foreground italic">
+                {finalizingSpeaking
+                  ? "Finishing transcription…"
+                  : active
+                    ? "Speak now — words will appear here."
+                    : sttSupported
+                      ? "Start recording and your words will show up here."
+                      : "Start recording — we will capture your response."}
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {sttError && <p className="text-xs text-destructive">{sttError}</p>}
+    </div>
   );
 }
 
-function SpeakingPromptCard({
-  data,
-  theme,
-  speakPassage,
+function SpeakingReviewFooter({
+  productionReview,
+  speakFeedback,
   onStopSpeaking,
-  speaking,
+  qIdx,
+  questionCount,
+  onContinueProduction,
+  onRetryProduction,
 }: {
-  data: Record<string, unknown>;
-  theme: SessionTheme;
-  speakPassage: (text: string) => void;
+  productionReview: NonNullable<SpeakingSessionViewProps["productionReview"]>;
+  speakFeedback: (text: string) => void;
   onStopSpeaking: () => void;
-  speaking: boolean;
+  qIdx: number;
+  questionCount: number;
+  onContinueProduction: () => void;
+  onRetryProduction: () => void;
 }) {
-  const spoken = promptSpeechText(data);
-
+  const passed = aiItemPassed(productionReview.feedback);
   return (
-    <div className={cn("p-5 sm:p-6 space-y-4", SESSION_CARD, theme.panel)}>
-      <p className={SESSION_LABEL}>Speaking prompt</p>
-      <h3 className={cn(SESSION_QUESTION, "mt-2")}>{String(data.prompt ?? "")}</h3>
-      {typeof data.scaffold === "string" && data.scaffold && (
-        <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
-          Suggested start:{" "}
-          <span className="text-foreground/85 italic">&ldquo;{data.scaffold}&rdquo;</span>
-        </p>
-      )}
-      {spoken && (
-        <ListenAgainButton
-          onListen={() => speakPassage(spoken)}
-          onStop={onStopSpeaking}
-          speaking={speaking}
-          domain="speaking"
-          fullWidth
-        />
-      )}
+    <div className="space-y-3">
+      <p className={SESSION_LABEL}>You said</p>
+      <p className="text-base text-foreground/90 leading-relaxed italic">
+        &ldquo;{productionReview.text}&rdquo;
+      </p>
+      <ItemCoachingCard
+        feedback={productionReview.feedback}
+        loading={productionReview.loading}
+        speakText={speakFeedback}
+        stopSpeaking={onStopSpeaking}
+        nextAction={
+          productionReview.loading ? undefined : passed ? "next" : "retry"
+        }
+      />
+      <AnswerStepButtons
+        loading={productionReview.loading}
+        passed={passed}
+        isLast={qIdx >= questionCount - 1}
+        onAdvance={onContinueProduction}
+        onRetry={onRetryProduction}
+        domain="speaking"
+      />
     </div>
   );
 }
@@ -96,7 +206,7 @@ export function SpeakingSessionView({
   sttError,
   onStartRecording,
   onStopRecording,
-  speakPassage,
+  speakTaskSession,
   speakFeedback,
   onStopSpeaking,
   speaking,
@@ -106,123 +216,55 @@ export function SpeakingSessionView({
   questionCount,
 }: SpeakingSessionViewProps) {
   const inReview = productionReview?.kind === "speaking";
+  const hasMedia = Boolean(mediaUrl || visual);
 
   return (
     <SessionResponsiveLayout
       domain="speaking"
       mediaUrl={mediaUrl}
       visual={visual}
-      referenceLabel="Look at the picture"
+      referenceLabel={hasMedia ? "Picture" : undefined}
       referencePanel={
-        !inReview ? (
-          <SpeakingPromptCard
-            data={data}
-            theme={theme}
-            speakPassage={speakPassage}
-            onStopSpeaking={onStopSpeaking}
-            speaking={speaking}
-          />
-        ) : undefined
+        <SessionTaskCard
+          domain="speaking"
+          data={data}
+          speakTaskSession={speakTaskSession}
+          onStopSpeaking={onStopSpeaking}
+          speaking={speaking}
+        />
       }
+      className="flex-1 min-h-0"
     >
-      {inReview ? (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            You said:{" "}
-            <span className="text-foreground font-medium">&ldquo;{productionReview.text}&rdquo;</span>
-          </p>
-          <ItemCoachingCard
-            feedback={productionReview.feedback}
-            loading={productionReview.loading}
-            speakText={speakFeedback}
-            stopSpeaking={onStopSpeaking}
-            nextAction={
-              productionReview.loading
-                ? undefined
-                : aiItemPassed(productionReview.feedback)
-                  ? "next"
-                  : "retry"
-            }
+      <SessionWorkScroll
+        footer={
+          inReview && productionReview ? (
+            <SpeakingReviewFooter
+              productionReview={productionReview}
+              speakFeedback={speakFeedback}
+              onStopSpeaking={onStopSpeaking}
+              qIdx={qIdx}
+              questionCount={questionCount}
+              onContinueProduction={onContinueProduction}
+              onRetryProduction={onRetryProduction}
+            />
+          ) : undefined
+        }
+      >
+        {!inReview && (
+          <SpeakingRecorderWorkspace
+            theme={theme}
+            recording={recording}
+            finalizingSpeaking={finalizingSpeaking}
+            sttSupported={sttSupported}
+            sttTranscript={sttTranscript}
+            sttInterim={sttInterim}
+            sttLevel={sttLevel}
+            sttError={sttError}
+            onStartRecording={onStartRecording}
+            onStopRecording={onStopRecording}
           />
-          <AnswerStepButtons
-            loading={productionReview.loading}
-            passed={aiItemPassed(productionReview.feedback)}
-            isLast={qIdx >= questionCount - 1}
-            onAdvance={onContinueProduction}
-            onRetry={onRetryProduction}
-          />
-        </div>
-      ) : (
-        <div className={cn("p-5 sm:p-6 space-y-4", SESSION_CARD)}>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              disabled={finalizingSpeaking}
-              className={cn(
-                "relative shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-white transition-colors disabled:opacity-60",
-                recording ? "bg-rose-600 hover:bg-rose-700" : theme.primaryBtn,
-              )}
-              onClick={recording ? onStopRecording : onStartRecording}
-            >
-              {finalizingSpeaking ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : recording ? (
-                <Square className="w-5 h-5" />
-              ) : (
-                <Mic className="w-5 h-5" />
-              )}
-            </button>
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {finalizingSpeaking
-                  ? "Processing speech…"
-                  : recording
-                    ? "Recording — tap to stop"
-                    : "Record your response"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {recording
-                  ? "Speak clearly, then stop when finished."
-                  : "Tap the button when you are ready."}
-              </p>
-            </div>
-          </div>
-
-          {(recording || finalizingSpeaking) && (
-            <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 space-y-2">
-              {recording && (
-                <div className="flex items-end gap-0.5 h-5" aria-hidden>
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const on = sttLevel > (i + 1) / 12;
-                    return (
-                      <span
-                        key={i}
-                        className={cn("w-0.5 rounded-full transition-all", on ? "bg-emerald-500" : "bg-border")}
-                        style={{ height: `${6 + (i % 4) * 3}px` }}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-              <p className={SESSION_LABEL}>Transcript</p>
-              <p className="text-sm text-foreground min-h-10 leading-relaxed">
-                {sttTranscript}
-                {sttInterim && <span className="text-muted-foreground"> {sttInterim}</span>}
-                {!sttTranscript && !sttInterim && (
-                  <span className="text-muted-foreground italic">
-                    {finalizingSpeaking
-                      ? "Finishing transcription…"
-                      : sttSupported
-                        ? "Speak now — words will appear here."
-                        : "Your browser can't show live words, but we are still recording."}
-                  </span>
-                )}
-              </p>
-            </div>
-          )}
-          {sttError && <p className="text-xs text-destructive">{sttError}</p>}
-        </div>
-      )}
+        )}
+      </SessionWorkScroll>
     </SessionResponsiveLayout>
   );
 }

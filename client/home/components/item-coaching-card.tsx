@@ -23,6 +23,9 @@ export type ItemFeedbackPayload = {
   /** ACCESS writing rubric 0–7 (writing sessions only). */
   accessWritingScore?: number;
   accessWritingLabel?: string;
+  /** ACCESS speaking category (speaking sessions only). */
+  accessSpeakingCategory?: string;
+  accessSpeakingLabel?: string;
 };
 
 function stripNavCues(text: string): string {
@@ -140,7 +143,7 @@ export function ItemCoachingCard({
 
   if (loading && displayParts.length === 0 && !rawSpoken) {
     return (
-      <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground py-1">
         Preparing feedback…
       </div>
     );
@@ -149,10 +152,12 @@ export function ItemCoachingCard({
 
   const rubricScore = feedback?.accessWritingScore;
   const rubricLabel = feedback?.accessWritingLabel?.trim();
+  const speakingCategory = feedback?.accessSpeakingCategory?.trim();
+  const speakingLabel = feedback?.accessSpeakingLabel?.trim();
   const multiPart = displayParts.length > 1;
 
   return (
-    <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5 text-left space-y-2.5">
+    <div className="text-left space-y-2.5">
       {typeof rubricScore === "number" && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full border border-violet-500/25 bg-violet-500/8 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-violet-700 dark:text-violet-300">
@@ -161,6 +166,18 @@ export function ItemCoachingCard({
           {rubricLabel && (
             <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {rubricLabel}
+            </span>
+          )}
+        </div>
+      )}
+      {speakingCategory && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/8 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200">
+            {speakingCategory}
+          </span>
+          {speakingLabel && (
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {speakingLabel}
             </span>
           )}
         </div>

@@ -9,11 +9,22 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, BookOpen, ImageIcon, ThumbsUp, ThumbsDown } from "lucide-react";
+import { CheckCircle2, XCircle, ImageIcon, ThumbsUp, ThumbsDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useApi } from "@/hooks/use-api";
+import { useViewportPageLayout } from "@/components/app-layout";
 import { ItemCoachingCard, coachingSpeech, aiItemPassed, type ItemFeedbackPayload } from "./item-coaching-card";
 import { AnswerStepButtons } from "./answer-step-buttons";
-import { ListenAgainButton } from "./listen-again-button";
+import { SessionTaskCard } from "./session-task-card";
+import { SessionResponsiveLayout } from "./session-responsive-layout";
+import { SessionWorkScroll } from "./session-work-scroll";
+import { SessionQuestionBlock } from "./session-question-block";
+import { SessionMcOptions } from "./session-mc-options";
+import {
+  SESSION_LABEL,
+  SESSION_QUESTION,
+  SESSION_THEMES,
+} from "./session-ui-styles";
 import type { CropBox } from "./image-crop";
 
 interface Detection {
@@ -52,6 +63,8 @@ export interface ImageYesNoQ {
 export type ImageLibraryQuestion = ImageObjectTapQ | ImageYesNoQ;
 
 export interface ImageLibraryData {
+  /** When true, render tap UI (box or text choice). Set by API for L1–2 listening. */
+  useTapMode?: boolean;
   topic: string;
   passage: string;
   imageUrl: string | null;
@@ -66,6 +79,7 @@ export interface ImageLibraryData {
    */
   tapMode?: "text_choice" | "box_tap";
   keyUse?: string;
+  framework?: Record<string, unknown>;
 }
 
 interface AnswerRecord {
@@ -82,12 +96,18 @@ function pictureQuestionText(q: ImageLibraryQuestion): string {
 interface Props {
   data: ImageLibraryData;
   onComplete: (answers: AnswerRecord[]) => void;
-  speakPassage: (text: string) => void;
+  speakTaskSession: (
+    domain: "listening",
+    data: Record<string, unknown>,
+    options?: { question?: string },
+  ) => void;
+  speakQuestion: (question: string) => void;
   speakFeedback: (text: string) => void;
   isLoadingTts: boolean;
   isSpeaking: boolean;
   stopSpeaking: () => void;
   studentId?: string;
+  sessionId?: string;
   level?: number;
 }
 
@@ -153,15 +173,19 @@ function buildLibraryChoices(
 export function ImageLibrarySession({
   data,
   onComplete,
-  speakPassage,
+  speakTaskSession,
+  speakQuestion,
   speakFeedback,
   isLoadingTts,
   isSpeaking,
   stopSpeaking,
   studentId,
+  sessionId,
   level = 1,
 }: Props) {
+  useViewportPageLayout();
   const { request } = useApi();
+  const theme = SESSION_THEMES.listening;
   const [qIdx, setQIdx]                 = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [tappedLabel, setTappedLabel]   = useState<string | null>(null);
@@ -174,7 +198,7 @@ export function ImageLibrarySession({
   const [choices, setChoices]             = useState<ChoiceOption[]>([]);
   const [coach, setCoach]                 = useState<ItemFeedbackPayload | null>(null);
   const [coachLoading, setCoachLoading]   = useState(false);
-  const spokenForQIdxRef = useRef(-1);
+  const spokenListenKeyRef = useRef<string | null>(null);
   const feedbackRef      = useRef<HTMLDivElement>(null);
 
   const { passage, imageUrl, detectionResults, questions, topic, tapMode = "box_tap", keyUse } = data;
@@ -182,34 +206,53 @@ export function ImageLibrarySession({
   const detections   = detectionResults?.detections ?? [];
   const currentQ     = questions[qIdx];
   const questionText = currentQ ? pictureQuestionText(currentQ) : "";
-  const passageText = passage?.trim() || "Look at the picture below and listen carefully.";
+  const audioScript = (data as { audioScript?: string; audio_script?: string }).audioScript
+    ?? (data as { audio_script?: string }).audio_script;
+  const passageText =
+    passage?.trim()
+    || audioScript?.trim()
+    || "Look at the picture below and listen carefully.";
 
   // Auto-play passage + question whenever the active question changes.
   // First question: reads the full passage then the question.
   // Subsequent questions: reads only the new question (passage already heard).
   useEffect(() => {
-    if (spokenForQIdxRef.current === qIdx) return;
-    spokenForQIdxRef.current = qIdx;
+    const listenKey = `tap:${qIdx}`;
+    if (spokenListenKeyRef.current === listenKey) return;
 
     // Reset the tap-gate so the student must wait for this question's audio
     setAudioPlayed(false);
     setAudioStarted(false);
 
-    const narration = qIdx === 0
-      ? `${passageText}... ${questionText}`
-      : questionText;
+    const taskPayload = {
+      passage: passageText,
+      keyUse,
+      imageDescription: data.imageDescription,
+      tags: data.tags,
+    };
 
-    speakPassage(narration);
+    spokenListenKeyRef.current = listenKey;
+
+    if (qIdx === 0) {
+      speakTaskSession("listening", taskPayload, { question: questionText });
+    } else if (questionText) {
+      speakQuestion(questionText);
+    }
     // Small delay so isSpeaking/isLoadingTts have time to flip before the
     // unlock watcher checks them
     const t = setTimeout(() => setAudioStarted(true), 300);
 
     // Build fresh choices for each object-tap question (box_tap mode only)
-    if (currentQ.type === "image_object_tap" && !isTextChoice) {
+    if (currentQ?.type === "image_object_tap" && !isTextChoice) {
       setChoices(buildLibraryChoices(detections, currentQ.targetLabel, labelsMatch));
     }
 
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      if (spokenListenKeyRef.current === listenKey) {
+        spokenListenKeyRef.current = null;
+      }
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qIdx]);
 
@@ -291,6 +334,7 @@ export function ImageLibrarySession({
     request<ItemFeedbackPayload>(`/api/students/${studentId}/item-feedback`, {
       method: "POST",
       body: JSON.stringify({
+        sessionId,
         domain: "listening",
         level,
         format: "picture",
@@ -299,6 +343,8 @@ export function ImageLibrarySession({
         correctAnswer,
         correct: itemIsCorrect,
         passage: passageText,
+        framework: data.framework ?? undefined,
+        keyUse: data.keyUse ?? undefined,
         imageDescription: data.imageDescription || undefined,
         imageTags: data.tags,
         targetObject: currentQ.targetLabel || undefined,
@@ -324,8 +370,17 @@ export function ImageLibrarySession({
     setAudioStarted(false);
     setAudioPlayed(false);
     setTimeout(() => {
-      // Replay: always read passage + current question together
-      speakPassage(`${passageText}... ${questionText}`);
+      const taskPayload = {
+        passage: passageText,
+        keyUse,
+        imageDescription: data.imageDescription,
+        tags: data.tags,
+      };
+      if (qIdx === 0) {
+        speakTaskSession("listening", taskPayload, { question: questionText });
+      } else if (questionText) {
+        speakQuestion(questionText);
+      }
       setTimeout(() => setAudioStarted(true), 300);
     }, 100);
   }
@@ -423,60 +478,54 @@ export function ImageLibrarySession({
   const waitingCoach = showFeedback && coachLoading;
   const nextAction = waitingCoach ? undefined : passed ? "next" as const : "retry" as const;
 
-  return (
-    <div className="flex flex-col gap-4 w-full max-w-xl mx-auto px-4 sm:px-6 py-6 pb-8">
+  const listenHint = currentQ?.type === "image_yes_no"
+    ? "Listen to the story — then agree or disagree"
+    : isTextChoice
+      ? "Listen to the story — then choose the correct answer"
+      : "Listen to the story — then tap the correct object";
 
-      {/* Domain badge + progress */}
-      <div className="flex items-center justify-between">
-        <span
-          className="text-xs font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
-          style={{ color: "hsl(338 100% 65%)", background: "hsl(338 100% 65% / .12)" }}
-        >
-          Listening{keyUse ? ` · ${keyUse}` : ""}
-        </span>
-        <span className="text-xs font-semibold text-muted-foreground">
-          {qIdx + 1} / {questions.length}
-        </span>
-      </div>
-
-      {/* Passage card — shows TTS state; passage names every answer */}
-      <div
-        className={`rounded-xl border bg-card/80 shadow-sm px-4 py-4 space-y-3 transition-colors duration-300 ${
-          audioActive ? "border-primary/25 bg-primary/[0.03]" : "border-border/60"
-        }`}
-      >
-        <div className="flex gap-3 items-start">
-          <BookOpen className="w-4 h-4 mt-0.5 shrink-0 text-sky-600 dark:text-sky-400" />
-          <p className="text-sm text-foreground leading-relaxed flex-1 min-w-0">{passageText}</p>
-        </div>
-        <ListenAgainButton
-          onListen={handleReplay}
-          onStop={stopSpeaking}
-          speaking={isSpeaking}
-          domain="listening"
-          fullWidth
-        />
-      </div>
-
-      {/* "Listen first" hint while audio is playing */}
-      {audioActive && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center text-xs font-semibold text-muted-foreground"
-        >
-          {currentQ?.type === "image_yes_no"
-            ? "Listen to the story — then agree or disagree"
-            : isTextChoice
-              ? "Listen to the story — then choose the correct answer"
-              : "Listen to the story — then tap the correct object"}
-        </motion.p>
+  const feedbackFooter = showFeedback ? (
+    <div ref={feedbackRef} className="space-y-3">
+      <ItemCoachingCard
+        feedback={coach}
+        loading={coachLoading}
+        speakText={speakFeedback}
+        stopSpeaking={stopSpeaking}
+        nextAction={nextAction}
+      />
+      {!coachLoading && !coachingSpeech(coach) && (
+        passed ? (
+          <p className="text-xs text-muted-foreground">Yes. You got it. {currentQ.explanation}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            {currentQ.type === "image_yes_no"
+              ? `The correct answer is "${currentQ.correctAnswer}". ${currentQ.explanation}`
+              : `Look at the picture again. ${currentQ.explanation}`}
+          </p>
+        )
       )}
+      <AnswerStepButtons
+        loading={coachLoading}
+        passed={passed}
+        isLast={qIdx >= questions.length - 1}
+        onAdvance={handleNext}
+        onRetry={handleTryAgain}
+        domain="listening"
+      />
+    </div>
+  ) : undefined;
 
-      {/* Scene image — boxes overlaid only in box_tap mode */}
-      <div className="relative w-full rounded-2xl overflow-hidden border border-border/40 bg-muted/20 select-none">
+  const tapImagePanel = (
+    <div className="space-y-2">
+      <p className={SESSION_LABEL}>Picture</p>
+      <div className="relative w-full overflow-hidden rounded-xl bg-muted/20 select-none shrink-0 max-h-[min(52vh,28rem)] lg:max-h-[min(72vh,36rem)] lg:sticky lg:top-0">
         {imageUrl ? (
-          <img src={imageUrl} alt={topic} className="w-full block" draggable={false} />
+          <img
+            src={imageUrl}
+            alt={topic}
+            className="w-full max-h-[inherit] object-contain block mx-auto"
+            draggable={false}
+          />
         ) : (
           <div className="w-full aspect-video flex flex-col items-center justify-center gap-2 bg-muted text-muted-foreground">
             <ImageIcon className="w-8 h-8 opacity-30" />
@@ -484,7 +533,6 @@ export function ImageLibrarySession({
           </div>
         )}
 
-        {/* Bounding-box choices — only in box_tap mode */}
         {!isTextChoice && currentQ.type === "image_object_tap" && imageUrl && (() => {
           // Sort largest → smallest so smaller boxes render last (on top) and
           // always win pointer events when boxes overlap.
@@ -584,145 +632,115 @@ export function ImageLibrarySession({
         });
         })()}
       </div>
+    </div>
+  );
 
-      {/* Question card */}
-      <AnimatePresence mode="wait">
-        <motion.div key={qIdx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}
-          className="rounded-2xl border border-border bg-muted/60 px-4 py-3"
-        >
-          <p className="text-base font-bold text-foreground leading-snug">{questionText}</p>
-          {currentQ.type === "image_yes_no" && (
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Agree or disagree.
-            </p>
-          )}
-          {currentQ.type !== "image_yes_no" && (
-          <p className="text-xs text-muted-foreground mt-1 font-medium">
-            {(isTextChoice || (currentQ.type === "image_object_tap" && choices.length === 0))
-                ? "Choose the correct answer below"
-                : "Tap the correct object in the image above"}
-          </p>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Text-choice option buttons — shown when:
-           a) academic vision sessions explicitly set tapMode="text_choice", OR
-           b) box_tap mode but no DINO box matched the target label (safe degradation
-              instead of silently marking a random wrong box as correct) */}
-      {(isTextChoice || (!isTextChoice && currentQ.type === "image_object_tap" && choices.length === 0)) && currentQ.type === "image_object_tap" && !showFeedback && (
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-2 gap-2.5"
-        >
-          {(currentQ.options ?? []).map((option, i) => {
-            const interactive = canTap;
-            return (
-              <button
-                key={i}
-                onClick={() => handleTextChoiceTap(option)}
-                disabled={!interactive}
-                className="rounded-xl border-2 border-border bg-card px-3 py-3 text-sm font-semibold text-foreground text-left leading-snug transition-all hover:border-primary/60 hover:bg-primary/5 active:scale-[0.97] disabled:opacity-40"
-              >
-                {option}
-              </button>
-            );
-          })}
-        </motion.div>
-      )}
-
-      {/* Text-choice feedback state — show all options with correct/wrong highlights */}
-      {isTextChoice && currentQ.type === "image_object_tap" && showFeedback && (
-        <div className="grid grid-cols-2 gap-2.5">
-          {(currentQ.options ?? []).map((option, i) => {
-            const isTarget  = labelsMatch(option, currentQ.targetLabel);
-            const wasTapped = tappedLabel !== null && labelsMatch(option, tappedLabel);
-            const style = isTarget
-              ? "border-green-500 bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300"
-              : wasTapped
-                ? "border-red-400 bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300"
-                : "border-border bg-muted/40 text-muted-foreground opacity-50";
-            return (
-              <div
-                key={i}
-                className={`rounded-xl border-2 px-3 py-3 text-sm font-semibold text-left leading-snug flex items-start gap-2 ${style}`}
-              >
-                {isTarget && <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-green-600" />}
-                {!isTarget && wasTapped && <XCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />}
-                <span>{option}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Agree / Disagree buttons — Argue key use */}
-      {currentQ.type === "image_yes_no" && !showFeedback && (
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-2 gap-3"
-        >
-          {([
-            { choice: "agree",    Icon: ThumbsUp,   label: "Agree",    style: "border-emerald-400 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700 dark:hover:bg-emerald-900/50" },
-            { choice: "disagree", Icon: ThumbsDown,  label: "Disagree", style: "border-rose-400 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-700 dark:hover:bg-rose-900/50" },
-          ] as const).map(({ choice, Icon, label, style }) => (
-            <button
-              key={choice}
-              onClick={() => handleYesNoAnswer(choice)}
-              disabled={!canTap}
-              className={`flex flex-col items-center justify-center gap-2.5 rounded-2xl border-2 py-6 text-sm font-bold transition-all active:scale-[0.97] disabled:opacity-40 ${style}`}
-            >
-              <Icon className="w-8 h-8" />
-              {label}
-            </button>
-          ))}
-        </motion.div>
-      )}
-
-      {/* Feedback banner — ref used to scroll into view on mobile */}
-      {showFeedback && (
-        <motion.div ref={feedbackRef} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-          className={`rounded-xl px-4 py-3 border text-sm font-medium ${
-            coachLoading
-              ? "bg-muted/40 border-border text-foreground"
-              : passed
-                ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/30 dark:border-green-800 dark:text-green-300"
-                : "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300"
-          }`}
-        >
-          <div className="space-y-2">
-            <ItemCoachingCard
-              feedback={coach}
-              loading={coachLoading}
-              speakText={speakFeedback}
-              stopSpeaking={stopSpeaking}
-              nextAction={nextAction}
-            />
-            {!coachLoading && !coachingSpeech(coach) && (
-              passed ? (
-                <p>Yes. You got it. {currentQ.explanation}</p>
-              ) : (
-                <p>
-                  {currentQ.type === "image_yes_no"
-                    ? `Not quite — the correct answer is "${currentQ.correctAnswer}". ${currentQ.explanation}`
-                    : `Not quite — look at the picture again. ${currentQ.explanation}`}
-                </p>
-              )
-            )}
-          </div>
-        </motion.div>
-      )}
-
-      {showFeedback && (
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-          <AnswerStepButtons
-            loading={coachLoading}
-            passed={passed}
-            isLast={qIdx >= questions.length - 1}
-            onAdvance={handleNext}
-            onRetry={handleTryAgain}
+  return (
+    <div className="flex flex-1 min-h-0 w-full flex-col py-2 sm:py-3">
+      <SessionResponsiveLayout
+        domain="listening"
+        referenceLabel="Picture"
+        className="flex-1 min-h-0"
+        referencePanel={tapImagePanel}
+      >
+        <SessionWorkScroll footer={feedbackFooter}>
+          <SessionTaskCard
+            domain="listening"
+            data={{
+              passage: passageText,
+              keyUse,
+              imageDescription: data.imageDescription,
+              tags: data.tags,
+            }}
+            speakTaskSession={speakTaskSession}
+            onListen={handleReplay}
+            onStopSpeaking={stopSpeaking}
+            speaking={isSpeaking}
           />
-        </motion.div>
-      )}
+
+          {audioActive && (
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs text-muted-foreground">
+              {listenHint}
+            </motion.p>
+          )}
+
+          <SessionQuestionBlock index={qIdx}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={qIdx}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
+                <h3 className={SESSION_QUESTION}>{questionText}</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {currentQ.type === "image_yes_no"
+                    ? "Agree or disagree."
+                    : (isTextChoice || (currentQ.type === "image_object_tap" && choices.length === 0))
+                      ? "Choose the correct answer below"
+                      : "Tap the correct object in the picture"}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+
+            {(isTextChoice || (!isTextChoice && currentQ.type === "image_object_tap" && choices.length === 0))
+              && currentQ.type === "image_object_tap"
+              && !showFeedback && (
+              <SessionMcOptions
+                options={currentQ.options ?? []}
+                correct={currentQ.correct}
+                selectedIdx={-1}
+                showFeedback={false}
+                onSelect={(i) => handleTextChoiceTap((currentQ.options ?? [])[i] ?? "")}
+                theme={theme}
+                disabled={!canTap}
+              />
+            )}
+
+            {isTextChoice && currentQ.type === "image_object_tap" && showFeedback && (
+              <SessionMcOptions
+                options={currentQ.options ?? []}
+                correct={currentQ.correct}
+                selectedIdx={
+                  tappedLabel
+                    ? (currentQ.options ?? []).findIndex((o) => labelsMatch(o, tappedLabel))
+                    : -1
+                }
+                showFeedback
+                onSelect={() => {}}
+                theme={theme}
+                disabled
+              />
+            )}
+
+            {currentQ.type === "image_yes_no" && !showFeedback && (
+              <div className="flex gap-2 max-w-md pt-1">
+                {([
+                  { choice: "agree" as const, Icon: ThumbsUp, label: "Agree" },
+                  { choice: "disagree" as const, Icon: ThumbsDown, label: "Disagree" },
+                ]).map(({ choice, Icon, label }) => (
+                  <button
+                    key={choice}
+                    type="button"
+                    onClick={() => handleYesNoAnswer(choice)}
+                    disabled={!canTap}
+                    className={cn(
+                      "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                      theme.chip,
+                      theme.chipHover,
+                      "disabled:opacity-40",
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </SessionQuestionBlock>
+        </SessionWorkScroll>
+      </SessionResponsiveLayout>
     </div>
   );
 }

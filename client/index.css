@@ -40,6 +40,8 @@
   /* Brand palette — driven by --brand-* in theme.css (Blossom or goELprep). */
   --color-trust-blue: hsl(var(--brand-trust-blue));
   --color-growth-green: hsl(var(--brand-growth-green));
+  --color-logo-gold: hsl(var(--brand-logo-gold));
+  --color-logo-teal: hsl(var(--brand-logo-teal));
   --color-energy-orange: hsl(var(--brand-energy-orange));
   --color-achieve-purple: hsl(var(--brand-achieve-purple));
   --color-streak-gold: hsl(var(--brand-streak-gold));

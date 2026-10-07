@@ -19,13 +19,21 @@
   --nav-height: 3.5rem;
   --radius: 0.875rem;
 
-  /* Blossom brand accents (overridden by goELprep themes) */
-  --brand-trust-blue: 338 100% 65%;
-  --brand-growth-green: 150 62% 41%;
-  --brand-energy-orange: 14 86% 57%;
-  --brand-achieve-purple: 286 70% 58%;
-  --brand-streak-gold: 40 94% 52%;
-  --brand-deep-night: 328 32% 13%;
+  /*
+   * goELprep brand palette (from logo)
+   * Blue #107CE6 · Green #55C40A · Navy #032552
+   * Reading #f8b000 · Writing #00a0b8 (logo streak accents)
+   * --primary stays Blossom pink; domain UI uses blue · green · gold · teal.
+   */
+  --brand-trust-blue: 210 87% 48%;
+  --brand-growth-green: 96 90% 40%;
+  --brand-logo-gold: 43 100% 49%;
+  --brand-logo-teal: 188 100% 36%;
+  /* Legacy aliases — same as logo gold/teal */
+  --brand-energy-orange: 43 100% 49%;
+  --brand-achieve-purple: 188 100% 36%;
+  --brand-streak-gold: 43 100% 49%;
+  --brand-deep-night: 214 93% 17%;
   --heading-secondary: 240 6% 10%;
 }
 
@@ -102,50 +110,61 @@
   --ring: 338 100% 65%;
 
   --heading-secondary: 0 0% 93%;
+
+  /* Logo domain accents — slightly brighter on dark surfaces */
+  --brand-trust-blue: 210 87% 58%;
+  --brand-growth-green: 96 90% 48%;
+  --brand-logo-gold: 43 100% 56%;
+  --brand-logo-teal: 188 100% 44%;
+  --brand-energy-orange: 43 100% 56%;
+  --brand-achieve-purple: 188 100% 44%;
+  --brand-streak-gold: 43 100% 56%;
 }
 
 /* ---------------------- goELprep LIGHT ---------------------- */
 [data-theme="goelprep-light"] {
   --background: 210 40% 98%;
-  --foreground: 220 100% 12%;
+  --foreground: 214 93% 17%;
 
   --border: 214 32% 88%;
 
   --card: 0 0% 100%;
-  --card-foreground: 220 100% 12%;
+  --card-foreground: 214 93% 17%;
   --card-border: 214 32% 88%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 220 100% 12%;
+  --popover-foreground: 214 93% 17%;
   --popover-border: 214 32% 88%;
 
-  --primary: 217 100% 50%;
+  --primary: 210 87% 48%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 217 100% 44%;
+  --primary-hover: 210 87% 42%;
 
   --secondary: 210 35% 94%;
-  --secondary-foreground: 220 80% 18%;
+  --secondary-foreground: 214 80% 22%;
 
   --muted: 210 30% 95%;
   --muted-foreground: 220 15% 40%;
 
-  --accent: 183 100% 34%;
+  --accent: 188 100% 36%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
 
   --input: 214 32% 88%;
-  --ring: 217 100% 50%;
+  --ring: 210 87% 48%;
 
-  --brand-trust-blue: 217 100% 50%;
-  --brand-growth-green: 95 74% 44%;
-  --brand-energy-orange: 38 95% 57%;
-  --brand-achieve-purple: 183 100% 34%;
-  --brand-streak-gold: 38 95% 57%;
-  --brand-deep-night: 220 100% 12%;
+  --brand-trust-blue: 210 87% 48%;
+  --brand-growth-green: 96 90% 40%;
+  --brand-logo-gold: 43 100% 49%;
+  --brand-logo-teal: 188 100% 36%;
+  --brand-energy-orange: 43 100% 49%;
+  --brand-achieve-purple: 188 100% 36%;
+  --brand-streak-gold: 43 100% 49%;
+  --brand-deep-night: 214 93% 17%;
 
-  --heading-secondary: 220 100% 12%;
+  --heading-secondary: 214 93% 17%;
 }
 
 /* ---------------------- goELprep DARK ---------------------- */
@@ -164,9 +183,9 @@
   --popover-foreground: 210 30% 95%;
   --popover-border: 230 9% 28%;
 
-  --primary: 217 100% 60%;
+  --primary: 210 87% 58%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 217 100% 67%;
+  --primary-hover: 210 87% 65%;
 
   --secondary: 230 8% 25%;
   --secondary-foreground: 210 25% 92%;
@@ -174,20 +193,22 @@
   --muted: 230 8% 23%;
   --muted-foreground: 215 10% 68%;
 
-  --accent: 95 74% 48%;
+  --accent: 96 90% 48%;
   --accent-foreground: 230 10% 17%;
 
   --destructive: 0 63% 52%;
   --destructive-foreground: 0 0% 100%;
 
   --input: 230 9% 26%;
-  --ring: 217 100% 60%;
+  --ring: 210 87% 58%;
 
-  --brand-trust-blue: 217 100% 60%;
-  --brand-growth-green: 95 74% 50%;
-  --brand-energy-orange: 38 95% 57%;
-  --brand-achieve-purple: 183 100% 42%;
-  --brand-streak-gold: 38 95% 57%;
+  --brand-trust-blue: 210 87% 58%;
+  --brand-growth-green: 96 90% 48%;
+  --brand-logo-gold: 43 100% 56%;
+  --brand-logo-teal: 188 100% 44%;
+  --brand-energy-orange: 43 100% 56%;
+  --brand-achieve-purple: 188 100% 44%;
+  --brand-streak-gold: 43 100% 56%;
   --brand-deep-night: 230 12% 22%;
 
   --heading-secondary: 210 22% 93%;

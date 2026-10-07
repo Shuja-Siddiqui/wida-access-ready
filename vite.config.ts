@@ -21,8 +21,12 @@ export default defineConfig(async ({ command }) => ({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client"),
+      "@shared": path.resolve(import.meta.dirname, "../shared"),
     },
     dedupe: ["react", "react-dom"],
+  },
+  optimizeDeps: {
+    include: ["microsoft-cognitiveservices-speech-sdk"],
   },
   root: path.resolve(import.meta.dirname),
   build: {

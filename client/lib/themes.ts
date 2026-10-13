@@ -23,11 +23,20 @@ export const THEME_GROUPS = [
       { id: "dark", label: "Dark", swatch: "bg-[#0F0F0F] ring-1 ring-[#FF4D8D]/40" },
     ],
   },
+  {
+    id: "daredevil",
+    label: "Daredevil",
+    themes: [
+      { id: "daredevil-light", label: "Light", swatch: "bg-[#B91C1C] ring-1 ring-black/20" },
+      { id: "daredevil-dark", label: "Dark", swatch: "bg-[#0A0A0A] ring-1 ring-[#DC2626]/50" },
+    ],
+  },
 ] as const;
 
 export const THEMES = [
   ...THEME_GROUPS[0].themes,
   ...THEME_GROUPS[1].themes,
+  ...THEME_GROUPS[2].themes,
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];
@@ -41,17 +50,22 @@ export function isThemeId(value: unknown): value is ThemeId {
 }
 
 export function isDarkTheme(theme: ThemeId): boolean {
-  return theme === "dark" || theme === "goelprep-dark";
+  return theme === "dark" || theme === "goelprep-dark" || theme === "daredevil-dark";
 }
 
 export function themeGroupId(theme: ThemeId): (typeof THEME_GROUPS)[number]["id"] {
-  return theme.startsWith("goelprep") ? "goelprep" : "blossom";
+  if (theme.startsWith("goelprep")) return "goelprep";
+  if (theme.startsWith("daredevil")) return "daredevil";
+  return "blossom";
 }
 
 /** Flip light ↔ dark within the same palette family. */
 export function toggleThemeMode(theme: ThemeId): ThemeId {
   if (theme.startsWith("goelprep")) {
     return theme === "goelprep-dark" ? "goelprep-light" : "goelprep-dark";
+  }
+  if (theme.startsWith("daredevil")) {
+    return theme === "daredevil-dark" ? "daredevil-light" : "daredevil-dark";
   }
   return theme === "dark" ? "light" : "dark";
 }

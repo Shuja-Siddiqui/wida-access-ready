@@ -62,6 +62,7 @@ export function WritingSessionView({
     aiItemPassed(productionReview?.feedback)
     || writingTryCount >= WRITING_ATTEMPTS_BEFORE_SKIP;
   const inReview = productionReview?.kind === "writing";
+  const isLastQuestion = qIdx >= questionCount - 1;
 
   return (
     <SessionResponsiveLayout
@@ -101,11 +102,12 @@ export function WritingSessionView({
                       ? "next"
                       : "retry"
                 }
+                isLast={isLastQuestion}
               />
               <AnswerStepButtons
                 loading={productionReview.loading}
                 passed={aiItemPassed(productionReview.feedback)}
-                isLast={qIdx >= questionCount - 1}
+                isLast={isLastQuestion}
                 onAdvance={onContinueProduction}
                 onRetry={onRetryProduction}
                 allowSkip={allowSkip}

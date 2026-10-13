@@ -10,30 +10,10 @@ import type { SessionQuestion } from "../session-context";
 import { READING_QUESTIONS_PER_PAGE } from "./reading-questions-panel";
 import { normalizeSessionDomain } from "./session-ui-styles";
 import { cn } from "@/lib/utils";
-
-function formatSubmittedAnswer(value: unknown): string {
-  if (value == null) return "";
-  if (typeof value === "string") return value;
-  if (Array.isArray(value)) return value.map(String).join(", ");
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
-
-function resolveCorrectIndex(q: SessionQuestion | undefined): number | undefined {
-  if (!q || !Array.isArray(q.options)) return undefined;
-  const raw = q.correct;
-  const idx = typeof raw === "number" ? raw : Number(raw);
-  if (!Number.isInteger(idx) || idx < 0 || idx >= q.options.length) return undefined;
-  return idx;
-}
-
-function resolveCorrectAnswer(q: SessionQuestion | undefined): string | undefined {
-  if (!q) return undefined;
-  const idx = resolveCorrectIndex(q);
-  if (idx != null) return q.options![idx];
-  if (q.type === "agree_disagree" && q.answer) return q.answer;
-  return undefined;
-}
+import {
+  formatStudentAnswerForFeedback,
+  resolveCorrectAnswerForFeedback,
+} from "./session-answer-format";
 
 export function SessionFeedbackBar() {
   const {
@@ -72,7 +52,8 @@ export function SessionFeedbackBar() {
     let cancelled = false;
     setCoachLoading(true);
     setCoachSettled(false);
-    const submitted = formatSubmittedAnswer(lastSubmittedAnswer);
+    const domainForFeedback = (session.content.type || activeDomain).replace("_academic", "");
+    const submitted = formatStudentAnswerForFeedback(currentQ, domainForFeedback, lastSubmittedAnswer);
     const fallbackMc =
       selectedIdx >= 0 && currentQ.options?.[selectedIdx] != null
         ? String(currentQ.options[selectedIdx])
@@ -88,7 +69,7 @@ export function SessionFeedbackBar() {
         format: "selected_response",
         question: currentQ.question,
         studentAnswer: submitted || fallbackMc,
-        correctAnswer: resolveCorrectAnswer(currentQ),
+        correctAnswer: resolveCorrectAnswerForFeedback(currentQ, domainForFeedback),
         correct: lastCorrect,
         passage: data?.audioScript ?? data?.passage,
         options: currentQ.options,
@@ -171,6 +152,8 @@ export function SessionFeedbackBar() {
                 speakText={speakFeedback}
                 stopSpeaking={onStopSpeaking}
                 nextAction={nextAction}
+                isLast={isLastQuestion}
+                advanceLabel={advanceLabel}
               />
               {!coachLoading && !coachingSpeech(coach) && currentQ?.explanation && (
                 <p className="text-muted-foreground text-xs leading-snug">

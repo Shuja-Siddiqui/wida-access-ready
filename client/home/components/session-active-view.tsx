@@ -26,7 +26,8 @@ export function SessionActiveView() {
     onAnswer, onAnswerNonMC, onStartRecording, onStopRecording, onSubmitWriting,
     sttSupported, sttTranscript, sttInterim, sttLevel, sttError,
     productionReview, onContinueProduction, onRetryProduction,
-    speakPassage, speakFeedback, speakTaskSession, speakQuestion, onStopSpeaking, speaking, ttsLoading,
+    speakPassage, speakFeedback, speakTaskSession, speakQuestion, speakListeningQuestion,
+    onStopSpeaking, speaking, ttsLoading,
   } = useSessionContext();
 
   const content     = session.content;
@@ -159,25 +160,28 @@ export function SessionActiveView() {
                       speakTaskSession={speakTaskSession}
                       onStopSpeaking={onStopSpeaking}
                       speaking={speaking}
-                      listenLabel={type === "reading" ? "Hear instructions" : undefined}
+                      listenLabel={
+                        type === "reading"
+                          ? "Hear instructions"
+                          : type === "listening"
+                            ? "Listen again"
+                            : undefined
+                      }
                       onListen={() => {
                         onStopSpeaking();
                         if (type === "reading") {
                           speakTaskSession("reading", data as Record<string, unknown>);
                           return;
                         }
-                        const questionText = currentQ?.question?.trim() ?? "";
-                        if (qIdx === 0) {
-                          speakTaskSession(
-                            domainKey,
+                        if (type === "listening") {
+                          speakListeningQuestion(
                             data as Record<string, unknown>,
-                            questionText ? { question: questionText } : undefined,
+                            qIdx,
+                            currentQ?.question?.trim() ?? "",
                           );
-                        } else if (questionText) {
-                          speakQuestion(questionText);
-                        } else {
-                          speakTaskSession(domainKey, data as Record<string, unknown>);
+                          return;
                         }
+                        speakTaskSession(domainKey, data as Record<string, unknown>);
                       }}
                     />
                   ) : undefined
@@ -197,7 +201,16 @@ export function SessionActiveView() {
               )}
 
               {type === "listening" && currentQ && (
-                <SessionQuestionBlock index={qIdx}>
+                <SessionQuestionBlock
+                  index={qIdx}
+                  listenToQuestion={() => {
+                    onStopSpeaking();
+                    const stem = currentQ.question?.trim() ?? "";
+                    if (stem) speakQuestion(stem, "listening");
+                  }}
+                  questionSpeaking={speaking}
+                  onStopQuestionSpeech={onStopSpeaking}
+                >
                   {renderQuestion(currentQ, "listening")}
                 </SessionQuestionBlock>
               )}

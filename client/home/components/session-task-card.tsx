@@ -15,9 +15,9 @@ const DOMAIN_META: Record<
 > = {
   listening: {
     label: "Listening",
-    subtitle: "Listen, then answer",
+    subtitle: "Listen carefully, then answer",
     Icon: Headphones,
-    storyLabel: "Passage",
+    storyLabel: "Audio",
   },
   reading: {
     label: "Reading",
@@ -70,10 +70,20 @@ export function SessionTaskCard({
   const meta = DOMAIN_META[domain];
   const { Icon } = meta;
 
+  /** Listening: never show audio script as readable text (assess listening, not reading). */
   const story =
-    (typeof data.passage === "string" ? data.passage.trim() : "")
-    || (typeof data.audioScript === "string" ? data.audioScript.trim() : "")
-    || (typeof data.audio_script === "string" ? data.audio_script.trim() : "");
+    domain === "listening"
+      ? ""
+      : (typeof data.passage === "string" ? data.passage.trim() : "")
+        || (typeof data.audioScript === "string" ? data.audioScript.trim() : "")
+        || (typeof data.audio_script === "string" ? data.audio_script.trim() : "");
+  const hasListeningAudio =
+    domain === "listening"
+    && Boolean(
+      (typeof data.audioScript === "string" && data.audioScript.trim())
+      || (typeof data.audio_script === "string" && data.audio_script.trim())
+      || (typeof data.passage === "string" && data.passage.trim()),
+    );
   const keyUse = typeof data.keyUse === "string" ? data.keyUse.trim() : "";
   const prompt = String(data.prompt ?? "");
   const wordBank = (data.wordBank ?? data.word_bank) as string[] | undefined;
@@ -101,6 +111,15 @@ export function SessionTaskCard({
           <p className={SESSION_LABEL}>{meta.storyLabel}</p>
           <p className="text-[15px] sm:text-base leading-[1.8] text-foreground/90 whitespace-pre-line">
             {story}
+          </p>
+        </div>
+      )}
+
+      {hasListeningAudio && !story && (
+        <div className="space-y-1.5">
+          <p className={SESSION_LABEL}>{meta.storyLabel}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            The passage is audio only — it is not shown as text. Use Listen again as often as you need.
           </p>
         </div>
       )}

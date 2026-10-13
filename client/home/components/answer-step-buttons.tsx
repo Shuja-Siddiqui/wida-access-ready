@@ -2,6 +2,7 @@ import { ArrowRight, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SESSION_THEMES, type SessionDomainKey } from "./session-ui-styles";
+import { resolveAdvanceButtonLabel } from "./session-nav-labels";
 
 /** Writing: require this many submits before Skip is offered on a failed item. */
 export const WRITING_ATTEMPTS_BEFORE_SKIP = 2;
@@ -33,7 +34,7 @@ export function AnswerStepButtons({
 }) {
   if (loading) return null;
 
-  const nextLabel = advanceLabel ?? (isLast ? "Finish" : "Next");
+  const nextLabel = resolveAdvanceButtonLabel(isLast, advanceLabel);
   const primaryBtn = domain ? SESSION_THEMES[domain].primaryBtn : "btn-brand";
 
   if (passed) {

@@ -96,12 +96,17 @@ function pictureQuestionText(q: ImageLibraryQuestion): string {
 interface Props {
   data: ImageLibraryData;
   onComplete: (answers: AnswerRecord[]) => void;
+  speakListeningQuestion: (
+    data: Record<string, unknown>,
+    questionIndex: number,
+    questionText: string,
+  ) => void;
   speakTaskSession: (
     domain: "listening",
     data: Record<string, unknown>,
     options?: { question?: string },
   ) => void;
-  speakQuestion: (question: string) => void;
+  speakQuestion: (question: string, domain?: "listening") => void;
   speakFeedback: (text: string) => void;
   isLoadingTts: boolean;
   isSpeaking: boolean;
@@ -173,6 +178,7 @@ function buildLibraryChoices(
 export function ImageLibrarySession({
   data,
   onComplete,
+  speakListeningQuestion,
   speakTaskSession,
   speakQuestion,
   speakFeedback,
@@ -233,11 +239,7 @@ export function ImageLibrarySession({
 
     spokenListenKeyRef.current = listenKey;
 
-    if (qIdx === 0) {
-      speakTaskSession("listening", taskPayload, { question: questionText });
-    } else if (questionText) {
-      speakQuestion(questionText);
-    }
+    speakListeningQuestion(taskPayload, qIdx, questionText);
     // Small delay so isSpeaking/isLoadingTts have time to flip before the
     // unlock watcher checks them
     const t = setTimeout(() => setAudioStarted(true), 300);
@@ -376,11 +378,7 @@ export function ImageLibrarySession({
         imageDescription: data.imageDescription,
         tags: data.tags,
       };
-      if (qIdx === 0) {
-        speakTaskSession("listening", taskPayload, { question: questionText });
-      } else if (questionText) {
-        speakQuestion(questionText);
-      }
+      speakListeningQuestion(taskPayload, qIdx, questionText);
       setTimeout(() => setAudioStarted(true), 300);
     }, 100);
   }
@@ -462,7 +460,7 @@ export function ImageLibrarySession({
     setCoach(null);
     setCoachLoading(false);
     // Bypass the audio gate entirely — no auto-replay, tap immediately.
-    // The passage is still visible; the Replay button lets them re-listen manually.
+    // Passage is audio-only on screen; replay uses TTS.
     stopSpeaking();
     setIsRetrying(true);
   }
@@ -477,6 +475,7 @@ export function ImageLibrarySession({
   const passed = aiItemPassed(coach, isCorrect);
   const waitingCoach = showFeedback && coachLoading;
   const nextAction = waitingCoach ? undefined : passed ? "next" as const : "retry" as const;
+  const isLastQuestion = qIdx >= questions.length - 1;
 
   const listenHint = currentQ?.type === "image_yes_no"
     ? "Listen to the story — then agree or disagree"
@@ -492,6 +491,7 @@ export function ImageLibrarySession({
         speakText={speakFeedback}
         stopSpeaking={stopSpeaking}
         nextAction={nextAction}
+        isLast={isLastQuestion}
       />
       {!coachLoading && !coachingSpeech(coach) && (
         passed ? (
@@ -507,7 +507,7 @@ export function ImageLibrarySession({
       <AnswerStepButtons
         loading={coachLoading}
         passed={passed}
-        isLast={qIdx >= questions.length - 1}
+        isLast={isLastQuestion}
         onAdvance={handleNext}
         onRetry={handleTryAgain}
         domain="listening"
@@ -664,7 +664,15 @@ export function ImageLibrarySession({
             </motion.p>
           )}
 
-          <SessionQuestionBlock index={qIdx}>
+          <SessionQuestionBlock
+            index={qIdx}
+            listenToQuestion={() => {
+              stopSpeaking();
+              if (questionText) speakQuestion(questionText, "listening");
+            }}
+            questionSpeaking={isSpeaking}
+            onStopQuestionSpeech={stopSpeaking}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={qIdx}

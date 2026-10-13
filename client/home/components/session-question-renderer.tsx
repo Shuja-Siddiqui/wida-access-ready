@@ -1,4 +1,8 @@
-import { resolveQuestionUi, type SessionDomain } from "@/lib/session-content-schema";
+import {
+  normalizeReadingClassifyDisplay,
+  resolveQuestionUi,
+  type SessionDomain,
+} from "@/lib/session-content-schema";
 import { StemVisual } from "@/components/shape-glyph";
 import type { SessionQuestion } from "../session-context";
 import { SessionImageGrid } from "./session-image-grid";
@@ -104,10 +108,14 @@ export function SessionQuestionRenderer({
         ? (q.correct as number[])
         : [];
     if (correct.length) {
+      const classifyDisplay =
+        domain === "reading"
+          ? normalizeReadingClassifyDisplay(q.question ?? "", q.categories)
+          : { question: q.question ?? "", categories: q.categories };
       return (
         <SessionClassifyQuestion
-          question={q.question}
-          categories={q.categories}
+          question={classifyDisplay.question}
+          categories={classifyDisplay.categories}
           items={q.items}
           correct={correct}
           theme={theme}

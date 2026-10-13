@@ -164,6 +164,7 @@ function SpeakingReviewFooter({
   onRetryProduction: () => void;
 }) {
   const passed = aiItemPassed(productionReview.feedback);
+  const isLast = qIdx >= questionCount - 1;
   return (
     <div className="space-y-3">
       <p className={SESSION_LABEL}>You said</p>
@@ -178,11 +179,12 @@ function SpeakingReviewFooter({
         nextAction={
           productionReview.loading ? undefined : passed ? "next" : "retry"
         }
+        isLast={isLast}
       />
       <AnswerStepButtons
         loading={productionReview.loading}
         passed={passed}
-        isLast={qIdx >= questionCount - 1}
+        isLast={isLast}
         onAdvance={onContinueProduction}
         onRetry={onRetryProduction}
         domain="speaking"

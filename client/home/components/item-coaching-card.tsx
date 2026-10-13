@@ -7,6 +7,7 @@ import {
   type CoachingTone,
 } from "@/lib/coaching-speech";
 import { prepareCoachingForSpeech } from "@/lib/prepare-text-for-speech";
+import { advanceButtonNavCue } from "./session-nav-labels";
 
 export type ItemFeedbackPayload = {
   headline: string;
@@ -31,8 +32,8 @@ export type ItemFeedbackPayload = {
 function stripNavCues(text: string): string {
   return text
     .replace(/\bthat answer works\.?\s*/gi, "")
-    .replace(/\btap next\.?\s*/gi, "")
-    .replace(/\btap try again(?:,? or skip to move on)?\.?\s*/gi, "")
+    .replace(/\btap (?:next|finish|try again(?:,? or skip to move on)?|skip(?: to move on)?)\.?\s*/gi, "")
+    .replace(/\btap answer question \d+\.?\s*/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -58,8 +59,14 @@ export function speakingReadyToSave(feedback: ItemFeedbackPayload | null | undef
   return aiItemPassed(feedback);
 }
 
-function navCue(nextAction?: "next" | "retry" | "save", allowSkip = true): string {
-  if (nextAction === "next" || nextAction === "save") return "Tap Next.";
+function navCue(
+  nextAction?: "next" | "retry" | "save",
+  allowSkip = true,
+  advance?: { isLast?: boolean; advanceLabel?: string },
+): string {
+  if (nextAction === "next" || nextAction === "save") {
+    return advanceButtonNavCue(advance?.isLast ?? false, advance?.advanceLabel);
+  }
   if (nextAction === "retry") {
     return allowSkip ? "Tap Try again, or Skip to move on." : "Tap Try again.";
   }
@@ -69,17 +76,24 @@ function navCue(nextAction?: "next" | "retry" | "save", allowSkip = true): strin
 /** Text for TTS — keeps *stress* and uses segmented prosody via speakSequence. */
 export function coachingSpeech(
   feedback: ItemFeedbackPayload | null,
-  extras?: { nextAction?: "next" | "retry" | "save"; loading?: boolean; allowSkip?: boolean },
+  extras?: {
+    nextAction?: "next" | "retry" | "save";
+    loading?: boolean;
+    allowSkip?: boolean;
+    isLast?: boolean;
+    advanceLabel?: string;
+  },
 ): string {
   if (extras?.loading) return "";
   const allowSkip = extras?.allowSkip ?? true;
-  if (!feedback) return navCue(extras?.nextAction, allowSkip);
+  const advance = { isLast: extras?.isLast, advanceLabel: extras?.advanceLabel };
+  if (!feedback) return navCue(extras?.nextAction, allowSkip, advance);
 
   const parts: string[] = [];
   const body = stripNavCues(prepareCoachingForSpeech(feedback.spokenText ?? ""));
   if (body) parts.push(body);
 
-  const cue = navCue(extras?.nextAction, allowSkip);
+  const cue = navCue(extras?.nextAction, allowSkip, advance);
   if (cue && !alreadySaid(parts.join(" "), cue)) parts.push(cue);
 
   return parts.join(" ");
@@ -124,6 +138,8 @@ export function ItemCoachingCard({
   stopSpeaking: _stopSpeaking,
   nextAction,
   allowSkip = true,
+  isLast = false,
+  advanceLabel,
 }: {
   feedback: ItemFeedbackPayload | null;
   loading?: boolean;
@@ -131,10 +147,19 @@ export function ItemCoachingCard({
   stopSpeaking?: () => void;
   nextAction?: "next" | "retry" | "save";
   allowSkip?: boolean;
+  /** Must match AnswerStepButtons on the same screen (Finish vs Next vs reading mid-page). */
+  isLast?: boolean;
+  advanceLabel?: string;
 }) {
   const rawSpoken = (feedback?.spokenText ?? "").trim();
   const displayParts = splitCoachingSegments(stripNavCues(rawSpoken));
-  const spokenAloud = coachingSpeech(feedback, { nextAction, loading, allowSkip });
+  const spokenAloud = coachingSpeech(feedback, {
+    nextAction,
+    loading,
+    allowSkip,
+    isLast,
+    advanceLabel,
+  });
 
   useEffect(() => {
     if (loading || !spokenAloud) return;

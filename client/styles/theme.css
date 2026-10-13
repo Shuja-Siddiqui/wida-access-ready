@@ -213,3 +213,97 @@
 
   --heading-secondary: 210 22% 93%;
 }
+
+/* ---------------------- Daredevil LIGHT ---------------------- */
+/* Crimson accent on warm paper — inspired by classic red suit / courtroom tones. */
+[data-theme="daredevil-light"] {
+  --background: 25 18% 96%;
+  --foreground: 0 28% 11%;
+
+  --border: 350 32% 86%;
+
+  --card: 350 35% 98%;
+  --card-foreground: 0 28% 11%;
+  --card-border: 350 32% 86%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 28% 11%;
+  --popover-border: 350 32% 86%;
+
+  --primary: 358 78% 42%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 358 85% 48%;
+
+  --secondary: 350 25% 92%;
+  --secondary-foreground: 0 25% 18%;
+
+  --muted: 350 18% 93%;
+  --muted-foreground: 0 8% 42%;
+
+  --accent: 0 22% 16%;
+  --accent-foreground: 350 20% 96%;
+
+  --destructive: 0 72% 48%;
+  --destructive-foreground: 0 0% 100%;
+
+  --input: 350 32% 86%;
+  --ring: 358 78% 42%;
+
+  --brand-trust-blue: 358 78% 42%;
+  --brand-growth-green: 145 45% 38%;
+  --brand-logo-gold: 38 92% 50%;
+  --brand-logo-teal: 188 55% 32%;
+  --brand-energy-orange: 25 95% 52%;
+  --brand-achieve-purple: 350 45% 45%;
+  --brand-streak-gold: 38 92% 50%;
+  --brand-deep-night: 0 28% 11%;
+
+  --heading-secondary: 0 28% 11%;
+}
+
+/* ---------------------- Daredevil DARK ---------------------- */
+/* Hell's Kitchen night — charcoal, deep red glow, high-contrast crimson primary. */
+[data-theme="daredevil-dark"] {
+  --background: 0 22% 5%;
+  --foreground: 350 18% 94%;
+
+  --border: 350 22% 18%;
+
+  --card: 0 20% 9%;
+  --card-foreground: 350 18% 94%;
+  --card-border: 350 22% 20%;
+
+  --popover: 0 20% 9%;
+  --popover-foreground: 350 18% 94%;
+  --popover-border: 350 22% 20%;
+
+  --primary: 358 85% 52%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 358 90% 58%;
+
+  --secondary: 0 18% 14%;
+  --secondary-foreground: 350 15% 90%;
+
+  --muted: 0 16% 12%;
+  --muted-foreground: 350 8% 62%;
+
+  --accent: 38 85% 52%;
+  --accent-foreground: 0 22% 8%;
+
+  --destructive: 0 68% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --input: 350 22% 18%;
+  --ring: 358 85% 52%;
+
+  --brand-trust-blue: 358 85% 52%;
+  --brand-growth-green: 145 50% 45%;
+  --brand-logo-gold: 38 90% 55%;
+  --brand-logo-teal: 188 50% 42%;
+  --brand-energy-orange: 25 90% 55%;
+  --brand-achieve-purple: 350 50% 55%;
+  --brand-streak-gold: 38 90% 55%;
+  --brand-deep-night: 0 22% 8%;
+
+  --heading-secondary: 350 15% 92%;
+}

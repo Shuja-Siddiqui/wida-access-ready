@@ -103,13 +103,34 @@ export function buildReadingInstructionSpeechSegments(questionCount: number): Sp
 }
 
 /** Single question — teacher intro + narrator reads stem (listening and similar). */
-export function buildQuestionSpeechSegments(question: string): SpeechSegment[] {
+export function buildQuestionSpeechSegments(
+  question: string,
+  opts?: { domain?: SessionDomainKey },
+): SpeechSegment[] {
   const body = prepareTextForSpeech(question);
   if (!body) return [];
+  const intro =
+    opts?.domain === "listening"
+      ? "Listen to your question."
+      : "Here is your question.";
   return [
-    { text: "Here is your question.", delivery: "coaching" },
+    { text: intro, delivery: "coaching" },
     { text: body, delivery: "passage" },
   ];
+}
+
+/** Listening: passage first (q0), then spoken stem for every question index. */
+export function buildListeningQuestionSpeechPlan(
+  data: Record<string, unknown>,
+  questionIndex: number,
+  questionText: string,
+): { passageOnly: SpeechSegment[]; question: SpeechSegment[] } {
+  const passageOnly = buildSessionTaskSpeechSegments("listening", data);
+  const question = buildQuestionSpeechSegments(questionText, { domain: "listening" });
+  if (questionIndex === 0) {
+    return { passageOnly, question };
+  }
+  return { passageOnly: [], question };
 }
 
 /**
@@ -160,12 +181,15 @@ export function buildSessionTaskSpeechSegments(
   };
 
   if (passage) {
-    pushTeacherThenContent(
-      hasImage
-        ? "First, listen and read about the picture."
-        : "First, listen and read this short passage.",
-      passage,
-    );
+    const intro =
+      domain === "listening"
+        ? hasImage
+          ? "Look at the picture. Listen carefully."
+          : "Listen carefully to the passage."
+        : hasImage
+          ? "First, listen and read about the picture."
+          : "First, listen and read this short passage.";
+    pushTeacherThenContent(intro, passage);
   }
 
   const skipSeparateFrame = frame && frameAlreadyInPrompt(frame, prompt);
@@ -186,7 +210,7 @@ export function buildSessionTaskSpeechSegments(
   }
 
   const question = str(options?.question);
-  if (question) {
+  if (question && domain !== "listening") {
     pushTeacherThenContent("Now answer this question.", question);
   }
 

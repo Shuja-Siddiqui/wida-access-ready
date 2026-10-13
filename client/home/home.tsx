@@ -12,7 +12,6 @@ import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { unlockAudioPlayback } from "@/lib/unlock-audio-playback";
 import { Home as HomeIcon } from "lucide-react";
 import { LoadingScreen } from "@/components/loading-screen";
-import confetti from "canvas-confetti";
 
 import type { AnswerRecord, View } from "./home-types";
 import { DOMAIN_CONFIG, domainLabel, resolveSessionStartFromUiKey } from "./home-types";
@@ -26,6 +25,7 @@ import { SessionLoadingView }  from "./components/session-loading-view";
 import { SessionErrorView }    from "./components/session-error-view";
 import { SessionCompleteView } from "./components/session-complete-view";
 import { SessionActiveView }   from "./components/session-active-view";
+import { formatStudentAnswerForFeedback } from "./components/session-answer-format";
 import { useBreadcrumbTrail, type Crumb } from "@/components/breadcrumbs";
 
 export default function Home() {
@@ -139,6 +139,7 @@ export default function Home() {
     speakFeedback,
     speakTaskSession,
     speakQuestion,
+    speakListeningQuestion,
     speakWritingSession,
     speakSpeakingSession,
     stopSpeaking,
@@ -211,15 +212,7 @@ export default function Home() {
     const questionText = sessionQuestions[qIdx]?.question?.trim() ?? "";
     spokenListenKeyRef.current = listenKey;
 
-    if (qIdx === 0) {
-      speakTaskSession(
-        "listening",
-        data as Record<string, unknown>,
-        questionText ? { question: questionText } : undefined,
-      );
-    } else if (questionText) {
-      speakQuestion(questionText);
-    }
+    speakListeningQuestion(data as Record<string, unknown>, qIdx, questionText);
 
     return () => {
       if (spokenListenKeyRef.current === listenKey) {
@@ -343,7 +336,6 @@ export default function Home() {
       return;
     }
 
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     setView("complete");
     refetchProgress();
     refetchStreak();
@@ -480,10 +472,16 @@ export default function Home() {
     setLastCorrect(isCorrect);
     setLastSubmittedAnswer(submittedAnswer);
     setShowFeedback(true);
+    const domainForAnswer = (session?.content?.type ?? activeDomain).replace("_academic", "");
+    const submittedText = currentQ
+      ? formatStudentAnswerForFeedback(currentQ, domainForAnswer, submittedAnswer)
+      : typeof submittedAnswer === "string"
+        ? submittedAnswer
+        : JSON.stringify(submittedAnswer);
     setAnswers(prev => [...prev, {
       question: currentQ?.question ?? "",
       content: currentQ,
-      submittedAnswer: typeof submittedAnswer === "string" ? submittedAnswer : JSON.stringify(submittedAnswer),
+      submittedAnswer: submittedText,
       correct: isCorrect,
     }]);
   };
@@ -509,8 +507,12 @@ export default function Home() {
     setLastCorrect(false);
     stopSpeaking();
     if (session?.content?.type === "listening") {
-      const questionText = questions[qIdx]?.question?.trim();
-      if (questionText) speakQuestion(questionText);
+      const questionText = questions[qIdx]?.question?.trim() ?? "";
+      speakListeningQuestion(
+        session.content.data as Record<string, unknown>,
+        qIdx,
+        questionText,
+      );
     }
   };
 
@@ -624,6 +626,7 @@ export default function Home() {
         studentId={studentId ?? undefined}
         sessionId={session.sessionId}
         level={Number(session.levelStart ?? 1)}
+        speakListeningQuestion={speakListeningQuestion}
         speakTaskSession={speakTaskSession}
         speakQuestion={speakQuestion}
         speakFeedback={speakFeedback}
@@ -665,6 +668,7 @@ export default function Home() {
       speakFeedback,
       speakTaskSession,
       speakQuestion,
+      speakListeningQuestion,
       speakWritingSession,
       speakSpeakingSession,
       onSpeak:        speakPassage,

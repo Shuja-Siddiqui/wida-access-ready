@@ -94,7 +94,7 @@ function AppShellFrame({ children }: { children: React.ReactNode }) {
           onMouseEnter={() => setExpanded(true)}
           onMouseLeave={() => setExpanded(false)}
           className={cn(
-            "fixed left-4 top-1/2 z-[100] -translate-y-1/2 overflow-hidden rounded-[28px] border border-border bg-card/95 p-1.5 shadow-lg shadow-black/10 backdrop-blur-md transition-[width] duration-300 ease-out",
+            "fixed right-4 top-1/2 z-[100] -translate-y-1/2 overflow-hidden rounded-[28px] border border-border bg-card/95 p-1.5 shadow-lg shadow-black/10 backdrop-blur-md transition-[width] duration-300 ease-out",
             expanded ? "w-52" : "w-14",
           )}
         >

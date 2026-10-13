@@ -9,7 +9,6 @@ import {
 } from "@/api-generated";
 import { useSpokenContent } from "@/hooks/use-spoken-content";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
-import { unlockAudioPlayback } from "@/lib/unlock-audio-playback";
 import { Home as HomeIcon } from "lucide-react";
 import { LoadingScreen } from "@/components/loading-screen";
 import confetti from "canvas-confetti";
@@ -52,7 +51,6 @@ export default function Home() {
   const [showFeedback, setShowFeedback]   = useState(false);
   const [lastCorrect, setLastCorrect]     = useState(false);
   const [selectedIdx, setSelectedIdx]     = useState(-1);
-  const [lastSubmittedAnswer, setLastSubmittedAnswer] = useState<unknown>(null);
   const [writingText, setWritingText]     = useState("");
   const [recording, setRecording]         = useState(false);
   const [finalizingSpeaking, setFinalizingSpeaking] = useState(false);
@@ -70,8 +68,7 @@ export default function Home() {
     tryCount: number;
     lastJudgment?: ItemFeedbackPayload["judgment"];
     lastCoachTip: string;
-    lastStudentAnswer: string;
-  }>({ tryCount: 0, lastCoachTip: "", lastStudentAnswer: "" });
+  }>({ tryCount: 0, lastCoachTip: "" });
   const writingCoachRef = useRef<{
     tryCount: number;
     lastJudgment?: ItemFeedbackPayload["judgment"];
@@ -137,12 +134,53 @@ export default function Home() {
     isLoadingTts: ttsLoading,
     speakPassage,
     speakFeedback,
-    speakTaskSession,
-    speakQuestion,
     speakWritingSession,
-    speakSpeakingSession,
     stopSpeaking,
   } = useSpokenContent({ onEnd: () => setListenedOnce(true) });
+
+  // Auto-play spoken support once per session:
+  // listening = audioScript; writing = passage + prompt (+ scaffolds); speaking = prompt.
+  // Reading is never auto-played — the student must read the print themselves.
+  const autoPlaySessionRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!session) return;
+    const kind = session.content?.type;
+    if (kind === "reading") return;
+    const data = session.content?.data;
+    const sessionId: string = session.sessionId;
+    if (autoPlaySessionRef.current === sessionId) return;
+
+    if (kind === "writing") {
+      if (!data || typeof data !== "object") return;
+      autoPlaySessionRef.current = sessionId;
+      speakWritingSession(data as Record<string, unknown>);
+      return;
+    }
+
+    const spoken =
+      kind === "listening"
+        ? (data?.audioScript ?? "")
+        : kind === "speaking"
+          ? [data?.prompt, data?.scaffold].filter(Boolean).join(". ")
+          : "";
+    if (!spoken) return;
+    autoPlaySessionRef.current = sessionId;
+    speakPassage(spoken);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.sessionId]);
+
+  const exitToHome = useCallback(() => {
+    stopSpeaking();
+    autoPlaySessionRef.current = null;
+    setView("home");
+  }, [stopSpeaking]);
+
+  // Stop Azure TTS when leaving the active session (breadcrumb, nav, complete, etc.).
+  useEffect(() => {
+    if (view !== "session") {
+      stopSpeaking();
+    }
+  }, [view, stopSpeaking]);
 
   const {
     isSupported: sttSupported,
@@ -159,93 +197,8 @@ export default function Home() {
     resetTranscript: resetSttTranscript,
   } = useSpeechToText();
 
-  // Auto-play task content — writing/speaking once per session; listening/reading per question (below).
-  const autoPlaySessionRef = useRef<string | null>(null);
-  const spokenListenKeyRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!session || view !== "session") return;
-    const kind = session.content?.type;
-    const data = session.content?.data;
-    const sessionId: string = session.sessionId;
-    if (autoPlaySessionRef.current === sessionId) return;
-    if (!data || typeof data !== "object") return;
-    if (kind !== "listening" && kind !== "reading" && kind !== "speaking" && kind !== "writing") return;
-
-    autoPlaySessionRef.current = sessionId;
-
-    // Multi-question listening: qIdx effect reads passage + each question.
-    // L1–2 tap sessions use ImageLibrarySession's own auto-play.
-    // Reading: instructions only (student reads passage on screen).
-    const questionCount = Array.isArray((data as { questions?: unknown[] }).questions)
-      ? (data as { questions: unknown[] }).questions.length
-      : 0;
-    const tapMode =
-      (data as { useTapMode?: boolean }).useTapMode === true
-      || (kind === "image_library" && (data as { useTapMode?: boolean }).useTapMode !== false);
-    if (kind === "listening" && (questionCount > 0 || tapMode)) return;
-    if (kind === "reading") {
-      speakTaskSession("reading", data as Record<string, unknown>);
-      return;
-    }
-
-    speakTaskSession(kind as "listening" | "speaking" | "writing", data as Record<string, unknown>);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.sessionId, view]);
-
-  // Listening only: auto-read passage on Q1, then each new question stem on advance.
-  useEffect(() => {
-    if (!session || view !== "session") return;
-    const kind = session.content?.type;
-    if (kind !== "listening") return;
-    const data = session.content?.data;
-    if (!data || typeof data !== "object") return;
-    if ((data as { useTapMode?: boolean }).useTapMode === true) return;
-
-    const sessionQuestions = (data as { questions?: Array<{ question?: string }> }).questions ?? [];
-    if (sessionQuestions.length === 0) return;
-
-    const listenKey = `${session.sessionId}:${qIdx}`;
-    if (spokenListenKeyRef.current === listenKey) return;
-
-    const questionText = sessionQuestions[qIdx]?.question?.trim() ?? "";
-    spokenListenKeyRef.current = listenKey;
-
-    if (qIdx === 0) {
-      speakTaskSession(
-        "listening",
-        data as Record<string, unknown>,
-        questionText ? { question: questionText } : undefined,
-      );
-    } else if (questionText) {
-      speakQuestion(questionText);
-    }
-
-    return () => {
-      if (spokenListenKeyRef.current === listenKey) {
-        spokenListenKeyRef.current = null;
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.sessionId, qIdx, view]);
-
-  const exitToHome = useCallback(() => {
-    stopSpeaking();
-    autoPlaySessionRef.current = null;
-    spokenListenKeyRef.current = null;
-    setView("home");
-  }, [stopSpeaking]);
-
-  // Stop Azure TTS when leaving the active session (breadcrumb, nav, complete, etc.).
-  useEffect(() => {
-    if (view !== "session") {
-      stopSpeaking();
-    }
-  }, [view, stopSpeaking]);
-
   // ─── Session lifecycle ────────────────────────────────────────────────────
   const startSession = useCallback(async (domain: string) => {
-    unlockAudioPlayback();
     setActiveDomain(domain);
     setQIdx(0);
     setAnswers([]);
@@ -258,10 +211,8 @@ export default function Home() {
     setSessionResult(null);
     setProductionReview(null);
     setListenedOnce(false);
-    speakingCoachRef.current = { tryCount: 0, lastCoachTip: "", lastStudentAnswer: "" };
+    speakingCoachRef.current = { tryCount: 0, lastCoachTip: "" };
     writingCoachRef.current = { tryCount: 0, lastCoachTip: "", lastStudentAnswer: "" };
-    autoPlaySessionRef.current = null;
-    spokenListenKeyRef.current = null;
     stopSpeaking();
     setView("loading");
     try {
@@ -356,15 +307,12 @@ export default function Home() {
     try {
       return await request<ItemFeedbackPayload>(`/api/students/${studentId}/item-feedback`, {
         method: "POST",
-        body: JSON.stringify({
-          ...body,
-          sessionId: session?.sessionId ?? body.sessionId,
-        }),
+        body: JSON.stringify(body),
       });
     } catch {
       return null;
     }
-  }, [studentId, request, session?.sessionId]);
+  }, [studentId, request]);
 
   useEffect(() => {
     if (!finalizingSpeaking) return;
@@ -405,22 +353,20 @@ export default function Home() {
       question: data?.prompt ?? "",
       studentAnswer: spoken,
       prompt: data?.prompt,
-      passage: data?.passage ?? undefined,
       scaffold: data?.scaffold,
-      framework: data?.framework ?? undefined,
+      canDo: data?.canDoDescriptor,
       keyUse: session?.keyUse ?? data?.keyUse,
+      canDoAction: data?.canDoAction,
+      canDoItems: data?.canDoItems,
       responseLength: data?.responseLength,
       imageTags: data?.imageTags ?? data?.tags,
       imageDescription: data?.imageDescription || undefined,
-      options: (data?.wordBank ?? data?.word_bank) ?? undefined,
       sttConfidence: sttConfidence,
       uncertainWords: sttUncertainWords,
       tryCount: speakingCoachRef.current.tryCount,
       lastJudgment: speakingCoachRef.current.lastJudgment,
       lastCoachTip: speakingCoachRef.current.lastCoachTip || undefined,
-      lastStudentAnswer: speakingCoachRef.current.lastStudentAnswer || undefined,
     }).then((feedback) => {
-      speakingCoachRef.current.lastStudentAnswer = spoken;
       if (feedback) {
         speakingCoachRef.current.lastJudgment = feedback.judgment;
         speakingCoachRef.current.lastCoachTip = feedback.tryAgainTip || feedback.spokenText || "";
@@ -465,7 +411,6 @@ export default function Home() {
     setSelectedIdx(idx);
     const correct = currentQ?.correct === idx;
     setLastCorrect(correct);
-    setLastSubmittedAnswer(currentQ?.options?.[idx] ?? idx);
     setShowFeedback(true);
     setAnswers(prev => [...prev, {
       question: currentQ?.question ?? "",
@@ -478,7 +423,6 @@ export default function Home() {
   const handleAnswerNonMC = (submittedAnswer: unknown, isCorrect: boolean) => {
     if (showFeedback) return;
     setLastCorrect(isCorrect);
-    setLastSubmittedAnswer(submittedAnswer);
     setShowFeedback(true);
     setAnswers(prev => [...prev, {
       question: currentQ?.question ?? "",
@@ -491,7 +435,6 @@ export default function Home() {
   const handleNext = () => {
     setShowFeedback(false);
     setSelectedIdx(-1);
-    setLastSubmittedAnswer(null);
     setListenedOnce(false);
     stopSpeaking();
     if (qIdx < questions.length - 1) {
@@ -505,13 +448,7 @@ export default function Home() {
     setAnswers((prev) => prev.slice(0, -1));
     setShowFeedback(false);
     setSelectedIdx(-1);
-    setLastSubmittedAnswer(null);
     setLastCorrect(false);
-    stopSpeaking();
-    if (session?.content?.type === "listening") {
-      const questionText = questions[qIdx]?.question?.trim();
-      if (questionText) speakQuestion(questionText);
-    }
   };
 
   // ─── Shared helpers ───────────────────────────────────────────────────────
@@ -608,24 +545,17 @@ export default function Home() {
     );
   }
 
-  // L1–2 tap mode bypasses the regular session pipeline (useTapMode flag or legacy image_library type).
-  const useTapMode =
-    session.content.data?.useTapMode === true
-    || (session.content.type === "image_library" && session.content.data?.useTapMode !== false);
-
-  if (useTapMode) {
+  // image_library (levels 0–2) bypasses the regular session pipeline
+  if (session.content.type === "image_library") {
     return (
-      <div className="flex flex-1 min-h-0 w-full flex-col">
       <ImageLibrarySession
         data={{
           ...session.content.data,
           keyUse: session.keyUse ?? session.content.data?.keyUse,
         }}
         studentId={studentId ?? undefined}
-        sessionId={session.sessionId}
         level={Number(session.levelStart ?? 1)}
-        speakTaskSession={speakTaskSession}
-        speakQuestion={speakQuestion}
+        speakPassage={speakPassage}
         speakFeedback={speakFeedback}
         isSpeaking={speaking}
         isLoadingTts={ttsLoading}
@@ -636,7 +566,6 @@ export default function Home() {
           completeSession(imageAnswers);
         }}
       />
-      </div>
     );
   }
 
@@ -652,8 +581,6 @@ export default function Home() {
       showFeedback,
       lastCorrect,
       selectedIdx,
-      answeredCount: answers.length,
-      lastSubmittedAnswer,
       listenedOnce,
       onAnswer:      handleAnswer,
       onAnswerNonMC: handleAnswerNonMC,
@@ -663,10 +590,7 @@ export default function Home() {
       ttsLoading,
       speakPassage,
       speakFeedback,
-      speakTaskSession,
-      speakQuestion,
       speakWritingSession,
-      speakSpeakingSession,
       onSpeak:        speakPassage,
       onStopSpeaking: stopSpeaking,
       sttSupported,
@@ -703,8 +627,7 @@ export default function Home() {
           prompt: data?.prompt ?? undefined,
           passage: data?.passage ?? undefined,
           scaffold: (data?.sentenceFrame ?? data?.sentence_frame) ?? undefined,
-          framework: data?.framework ?? undefined,
-          keyUse: session?.keyUse ?? data?.keyUse ?? undefined,
+          canDo: data?.canDoDescriptor ?? undefined,
           imageTags: (data?.imageTags ?? data?.tags) ?? undefined,
           imageDescription: data?.imageDescription || undefined,
           minSentences: data?.minSentences != null ? Number(data.minSentences) : undefined,

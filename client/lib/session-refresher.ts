@@ -12,8 +12,8 @@
  *     POST /api/auth/refresh.
  *  4a. Success → new access + refresh tokens written to storage; the
  *      registered onRefreshed callback updates React context; returns true.
- *  4b. Failure → the registered onSessionExpired callback fires (toast +
- *      redirect to login); returns false. customFetch then throws the 401.
+ *  4b. Failure → the registered onLogout callback fires, clearing the
+ *      session; returns false. customFetch then throws the original 401.
  *
  * Concurrent refresh deduplication: if multiple requests fail simultaneously,
  * only one refresh call is made; all callers await the same promise.
@@ -24,23 +24,11 @@ export const ACCESS_TOKEN_KEY  = "authToken";
 
 type RefreshCallbacks = {
   onRefreshed: (accessToken: string, refreshToken: string) => void;
-  onSessionExpired: () => void;
+  onLogout: () => void;
 };
 
 let _callbacks: RefreshCallbacks | null = null;
 let _inflight: Promise<boolean> | null = null;
-let _sessionExpiredNotified = false;
-
-/** Call after a successful login so a future expiry can notify again. */
-export function resetSessionExpiredNotice(): void {
-  _sessionExpiredNotified = false;
-}
-
-function notifySessionExpired(): void {
-  if (_sessionExpiredNotified) return;
-  _sessionExpiredNotified = true;
-  _callbacks?.onSessionExpired();
-}
 
 /** Called once from UserContext to wire in the React-side callbacks. */
 export function configureSessionRefresher(callbacks: RefreshCallbacks): void {
@@ -77,7 +65,6 @@ async function doRefresh(): Promise<boolean> {
     if (!data?.token || !data?.refreshToken) return false;
 
     writeTokens(data.token, data.refreshToken);
-    resetSessionExpiredNotice();
     _callbacks?.onRefreshed(data.token, data.refreshToken);
     return true;
   } catch {
@@ -94,22 +81,16 @@ export function attemptRefresh(): Promise<boolean> {
   if (_inflight) return _inflight;
   _inflight = doRefresh().then((ok) => {
     _inflight = null;
-    if (!ok) notifySessionExpired();
+    if (!ok) _callbacks?.onLogout();
     return ok;
   });
   return _inflight;
 }
 
-/** True when the error body from the API looks like an expired or revoked session. */
+/** True when the error body from the API looks like an expired-session error. */
 export function isSessionExpiredError(data: unknown): boolean {
   if (!data || typeof data !== "object") return false;
   const err = (data as Record<string, unknown>).error;
   if (typeof err !== "string") return false;
-  const lower = err.toLowerCase();
-  return (
-    lower.includes("expired")
-    || lower.includes("invalid or expired session")
-    || lower.includes("invalid or expired refresh token")
-    || lower.includes("superseded")
-  );
+  return err.toLowerCase().includes("expired") || err.toLowerCase().includes("invalid or expired session");
 }

@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { SessionReferenceImage } from "./session-reference-image";
 import {
   SESSION_REFERENCE_COLUMN,
+  SESSION_WORK_COLUMN,
   sessionScrollArea,
   type SessionDomainKey,
 } from "./session-ui-styles";
@@ -10,8 +11,8 @@ import {
 /**
  * Responsive session shell used by every domain.
  *
- * Mobile (stacked):  whole grid scrolls — image → passage → questions → feedback
- * Desktop (split):   reference column scrolls left  |  work column scrolls right (footer pinned in work column)
+ * Mobile (stacked):  reference image → reference panel (passage / audio / prompt) → work area
+ * Desktop (split):   reference column (sticky left)  |  work column (right)
  */
 export function SessionResponsiveLayout({
   domain,
@@ -32,31 +33,20 @@ export function SessionResponsiveLayout({
 }) {
   const hasMedia = Boolean(mediaUrl || visual);
   const hasReference = hasMedia || referencePanel != null;
-  const imageOnlyReference = hasMedia && referencePanel == null;
 
   if (!hasReference) {
     return <div className={cn("w-full min-w-0 space-y-5", className)}>{children}</div>;
   }
 
-  const fillViewport =
-    domain === "writing"
-      ? true
-      : domain === "speaking" || domain === "listening" || domain === "reading";
-
-  /** Smaller reference photo — more room for passage + two questions on reading/listening. */
-  const compactImage = domain === "reading" || domain === "listening";
+  const fillViewport = domain === "writing" || domain === "speaking";
 
   return (
     <div
       className={cn(
         "w-full grid grid-cols-1 lg:grid-cols-[minmax(0,44%)_minmax(0,1fr)]",
-        "gap-4 sm:gap-5 lg:gap-6",
+        "gap-5 sm:gap-6 lg:gap-8",
         fillViewport
-          ? cn(
-              "flex-1 min-h-0 max-h-full items-stretch",
-              "overflow-y-auto overscroll-contain themed-scroll",
-              "lg:overflow-hidden lg:h-full",
-            )
+          ? "flex-1 min-h-0 items-stretch max-lg:overflow-y-auto max-lg:overscroll-contain max-lg:themed-scroll lg:h-full lg:min-h-0 lg:overflow-hidden"
           : "items-start",
         className,
       )}
@@ -65,8 +55,8 @@ export function SessionResponsiveLayout({
         className={cn(
           fillViewport
             ? cn(
-                "min-w-0 flex flex-col gap-3 sm:gap-4 min-h-0 shrink-0",
-                "lg:max-h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-1",
+                "min-w-0 flex flex-col gap-3 sm:gap-4 min-h-0",
+                "max-lg:shrink-0 lg:max-h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-1",
                 sessionScrollArea(domain),
               )
             : cn(SESSION_REFERENCE_COLUMN, sessionScrollArea(domain)),
@@ -78,11 +68,8 @@ export function SessionResponsiveLayout({
             visual={visual}
             domain={domain}
             label={referenceLabel}
-            compact={compactImage}
-            className={cn(
-              "shrink-0",
-              imageOnlyReference && "lg:sticky lg:top-0",
-            )}
+            compact={domain === "writing"}
+            className="shrink-0"
           />
         )}
         {referencePanel}
@@ -90,8 +77,9 @@ export function SessionResponsiveLayout({
 
       <div
         className={cn(
-          "min-w-0 flex flex-col min-h-0",
-          fillViewport && "lg:h-full lg:max-h-full lg:overflow-hidden lg:flex-1 lg:border-l lg:border-border/10 lg:pl-6 lg:ml-2",
+          SESSION_WORK_COLUMN,
+          fillViewport && "max-lg:shrink-0 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain",
+          fillViewport && sessionScrollArea(domain),
         )}
       >
         {children}

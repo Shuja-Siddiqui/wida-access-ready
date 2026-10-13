@@ -10,7 +10,6 @@
  */
 
 import { createContext, useContext } from "react";
-import type { SessionDomainKey } from "./components/session-ui-styles";
 
 // ── Question shape ─────────────────────────────────────────────────────────────
 
@@ -72,14 +71,10 @@ export interface SessionData {
       topic?: string;
       visual?: string;
       illustrationUrl?: string;
-      /** L1–2 listening: true = tap objects on photo; false = listen-and-read with supporting image. */
-      useTapMode?: boolean;
       imageTags?: string[];
       tags?: string[];
       imageDescription?: string;
-      /** WIDA 2020 framework snapshot from session start (writing/speaking). */
-      framework?: Record<string, unknown>;
-      taskDescriptor?: string;
+      canDoDescriptor?: string;
       responseLength?: string;
       minSentences?: number;
       keyUse?: string;
@@ -102,10 +97,6 @@ export interface SessionContextValue {
   showFeedback: boolean;
   lastCorrect: boolean;
   selectedIdx: number;
-  /** Questions already submitted (sequential from the start). */
-  answeredCount: number;
-  /** Last answer payload — MC option text, agree/disagree, sequence, etc. */
-  lastSubmittedAnswer: unknown;
   listenedOnce: boolean;
 
   // ── Question handlers ─────────────────────────────────────────────────────
@@ -122,18 +113,8 @@ export interface SessionContextValue {
   speakPassage: (text: string) => void;
   /** Jenny — coaching and item feedback. */
   speakFeedback: (text: string) => void;
-  /** Teacher intros then content — same pattern in every domain. */
-  speakTaskSession: (
-    domain: SessionDomainKey,
-    data: Record<string, unknown>,
-    options?: { question?: string },
-  ) => void;
-  /** Single question stem — teacher then narrator. */
-  speakQuestion: (question: string) => void;
-  /** @deprecated Use speakTaskSession("writing", data) */
+  /** Writing — teacher intros then content, multi-voice sequence. */
   speakWritingSession: (data: Record<string, unknown>) => void;
-  /** @deprecated Use speakTaskSession("speaking", data) */
-  speakSpeakingSession: (data: Record<string, unknown>) => void;
   onSpeak: (text: string) => void;
   onStopSpeaking: () => void;
 

@@ -4,8 +4,8 @@ import { LevelRing } from "@/components/level-ring";
 const DOMAIN_COLORS: Record<string, string> = {
   listening: "var(--color-trust-blue)",
   speaking:  "var(--color-growth-green)",
-  reading:   "var(--color-energy-orange)",
-  writing:   "var(--color-achieve-purple)",
+  reading:   "var(--color-logo-gold)",
+  writing:   "var(--color-logo-teal)",
 };
 
 const DOMAIN_LABELS: Record<string, string> = {

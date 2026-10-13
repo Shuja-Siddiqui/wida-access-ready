@@ -257,9 +257,11 @@ export default function Session() {
                   <div className="bg-trust-blue/5 border border-trust-blue/20 rounded-2xl p-5 space-y-3">
                     <div className="flex items-center gap-2 text-trust-blue font-bold text-sm">
                       <Volume2 className="w-5 h-5" />
-                      <span>Listen to this passage:</span>
+                      <span>Audio passage</span>
                     </div>
-                    <p className="text-foreground leading-relaxed text-[15px] italic">"{data.audioScript}"</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      The passage is not shown as text. Use practice from Home for narrated audio, or ask your teacher to read aloud.
+                    </p>
                   </div>
                 )}
               </div>

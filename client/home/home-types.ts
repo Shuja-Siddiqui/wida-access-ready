@@ -1,78 +1,152 @@
 import { Headphones, Mic, BookOpen, PenLine } from "lucide-react";
 
+
+
 export type AnswerRecord = {
+
   question: string;
+
   content: unknown;
+
   submittedAnswer: unknown;
+
   correct: boolean;
+
 };
+
+
 
 export type View = "home" | "loading" | "session" | "error" | "complete" | "finishing";
 
+
+
 /**
+
  * Domain config entries drive the dashboard UI (icon, colour, label) and also
+
  * encode the canonical API payload for starting a session.
+
  *
+
  * apiDomain — the core skill sent to POST /sessions/start  (always one of the 4 base domains)
- * tier      — the curriculum track sent alongside the domain ("general" | "academic")
+
+ * tier      — always "academic" (WIDA SF content across all domains)
+
  *
+
  * The actual API call uses { domain: apiDomain, tier }.
- * Listening tier (general/academic) is chosen server-side when starting a session.
+
  */
+
 export interface DomainConfig {
+
   icon: typeof Headphones;
+
   color: string;
+
   bg: string;
+
   border: string;
+
   btnBg: string;
+
   label?: string;
+
   apiDomain: string;
-  tier: "general" | "academic";
+
+  tier: "academic";
+
 }
+
+
 
 export const DOMAIN_CONFIG: Record<string, DomainConfig> = {
-  listening:          { icon: Headphones,    color: "text-trust-blue",      bg: "bg-trust-blue/10",      border: "border-trust-blue",      btnBg: "bg-trust-blue",      label: "Listening",           apiDomain: "listening", tier: "general"  },
-  speaking:           { icon: Mic,           color: "text-growth-green",    bg: "bg-growth-green/10",    border: "border-growth-green",    btnBg: "bg-growth-green",                                  apiDomain: "speaking",  tier: "general"  },
-  reading:            { icon: BookOpen,      color: "text-energy-orange",   bg: "bg-energy-orange/10",   border: "border-energy-orange",   btnBg: "bg-energy-orange",                                 apiDomain: "reading",   tier: "general"  },
-  writing:            { icon: PenLine,       color: "text-achieve-purple",  bg: "bg-achieve-purple/10",  border: "border-achieve-purple",  btnBg: "bg-achieve-purple",  label: "Writing",           apiDomain: "writing",   tier: "academic" },
-  // Alias — domainTierToKey("writing", "academic") would otherwise produce an unknown key.
-  writing_academic:   { icon: PenLine,       color: "text-achieve-purple",  bg: "bg-achieve-purple/10",  border: "border-achieve-purple",  btnBg: "bg-achieve-purple",  label: "Writing",           apiDomain: "writing",   tier: "academic" },
+
+  listening:          { icon: Headphones,    color: "text-trust-blue",      bg: "bg-trust-blue/10",      border: "border-trust-blue",      btnBg: "bg-trust-blue",      label: "Listening",           apiDomain: "listening", tier: "academic" },
+
+  speaking:           { icon: Mic,           color: "text-growth-green",    bg: "bg-growth-green/10",    border: "border-growth-green",    btnBg: "bg-growth-green",                                  apiDomain: "speaking",  tier: "academic" },
+
+  reading:            { icon: BookOpen,      color: "text-logo-gold",   bg: "bg-logo-gold/10",   border: "border-logo-gold",   btnBg: "bg-logo-gold",                                 apiDomain: "reading",   tier: "academic" },
+
+  writing:            { icon: PenLine,       color: "text-logo-teal",  bg: "bg-logo-teal/10",  border: "border-logo-teal",  btnBg: "bg-logo-teal",  label: "Writing",           apiDomain: "writing",   tier: "academic" },
+
+  // Legacy aliases — progress API may still return *_academic from older rows.
+
+  reading_academic:   { icon: BookOpen,      color: "text-logo-gold",   bg: "bg-logo-gold/10",   border: "border-logo-gold",   btnBg: "bg-logo-gold",   label: "Reading",           apiDomain: "reading",   tier: "academic" },
+
+  writing_academic:   { icon: PenLine,       color: "text-logo-teal",  bg: "bg-logo-teal/10",  border: "border-logo-teal",  btnBg: "bg-logo-teal",  label: "Writing",           apiDomain: "writing",   tier: "academic" },
+
+  // Legacy alias — old progress rows used listening_academic before SF-only migration.
+
+  listening_academic: { icon: Headphones,    color: "text-trust-blue",      bg: "bg-trust-blue/10",      border: "border-trust-blue",      btnBg: "bg-trust-blue",      label: "Listening",           apiDomain: "listening", tier: "academic" },
+
 };
 
+
+
 /** Returns the user-facing label for a domain config key. */
+
 export function domainLabel(domainKey: string): string {
+
   return DOMAIN_CONFIG[domainKey]?.label ?? (domainKey.charAt(0).toUpperCase() + domainKey.slice(1));
+
 }
+
+
 
 /**
+
  * Derives a UI domain config key from a (domain, tier) pair returned by the API.
+
  */
-export function domainTierToKey(domain: string, tier: string = "general"): string {
-  // Writing is academic-only — UI key stays "writing" (matches progress API).
-  if (domain === "writing") return "writing";
-  // Single listening card — tier rotates server-side on session start.
-  if (domain === "listening") return "listening";
-  if (tier === "academic") return `${domain}_academic`;
+
+export function domainTierToKey(domain: string, _tier: string = "academic"): string {
+
+  if (domain === "listening_academic") return "listening";
+
+  if (domain.endsWith("_academic")) return domain.replace(/_academic$/, "");
+
   return domain;
+
 }
+
+
 
 /** Maps a dashboard / URL domain key to the POST /sessions/start payload. */
+
 export function resolveSessionStartFromUiKey(domainKey: string): {
+
   apiDomain: string;
-  tier: "general" | "academic";
+
+  tier: "academic";
+
 } {
+
   const cfg = DOMAIN_CONFIG[domainKey];
+
   if (cfg) return { apiDomain: cfg.apiDomain, tier: cfg.tier };
 
+
+
   if (domainKey === "writing" || domainKey === "writing_academic") {
+
     return { apiDomain: "writing", tier: "academic" };
+
   }
-  // Legacy URLs — treat as unified listening (server picks tier).
+
   if (domainKey === "listening_academic") {
-    return { apiDomain: "listening", tier: "general" };
+
+    return { apiDomain: "listening", tier: "academic" };
+
   }
+
   if (domainKey.endsWith("_academic")) {
+
     return { apiDomain: domainKey.replace(/_academic$/, ""), tier: "academic" };
+
   }
-  return { apiDomain: domainKey, tier: "general" };
+
+  return { apiDomain: domainKey, tier: "academic" };
+
 }
+

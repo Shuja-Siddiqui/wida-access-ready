@@ -1,7 +1,10 @@
 import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { domainLabel } from "../home-types";
 import { LevelRing, SessionBars } from "@/components/level-ring";
+import { DASHBOARD_MICRO, DASHBOARD_PANEL_HOVER } from "./dashboard-ui-styles";
+import { domainBrand, domainBrandStroke } from "./domain-brand-colors";
 
 export type SessionPoint = {
   date: string;
@@ -36,74 +39,74 @@ function SingleDomainCard({
   onSelect: (domain: string) => void;
   index: number;
 }) {
-  const colorName = cfg.color.replace("text-", "");
-  const stroke    = `var(--color-${colorName})`;
-  const pct       = Math.min(100, Math.max(0, (d.currentLevel / d.exitThreshold) * 100));
+  const brand = domainBrand(d.domain);
+  const stroke = domainBrandStroke(d.domain);
+  const pct = Math.min(100, Math.max(0, (d.currentLevel / d.exitThreshold) * 100));
   const sessCount = d.sessionHistory?.length ?? 0;
+  const Icon = cfg.icon;
 
   return (
     <motion.button
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.1 + index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.08 + index * 0.05, duration: 0.28 }}
       onClick={() => onSelect(d.domain)}
-      className="group w-full rounded-2xl bg-card border border-border/40 text-left relative overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl flex flex-col"
+      className={cn(
+        DASHBOARD_PANEL_HOVER,
+        "group w-full text-left relative overflow-hidden flex flex-col",
+      )}
     >
-      {/* Top accent */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[3px]"
-        style={{ background: `linear-gradient(to right, ${stroke}, transparent)` }}
-      />
+      <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: stroke }} />
 
       <div className="p-6 flex-1 flex flex-col gap-5">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="block font-black text-xl tracking-tight leading-none text-foreground">
-              {domainLabel(d.domain)}
-            </span>
-            <span
-              className="text-[10px] font-semibold uppercase tracking-widest mt-0.5 block opacity-80"
-              style={{ color: stroke }}
-            >
-              {d.levelLabel || "Level"}
-            </span>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className={cn("shrink-0 w-9 h-9 rounded-lg flex items-center justify-center", brand.bgSoft)}>
+              <Icon className={cn("w-4 h-4", brand.text)} />
+            </div>
+            <div>
+              <span className="block font-black text-xl tracking-tight leading-none text-foreground">
+                {domainLabel(d.domain)}
+              </span>
+              <span
+                className="text-[10px] font-semibold uppercase tracking-widest mt-1 block opacity-80"
+                style={{ color: stroke }}
+              >
+                {d.levelLabel || "Level"}
+              </span>
+            </div>
           </div>
-          <ChevronRight
-            className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0"
-          />
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
         </div>
 
-        {/* Ring — centrepiece */}
         <div className="flex justify-center py-1">
           <LevelRing
             pct={pct}
             level={d.currentLevel}
             exitThreshold={d.exitThreshold}
             color={stroke}
-            size={148}
+            size={140}
           />
         </div>
 
-        {/* Session score bars */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <span className={DASHBOARD_MICRO}>
             {sessCount > 0 ? `Last ${Math.min(sessCount, 12)} sessions` : "No sessions yet"}
           </span>
           <SessionBars history={d.sessionHistory ?? []} color={stroke} />
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="px-6 py-4 bg-transparent border-t border-border/40 flex justify-between items-center">
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <div className="px-6 py-3.5 border-t border-border/10 flex justify-between items-center">
+        <span className={DASHBOARD_MICRO}>
           {sessCount > 0 ? `${sessCount} sessions` : "New"}
         </span>
         <span
-          className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest transition-colors"
+          className="flex items-center gap-1 text-xs font-black uppercase tracking-widest transition-colors"
           style={{ color: stroke }}
         >
-          Practice <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+          Practice
+          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </span>
       </div>
     </motion.button>
@@ -122,7 +125,7 @@ export function DomainCharts({
   onSelect: (domain: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {domains.map((d, index) => (
         <SingleDomainCard
           key={d.domain}

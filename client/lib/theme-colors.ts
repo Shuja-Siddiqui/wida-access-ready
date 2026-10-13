@@ -1,9 +1,9 @@
 const CONFETTI_TOKENS = [
   "--color-trust-blue",
-  "--color-streak-gold",
   "--color-growth-green",
-  "--color-achieve-purple",
-  "--color-energy-orange",
+  "--color-logo-gold",
+  "--color-logo-teal",
+  "--color-streak-gold",
 ] as const;
 
 function cssVarToColor(varName: string): string | null {
@@ -20,12 +20,12 @@ function cssVarToColor(varName: string): string | null {
 /** Brand palette colors for canvas-confetti and similar runtime effects. */
 export function getThemeConfettiColors(): string[] {
   const colors = CONFETTI_TOKENS.map(cssVarToColor).filter(Boolean) as string[];
-  return colors.length ? colors : ["hsl(217 100% 50%)"];
+  return colors.length ? colors : ["hsl(210 87% 48%)"];
 }
 
 /** Resolved primary color for inline SVG/chart accents. */
 export function getThemePrimaryColor(): string {
-  return cssVarToColor("--color-primary") ?? "hsl(217 100% 50%)";
+  return cssVarToColor("--color-primary") ?? "hsl(210 87% 48%)";
 }
 
 /** Primary brand gradient for inline styles when a CSS class is awkward. */
@@ -42,14 +42,14 @@ export function getThemePrimaryGradient(): string {
 /** Secondary accent gradient (e.g. academic tracks). */
 export function getThemeAccentGradient(): string {
   if (typeof document === "undefined") {
-    return "linear-gradient(135deg, hsl(var(--brand-achieve-purple)), hsl(var(--primary)))";
+    return "linear-gradient(135deg, hsl(var(--brand-logo-teal)), hsl(var(--primary)))";
   }
   const root = getComputedStyle(document.documentElement);
-  const accent = root.getPropertyValue("--brand-achieve-purple").trim();
+  const accent = root.getPropertyValue("--brand-logo-teal").trim();
   const primary = root.getPropertyValue("--primary").trim();
   return `linear-gradient(135deg, hsl(${accent}), hsl(${primary}))`;
 }
 
 export function getThemeAccentColor(): string {
-  return cssVarToColor("--color-achieve-purple") ?? getThemePrimaryColor();
+  return cssVarToColor("--color-logo-teal") ?? getThemePrimaryColor();
 }

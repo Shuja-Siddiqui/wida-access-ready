@@ -3,6 +3,7 @@ import type { SessionDomainKey } from "@/home/components/session-ui-styles";
 import { buildCoachingSpeechSegments } from "@/lib/coaching-speech";
 import { prepareTextForSpeech } from "@/lib/prepare-text-for-speech";
 import {
+  buildListeningQuestionSpeechPlan,
   buildQuestionSpeechSegments,
   buildSessionTaskSpeechSegments,
   type SessionTaskSpeechOptions,
@@ -23,7 +24,13 @@ export type SpokenContent = {
     options?: SessionTaskSpeechOptions,
   ) => void;
   /** Single question stem — same teacher→narrator pattern. */
-  speakQuestion: (question: string) => void;
+  speakQuestion: (question: string, domain?: SessionDomainKey) => void;
+  /** Listening: audio passage on Q1, then spoken stem for each question (including Q1). */
+  speakListeningQuestion: (
+    data: Record<string, unknown>,
+    questionIndex: number,
+    questionText: string,
+  ) => void;
   /** @deprecated Use speakTaskSession("writing", data) */
   speakWritingSession: (data: Record<string, unknown>) => void;
   /** @deprecated Use speakTaskSession("speaking", data) */
@@ -66,10 +73,33 @@ export function useSpokenContent(options: UseTextToSpeechOptions = {}): SpokenCo
   );
 
   const speakQuestion = useCallback(
-    (question: string) => {
-      const segments = buildQuestionSpeechSegments(question);
+    (question: string, domain?: SessionDomainKey) => {
+      const segments = buildQuestionSpeechSegments(question, domain ? { domain } : undefined);
       if (segments.length === 0) return;
       tts.speakSequence(segments);
+    },
+    [tts.speakSequence],
+  );
+
+  const speakListeningQuestion = useCallback(
+    (data: Record<string, unknown>, questionIndex: number, questionText: string) => {
+      const trimmed = questionText.trim();
+      const { passageOnly, question } = buildListeningQuestionSpeechPlan(
+        data,
+        questionIndex,
+        trimmed,
+      );
+
+      const playQuestion = () => {
+        if (question.length === 0) return;
+        tts.speakSequence(question);
+      };
+
+      if (passageOnly.length > 0) {
+        tts.speakSequence(passageOnly, playQuestion);
+        return;
+      }
+      playQuestion();
     },
     [tts.speakSequence],
   );
@@ -89,6 +119,7 @@ export function useSpokenContent(options: UseTextToSpeechOptions = {}): SpokenCo
     speakFeedback,
     speakTaskSession,
     speakQuestion,
+    speakListeningQuestion,
     speakWritingSession,
     speakSpeakingSession,
     stopSpeaking: tts.stop,

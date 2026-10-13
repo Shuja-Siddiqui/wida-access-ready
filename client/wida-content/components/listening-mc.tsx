@@ -18,7 +18,6 @@ export function ListeningMC({ question, onSubmit, showResult = false }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [played, setPlayed] = useState(false);
-  const [showScript, setShowScript] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const togglePlay = () => {
@@ -83,23 +82,6 @@ export function ListeningMC({ question, onSubmit, showResult = false }: Props) {
           {playing ? "Pause" : played ? "Play Again" : "Play Audio"}
         </button>
 
-        <button
-          type="button"
-          onClick={() => setShowScript((v) => !v)}
-          className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {showScript ? "Hide transcript" : "Show transcript"}
-        </button>
-
-        {showScript && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="w-full rounded-xl bg-background border border-border p-3 text-sm text-foreground leading-relaxed"
-          >
-            {question.audioScript}
-          </motion.div>
-        )}
       </div>
 
       <StemVisual visual={question.visual} />

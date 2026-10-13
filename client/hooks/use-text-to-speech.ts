@@ -25,6 +25,8 @@ export type SpeechSegment = {
   tone?: CoachingTone;
 };
 
+export { unlockAudioPlayback } from "@/lib/unlock-audio-playback";
+
 export interface UseTextToSpeechReturn {
   isSupported: boolean;
   isSpeaking: boolean;
@@ -32,7 +34,7 @@ export interface UseTextToSpeechReturn {
   isLoading: boolean;
   speak: (text: string, delivery?: SpeechDelivery) => void;
   /** Play segments in order — coaching (teacher) vs passage (content) voices. */
-  speakSequence: (segments: SpeechSegment[]) => void;
+  speakSequence: (segments: SpeechSegment[], onComplete?: () => void) => void;
   stop: () => void;
 }
 
@@ -53,6 +55,8 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
   onEndRef.current = onEnd;
   const requestIdRef = useRef<number>(0);
   const mountedRef = useRef(true);
+  const pendingSequenceRef = useRef<SpeechSegment[] | null>(null);
+  const pendingOnCompleteRef = useRef<(() => void) | undefined>(undefined);
 
   const getAudio = useCallback(() => {
     if (!audioRef.current) {
@@ -192,18 +196,26 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
   );
 
   const speakSequence = useCallback(
-    (segments: SpeechSegment[]) => {
+    (segments: SpeechSegment[], onComplete?: () => void) => {
       const queue = segments.filter((s) => s.text.trim().length > 0);
-      if (queue.length === 0) return;
+      if (queue.length === 0) {
+        onComplete?.();
+        return;
+      }
       if (azureAvailable === false) return;
+
+      if (azureAvailable === null) {
+        pendingSequenceRef.current = queue;
+        pendingOnCompleteRef.current = onComplete;
+        setIsLoading(true);
+        return;
+      }
 
       const myRequestId = ++requestIdRef.current;
       cleanupSrc();
       setIsLoading(true);
 
       void (async () => {
-        // Prefetch the next segment while the current one plays to avoid
-        // serial round-trips to Azure (writing tasks can have 6+ segments).
         let pendingFetch = fetchSegmentBlob(queue[0], myRequestId);
 
         for (let i = 0; i < queue.length; i++) {
@@ -225,13 +237,26 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}): UseTextTo
         if (requestIdRef.current !== myRequestId) return;
         setIsLoading(false);
         onEndRef.current?.();
+        onComplete?.();
       })();
     },
     [azureAvailable, cleanupSrc, fetchSegmentBlob, playBlob],
   );
 
+  // Replay anything queued before Azure status was known.
+  useEffect(() => {
+    if (azureAvailable !== true || !pendingSequenceRef.current) return;
+    const queue = pendingSequenceRef.current;
+    const done = pendingOnCompleteRef.current;
+    pendingSequenceRef.current = null;
+    pendingOnCompleteRef.current = undefined;
+    speakSequence(queue, done);
+  }, [azureAvailable, speakSequence]);
+
   const stop = useCallback(() => {
     requestIdRef.current += 1;
+    pendingSequenceRef.current = null;
+    pendingOnCompleteRef.current = undefined;
     cleanupSrc();
     setIsSpeaking(false);
     setIsLoading(false);

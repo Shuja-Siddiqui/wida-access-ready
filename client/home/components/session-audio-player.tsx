@@ -2,7 +2,7 @@ import { CheckCircle2, Volume2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSessionContext } from "../session-context";
 import { ListenAgainButton } from "./listen-again-button";
-import { SESSION_CARD, SESSION_LABEL } from "./session-ui-styles";
+import { DOMAIN_BRAND, SESSION_CARD, SESSION_LABEL, SESSION_THEMES } from "./session-ui-styles";
 import { cn } from "@/lib/utils";
 
 const BAR_HEIGHTS = [12, 18, 24, 16, 28, 14, 22, 16, 26, 12, 20, 14];
@@ -19,13 +19,14 @@ export function SessionAudioPlayer() {
   const audioScript = session.content?.data?.audioScript ?? "";
   const handleListen = () => speakPassage(audioScript);
   const audioActive = speaking;
+  const listening = SESSION_THEMES.listening;
 
   return (
-    <div className={cn(SESSION_CARD, "p-4 sm:p-5 border-l-2 border-l-sky-500/40")}>
+    <div className={cn(SESSION_CARD, "p-4 sm:p-5")}>
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-sky-500/10 ring-1 ring-sky-500/15 flex items-center justify-center shrink-0">
-            <Volume2 className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+          <div className={cn("w-8 h-8 rounded-lg ring-1 flex items-center justify-center shrink-0", DOMAIN_BRAND.listening.bgSoft, "ring-trust-blue/15")}>
+            <Volume2 className={cn("w-4 h-4", listening.icon)} />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">Audio passage</p>
@@ -50,7 +51,7 @@ export function SessionAudioPlayer() {
       <div
         className={cn(
           "flex items-end justify-center gap-0.5 h-10 mb-4 px-2 rounded-lg transition-colors",
-          audioActive ? "bg-sky-500/[0.06]" : "bg-muted/30",
+          audioActive ? "bg-trust-blue/[0.06]" : "bg-muted/30",
         )}
       >
         {BAR_HEIGHTS.map((h, i) => (

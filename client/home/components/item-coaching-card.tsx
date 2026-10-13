@@ -7,6 +7,7 @@ import {
   type CoachingTone,
 } from "@/lib/coaching-speech";
 import { prepareCoachingForSpeech } from "@/lib/prepare-text-for-speech";
+import { advanceButtonNavCue } from "./session-nav-labels";
 
 export type ItemFeedbackPayload = {
   headline: string;
@@ -23,13 +24,16 @@ export type ItemFeedbackPayload = {
   /** ACCESS writing rubric 0–7 (writing sessions only). */
   accessWritingScore?: number;
   accessWritingLabel?: string;
+  /** ACCESS speaking category (speaking sessions only). */
+  accessSpeakingCategory?: string;
+  accessSpeakingLabel?: string;
 };
 
 function stripNavCues(text: string): string {
   return text
     .replace(/\bthat answer works\.?\s*/gi, "")
-    .replace(/\btap next\.?\s*/gi, "")
-    .replace(/\btap try again(?:,? or skip to move on)?\.?\s*/gi, "")
+    .replace(/\btap (?:next|finish|try again(?:,? or skip to move on)?|skip(?: to move on)?)\.?\s*/gi, "")
+    .replace(/\btap answer question \d+\.?\s*/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -55,8 +59,14 @@ export function speakingReadyToSave(feedback: ItemFeedbackPayload | null | undef
   return aiItemPassed(feedback);
 }
 
-function navCue(nextAction?: "next" | "retry" | "save", allowSkip = true): string {
-  if (nextAction === "next" || nextAction === "save") return "Tap Next.";
+function navCue(
+  nextAction?: "next" | "retry" | "save",
+  allowSkip = true,
+  advance?: { isLast?: boolean; advanceLabel?: string },
+): string {
+  if (nextAction === "next" || nextAction === "save") {
+    return advanceButtonNavCue(advance?.isLast ?? false, advance?.advanceLabel);
+  }
   if (nextAction === "retry") {
     return allowSkip ? "Tap Try again, or Skip to move on." : "Tap Try again.";
   }
@@ -66,17 +76,24 @@ function navCue(nextAction?: "next" | "retry" | "save", allowSkip = true): strin
 /** Text for TTS — keeps *stress* and uses segmented prosody via speakSequence. */
 export function coachingSpeech(
   feedback: ItemFeedbackPayload | null,
-  extras?: { nextAction?: "next" | "retry" | "save"; loading?: boolean; allowSkip?: boolean },
+  extras?: {
+    nextAction?: "next" | "retry" | "save";
+    loading?: boolean;
+    allowSkip?: boolean;
+    isLast?: boolean;
+    advanceLabel?: string;
+  },
 ): string {
   if (extras?.loading) return "";
   const allowSkip = extras?.allowSkip ?? true;
-  if (!feedback) return navCue(extras?.nextAction, allowSkip);
+  const advance = { isLast: extras?.isLast, advanceLabel: extras?.advanceLabel };
+  if (!feedback) return navCue(extras?.nextAction, allowSkip, advance);
 
   const parts: string[] = [];
   const body = stripNavCues(prepareCoachingForSpeech(feedback.spokenText ?? ""));
   if (body) parts.push(body);
 
-  const cue = navCue(extras?.nextAction, allowSkip);
+  const cue = navCue(extras?.nextAction, allowSkip, advance);
   if (cue && !alreadySaid(parts.join(" "), cue)) parts.push(cue);
 
   return parts.join(" ");
@@ -121,6 +138,8 @@ export function ItemCoachingCard({
   stopSpeaking: _stopSpeaking,
   nextAction,
   allowSkip = true,
+  isLast = false,
+  advanceLabel,
 }: {
   feedback: ItemFeedbackPayload | null;
   loading?: boolean;
@@ -128,10 +147,19 @@ export function ItemCoachingCard({
   stopSpeaking?: () => void;
   nextAction?: "next" | "retry" | "save";
   allowSkip?: boolean;
+  /** Must match AnswerStepButtons on the same screen (Finish vs Next vs reading mid-page). */
+  isLast?: boolean;
+  advanceLabel?: string;
 }) {
   const rawSpoken = (feedback?.spokenText ?? "").trim();
   const displayParts = splitCoachingSegments(stripNavCues(rawSpoken));
-  const spokenAloud = coachingSpeech(feedback, { nextAction, loading, allowSkip });
+  const spokenAloud = coachingSpeech(feedback, {
+    nextAction,
+    loading,
+    allowSkip,
+    isLast,
+    advanceLabel,
+  });
 
   useEffect(() => {
     if (loading || !spokenAloud) return;
@@ -140,7 +168,7 @@ export function ItemCoachingCard({
 
   if (loading && displayParts.length === 0 && !rawSpoken) {
     return (
-      <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground py-1">
         Preparing feedback…
       </div>
     );
@@ -149,10 +177,12 @@ export function ItemCoachingCard({
 
   const rubricScore = feedback?.accessWritingScore;
   const rubricLabel = feedback?.accessWritingLabel?.trim();
+  const speakingCategory = feedback?.accessSpeakingCategory?.trim();
+  const speakingLabel = feedback?.accessSpeakingLabel?.trim();
   const multiPart = displayParts.length > 1;
 
   return (
-    <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5 text-left space-y-2.5">
+    <div className="text-left space-y-2.5">
       {typeof rubricScore === "number" && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full border border-violet-500/25 bg-violet-500/8 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-violet-700 dark:text-violet-300">
@@ -161,6 +191,18 @@ export function ItemCoachingCard({
           {rubricLabel && (
             <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {rubricLabel}
+            </span>
+          )}
+        </div>
+      )}
+      {speakingCategory && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/8 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200">
+            {speakingCategory}
+          </span>
+          {speakingLabel && (
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {speakingLabel}
             </span>
           )}
         </div>

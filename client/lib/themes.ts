@@ -27,8 +27,8 @@ export const THEME_GROUPS = [
     id: "daredevil",
     label: "Daredevil",
     themes: [
-      { id: "daredevil-light", label: "Light", swatch: "bg-[#B91C1C] ring-1 ring-black/20" },
-      { id: "daredevil-dark", label: "Dark", swatch: "bg-[#0A0A0A] ring-1 ring-[#DC2626]/50" },
+      { id: "daredevil-light", label: "Light", swatch: "bg-[#BE1E2D]" },
+      { id: "daredevil-dark", label: "Dark", swatch: "bg-[#140808] ring-1 ring-[#E4142]/50" },
     ],
   },
 ] as const;
@@ -45,12 +45,14 @@ export const DEFAULT_THEME: ThemeId = "goelprep-light";
 
 const THEME_IDS: readonly string[] = THEMES.map((t) => t.id);
 
+const DARK_THEME_IDS = new Set<string>(["dark", "goelprep-dark", "daredevil-dark"]);
+
 export function isThemeId(value: unknown): value is ThemeId {
   return typeof value === "string" && THEME_IDS.includes(value);
 }
 
 export function isDarkTheme(theme: ThemeId): boolean {
-  return theme === "dark" || theme === "goelprep-dark" || theme === "daredevil-dark";
+  return DARK_THEME_IDS.has(theme);
 }
 
 export function themeGroupId(theme: ThemeId): (typeof THEME_GROUPS)[number]["id"] {

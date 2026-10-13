@@ -9,6 +9,8 @@ import {
 } from "react";
 import { setAuthTokenGetter } from "@/api-generated/custom-fetch";
 import { useAuthRefresh, writeRefreshToken, clearRefreshToken } from "@/hooks/use-auth-refresh";
+import { toast } from "@/hooks/use-toast";
+import { resetSessionExpiredNotice } from "@/lib/session-refresher";
 import {
   useGetStudent,
   getGetStudentQueryKey,
@@ -33,6 +35,11 @@ const STORAGE_KEYS = {
   role: "role",
 } as const;
 const TOKEN_KEY = "authToken";
+
+function loginPath(): string {
+  const base = (import.meta.env.BASE_URL ?? "").replace(/\/$/, "");
+  return `${base}/login`;
+}
 
 function readToken(): string | null {
   if (typeof sessionStorage === "undefined") return null;
@@ -181,6 +188,7 @@ export function UserProvider({
   }, []);
 
   const loginWithToken = useCallback((tok: string, opts: LoginWithTokenOptions) => {
+    resetSessionExpiredNotice();
     sessionStorage.setItem(TOKEN_KEY, tok);
     setToken(tok);
     if (opts.refreshToken) writeRefreshToken(opts.refreshToken);
@@ -229,13 +237,25 @@ export function UserProvider({
     setRole(null);
   }, []);
 
+  const handleSessionExpired = useCallback(() => {
+    toast({
+      title: "Session expired",
+      description: "Please log in again to continue.",
+      variant: "destructive",
+    });
+    logout();
+    if (typeof window !== "undefined") {
+      window.location.assign(loginPath());
+    }
+  }, [logout]);
+
   // Wire refresh callbacks AFTER logout is defined so the closure is valid.
   useAuthRefresh({
     onRefreshed: (accessToken) => {
       sessionStorage.setItem(TOKEN_KEY, accessToken);
       setToken(accessToken);
     },
-    onLogout: logout,
+    onSessionExpired: handleSessionExpired,
   });
 
   const value = useMemo<UserContextValue>(

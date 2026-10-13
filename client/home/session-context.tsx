@@ -129,7 +129,13 @@ export interface SessionContextValue {
     options?: { question?: string },
   ) => void;
   /** Single question stem — teacher then narrator. */
-  speakQuestion: (question: string) => void;
+  speakQuestion: (question: string, domain?: SessionDomainKey) => void;
+  /** Listening: passage on first question, spoken stem on every question. */
+  speakListeningQuestion: (
+    data: Record<string, unknown>,
+    questionIndex: number,
+    questionText: string,
+  ) => void;
   /** @deprecated Use speakTaskSession("writing", data) */
   speakWritingSession: (data: Record<string, unknown>) => void;
   /** @deprecated Use speakTaskSession("speaking", data) */

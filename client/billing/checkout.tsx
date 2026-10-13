@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { DEFAULT_THEME, isDarkTheme, isThemeId } from "@/lib/themes";
 import { useLocation, useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { loadStripe, type Appearance } from "@stripe/stripe-js";
@@ -47,7 +48,11 @@ function useStripeAppearance(): Appearance {
     const get = (name: string) => styles.getPropertyValue(name).trim();
 
     setAppearance({
-      theme: document.documentElement.getAttribute("data-theme") === "dark" ? "night" : "stripe",
+      theme: (() => {
+        const raw = document.documentElement.getAttribute("data-theme");
+        const id = isThemeId(raw) ? raw : DEFAULT_THEME;
+        return isDarkTheme(id) ? "night" : "stripe";
+      })(),
       variables: {
         colorPrimary: hsl(get("--primary")),
         colorBackground: hsl(get("--background")),

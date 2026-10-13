@@ -1,14 +1,13 @@
-import { BookOpen, ChevronRight, Flame, Lock, PenLine, Sparkles, Star, Zap, Trophy } from "lucide-react";
+import { ChevronRight, Flame, Lock, Star, Zap } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PageContainer } from "@/components/page-container";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { DomainCharts, type DomainProgress, type SessionPoint } from "./domain-charts";
+import { DomainCharts, type DomainProgress } from "./domain-charts";
 import { DOMAIN_CONFIG, domainLabel } from "../home-types";
 import { DashboardSuggestions, type PracticeSuggestion } from "./dashboard-suggestions";
-
-// ─── Mobile domain card ───────────────────────────────────────────────────────
+import { DASHBOARD_MICRO, DASHBOARD_PANEL, DASHBOARD_PANEL_HOVER } from "./dashboard-ui-styles";
+import { domainBrand, domainBrandStroke } from "./domain-brand-colors";
 
 function MobileDomainCard({
   d, cfg, index, onStart,
@@ -18,51 +17,70 @@ function MobileDomainCard({
   index:   number;
   onStart: (domain: string) => void;
 }) {
-  const pct       = Math.min(100, Math.max(0, (d.currentLevel / d.exitThreshold) * 100));
-  const colorName = cfg.color.replace("text-", "");
-  const stroke    = `hsl(var(--color-${colorName}))`; // Changed to hsl to work with theme tokens if needed, but colorName is like 'trust-blue' so var(--color-trust-blue)
+  const brand = domainBrand(d.domain);
+  const stroke = domainBrandStroke(d.domain);
+  const pct = Math.min(100, Math.max(0, (d.currentLevel / d.exitThreshold) * 100));
+  const Icon = cfg.icon;
 
   return (
     <motion.button
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + index * 0.06, duration: 0.3 }}
+      transition={{ delay: 0.08 + index * 0.05, duration: 0.28 }}
       onClick={() => onStart(d.domain)}
-      className="group w-full bg-card rounded-2xl border border-border/40 overflow-hidden text-left relative transition-all duration-300 shadow-sm hover:-translate-y-1 hover:shadow-xl flex flex-col"
+      className={cn(
+        DASHBOARD_PANEL_HOVER,
+        "group w-full overflow-hidden text-left relative flex flex-col",
+      )}
     >
-      <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(to right, var(--color-${colorName}), transparent)` }} />
-      <div className="p-5 flex-1">
-        <div className="flex items-center gap-4 mb-5">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-black text-2xl tracking-tight text-foreground leading-none">{domainLabel(d.domain)}</h3>
-            <div className="text-xs font-semibold uppercase tracking-widest mt-1.5 opacity-80" style={{ color: `var(--color-${colorName})` }}>{d.levelLabel || "Level"}</div>
+      <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: stroke }} />
+
+      <div className="p-5 flex-1 space-y-5">
+        <div className="flex items-start gap-4">
+          <div className={cn("shrink-0 w-10 h-10 rounded-xl flex items-center justify-center", brand.bgSoft)}>
+            <Icon className={cn("w-5 h-5", brand.text)} />
           </div>
-          <div className="flex flex-col items-end">
-            <span className="text-4xl font-black tabular-nums leading-none" style={{ color: `var(--color-${colorName})` }}>
-              {d.currentLevel.toFixed(1)}
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mt-1.5 bg-muted px-2 py-0.5 rounded-md">/ {d.exitThreshold} EXIT</span>
+          <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-black text-2xl tracking-tight text-foreground leading-none">
+                {domainLabel(d.domain)}
+              </h3>
+              <div
+                className="text-xs font-semibold uppercase tracking-widest mt-1.5 opacity-80"
+                style={{ color: stroke }}
+              >
+                {d.levelLabel || "Level"}
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <span
+                className="text-3xl font-black tabular-nums leading-none"
+                style={{ color: stroke }}
+              >
+                {d.currentLevel.toFixed(1)}
+              </span>
+              <span className={cn(DASHBOARD_MICRO, "block mt-1")}>
+                / {d.exitThreshold} exit
+              </span>
+            </div>
           </div>
         </div>
-        
-        <div className="h-4 bg-muted rounded-full overflow-hidden relative">
-          <div className="h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden" style={{ width: `${pct}%`, backgroundColor: `var(--color-${colorName})` }}>
-            <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-full" />
-          </div>
+
+        <div className="h-2 bg-muted/80 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${pct}%`, backgroundColor: stroke }}
+          />
         </div>
       </div>
-      
-      <div className="px-5 py-4 bg-transparent border-t border-border/40 flex justify-between items-center mt-auto">
-         <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Practice Now
-         </span>
-         <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform group-hover:text-foreground" />
+
+      <div className="px-5 py-3.5 border-t border-border/10 flex justify-between items-center">
+        <span className={DASHBOARD_MICRO}>Practice now</span>
+        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-0.5 group-hover:text-foreground transition-all" />
       </div>
     </motion.button>
   );
 }
-
-// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface HomeDashboardViewProps {
   studentName:      string;
@@ -83,7 +101,40 @@ interface HomeDashboardViewProps {
   onNavigateBilling: () => void;
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+function StatTile({
+  label,
+  value,
+  icon: Icon,
+  iconClass,
+  iconWrapClass,
+  delay = 0,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ComponentType<{ className?: string }>;
+  iconClass: string;
+  iconWrapClass: string;
+  delay?: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.3 }}
+      className={cn(DASHBOARD_PANEL, "p-5 flex flex-col gap-4 min-h-[8.5rem]")}
+    >
+      <div className="flex items-center gap-2.5">
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", iconWrapClass)}>
+          <Icon className={cn("w-4 h-4", iconClass)} />
+        </div>
+        <span className={DASHBOARD_MICRO}>{label}</span>
+      </div>
+      <div className="text-4xl xl:text-[2.75rem] font-black tracking-tight tabular-nums leading-none text-foreground mt-auto">
+        {value}
+      </div>
+    </motion.div>
+  );
+}
 
 export function HomeDashboardView({
   studentName,
@@ -106,162 +157,164 @@ export function HomeDashboardView({
   const xpProgress = nextRankXp > 0 ? Math.min(100, (totalXp / nextRankXp) * 100) : 0;
 
   return (
-    <PageContainer shellClassName="py-6 sm:py-10">
+    <PageContainer shellClassName="py-6 sm:py-10 relative">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-primary/[0.05] to-transparent"
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="space-y-10"
+        transition={{ duration: 0.35 }}
+        className="relative space-y-10 sm:space-y-12"
       >
-          {/* ── Header ─────────────────────────────────────────────────────── */}
-          <header className="flex items-center justify-between">
-            <div>
-              <h2 className="heading-eyebrow mb-2">Welcome Back</h2>
-              <h1 className="heading-page text-4xl sm:text-5xl leading-none">
-                {studentName || "Student"}
-              </h1>
+        <header className="flex items-center justify-between gap-6">
+          <div className="min-w-0">
+            <h2 className="heading-eyebrow mb-2">Welcome Back</h2>
+            <h1 className="heading-page text-4xl sm:text-5xl leading-none truncate">
+              {studentName || "Student"}
+            </h1>
+          </div>
+          <Avatar className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 border border-border/20 shadow-sm">
+            {avatarUrl && (
+              <AvatarImage
+                src={`/api/storage${avatarUrl}`}
+                alt={studentName}
+                className="object-cover"
+              />
+            )}
+            <AvatarFallback className="bg-primary text-primary-foreground text-xl sm:text-2xl font-black">
+              {(studentName || "S").charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+          <div className="space-y-6 lg:col-span-4 xl:col-span-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <StatTile
+                label="Total XP"
+                value={totalXp.toLocaleString()}
+                icon={Zap}
+                iconClass="text-primary"
+                iconWrapClass="bg-primary/15"
+                delay={0.05}
+              />
+              <StatTile
+                label="Day Streak"
+                value={currentStreak}
+                icon={Flame}
+                iconClass="text-streak-gold"
+                iconWrapClass="bg-streak-gold/15"
+                delay={0.1}
+              />
             </div>
-            <Avatar className="hidden sm:flex w-16 h-16 shadow-lg border-2 border-border/40">
-              {avatarUrl && (
-                <AvatarImage src={`/api/storage${avatarUrl}`} alt={studentName} className="object-cover" />
-              )}
-              <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-black">
-                {(studentName || "S").charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-
-            {/* ── Left column — stats ──────────────────────────────────────── */}
-            <div className="space-y-8 lg:col-span-1">
-
-              {/* XP + Streak cards */}
-              <div className="grid grid-cols-2 gap-4">
-
-                {/* XP */}
-                <div className="bg-card rounded-2xl relative overflow-hidden shadow-sm border border-border/30 p-6 flex flex-col justify-between" style={{ background: "linear-gradient(135deg, hsl(var(--color-achieve-purple) / 0.15), transparent)" }}>
-                  <Zap className="w-32 h-32 absolute -bottom-8 -right-8 opacity-[0.07] rotate-12 text-foreground pointer-events-none" />
-                  <div className="relative z-10 flex flex-col h-full justify-between gap-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-achieve-purple/20 flex items-center justify-center">
-                         <Zap className="w-4 h-4 text-achieve-purple" />
-                      </div>
-                      <span className="font-semibold uppercase tracking-widest text-xs text-muted-foreground">Total XP</span>
-                    </div>
-                    <div className="text-4xl xl:text-5xl font-black tracking-tight tabular-nums leading-none">
-                      {totalXp.toLocaleString()}
-                    </div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.3 }}
+              className={cn(DASHBOARD_PANEL, "p-6 sm:p-7 space-y-6")}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className={cn(DASHBOARD_MICRO, "mb-2")}>Current Rank</div>
+                  <div className="text-3xl sm:text-4xl font-black tracking-tight text-foreground leading-none">
+                    {rank}
                   </div>
                 </div>
-
-                {/* Streak */}
-                <div className="bg-card rounded-2xl relative overflow-hidden shadow-sm border border-border/30 p-6 flex flex-col justify-between" style={{ background: "linear-gradient(135deg, hsl(var(--color-streak-gold) / 0.15), transparent)" }}>
-                  <Flame className="w-32 h-32 absolute -bottom-8 -right-8 opacity-[0.07] -rotate-12 text-foreground pointer-events-none" />
-                  <div className="relative z-10 flex flex-col h-full justify-between gap-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-streak-gold/20 flex items-center justify-center">
-                         <Flame className="w-4 h-4 text-streak-gold" />
-                      </div>
-                      <span className="font-semibold uppercase tracking-widest text-xs text-muted-foreground">Day Streak</span>
-                    </div>
-                    <div className="text-4xl xl:text-5xl font-black tracking-tight tabular-nums leading-none">
-                      {currentStreak}
-                    </div>
-                  </div>
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Star className="w-5 h-5 text-primary" />
                 </div>
               </div>
 
-              {/* Rank card */}
-              <div className="bg-card border border-border/30 p-6 sm:p-8 rounded-2xl relative shadow-sm" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.1), transparent)" }}>
-                <div className="absolute top-6 right-6 w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-                  <Star className="w-6 h-6 text-primary" />
-                </div>
-                <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Current Rank</div>
-                <div className="text-3xl sm:text-4xl font-black tracking-tight text-foreground mb-8 pr-16 leading-none">
-                  {rank}
-                </div>
-                
-                <div className="h-4 bg-muted rounded-full overflow-hidden relative">
+              <div className="space-y-2.5">
+                <div className="h-2 bg-muted/80 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${xpProgress}%` }}
-                    transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-                    className="h-full bg-primary rounded-full relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-full" />
-                  </motion.div>
+                    transition={{ duration: 0.9, delay: 0.25, ease: "easeOut" }}
+                    className="h-full bg-primary rounded-full"
+                  />
                 </div>
-                
-                <div className="flex justify-between mt-3 text-xs font-semibold text-muted-foreground">
+                <div className="flex justify-between text-xs font-semibold text-muted-foreground">
                   <span>{totalXp.toLocaleString()} XP</span>
                   <span>{nextRankXp.toLocaleString()} to next</span>
                 </div>
               </div>
+            </motion.div>
 
-              {(suggestions.length > 0 || nudgeMessage) && onSpeakSuggestion && onStopSpeaking && (
-                <DashboardSuggestions
-                  suggestions={suggestions}
-                  nudgeMessage={nudgeMessage}
-                  speaking={speaking}
-                  onSpeak={onSpeakSuggestion}
-                  onStopSpeaking={onStopSpeaking}
-                />
-              )}
+            {(suggestions.length > 0 || nudgeMessage) && onSpeakSuggestion && onStopSpeaking && (
+              <DashboardSuggestions
+                suggestions={suggestions}
+                nudgeMessage={nudgeMessage}
+                speaking={speaking}
+                onSpeak={onSpeakSuggestion}
+                onStopSpeaking={onStopSpeaking}
+              />
+            )}
+          </div>
+
+          <div className="lg:col-span-8 xl:col-span-9 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
+              <div>
+                <p className="heading-eyebrow mb-1.5">Today</p>
+                <h2 className="font-black text-3xl sm:text-4xl tracking-tight text-foreground leading-none">
+                  Practice Today
+                </h2>
+              </div>
+              <span className={cn(DASHBOARD_MICRO, "self-start sm:self-auto px-3 py-1.5 rounded-full bg-muted/40 border border-border/10")}>
+                {domains.length} domain{domains.length !== 1 ? "s" : ""}
+              </span>
             </div>
 
-            {/* ── Right column — practice ──────────────────────────────────── */}
-            <div className="lg:col-span-2">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-                <h2 className="font-black text-3xl sm:text-4xl tracking-tight text-foreground leading-none">Practice Today</h2>
-                <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest border border-primary/20 self-start sm:self-auto">
-                  {domains.length} Domain{domains.length !== 1 ? "s" : ""}
+            {!canPractice && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={cn(
+                  DASHBOARD_PANEL,
+                  "p-5 sm:p-6 flex flex-col sm:flex-row items-start gap-4 border-destructive/20 bg-destructive/[0.06]",
+                )}
+              >
+                <div className="w-10 h-10 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5 text-destructive" />
                 </div>
-              </div>
-
-              {/* Access paused banner */}
-              {!canPractice && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-8 bg-destructive/10 text-destructive p-6 sm:p-8 rounded-2xl shadow-sm border border-destructive/20 flex flex-col sm:flex-row items-start gap-6"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-destructive/20 flex items-center justify-center flex-shrink-0">
-                    <Lock className="w-6 h-6 text-destructive" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-black text-2xl tracking-tight mb-1.5 text-destructive">
+                    Practice is Paused
                   </div>
-                  <div className="flex-1">
-                    <div className="font-black text-2xl tracking-tight mb-2">Practice is Paused</div>
-                    <div className="font-medium text-sm opacity-90 leading-relaxed max-w-lg">
-                      {accessReason === "plan_inactive"
-                        ? "Your teacher's subscription has expired. Ask them to renew to keep practicing."
-                        : accessReason === "no_plan"
-                          ? "An active plan is required to start sessions."
-                          : "Your account access is currently inactive."}
-                    </div>
-                    {accessReason === "no_plan" && (
-                      <button
-                        onClick={onNavigateBilling}
-                        className="mt-6 bg-destructive text-white font-bold uppercase tracking-widest px-6 py-2.5 rounded-xl shadow-sm transition-all hover:bg-destructive/90 active:scale-95 text-xs"
-                      >
-                        Get a Plan
-                      </button>
-                    )}
+                  <div className="font-medium text-sm text-destructive/90 leading-relaxed max-w-lg">
+                    {accessReason === "plan_inactive"
+                      ? "Your teacher's subscription has expired. Ask them to renew to keep practicing."
+                      : accessReason === "no_plan"
+                        ? "An active plan is required to start sessions."
+                        : "Your account access is currently inactive."}
                   </div>
-                </motion.div>
-              )}
+                  {accessReason === "no_plan" && (
+                    <button
+                      onClick={onNavigateBilling}
+                      className="mt-4 bg-destructive text-destructive-foreground font-bold uppercase tracking-widest px-5 py-2 rounded-xl transition-colors hover:bg-destructive/90 active:scale-[0.98] text-xs"
+                    >
+                      Get a Plan
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
 
-              {/* Desktop chart grid */}
+            <div className={cn(!canPractice && "opacity-50 pointer-events-none grayscale")}>
               <div className="hidden lg:block">
                 <DomainCharts
-                  domains={domains as Parameters<typeof DomainCharts>[0]["domains"]}
+                  domains={domains}
                   config={DOMAIN_CONFIG}
                   fallbackCfg={DOMAIN_CONFIG.listening}
                   onSelect={canPractice ? onStartSession : () => {}}
                 />
               </div>
 
-              {/* Mobile card list */}
-              <div className={`flex flex-col gap-6 lg:hidden ${!canPractice ? "opacity-50 grayscale pointer-events-none" : ""}`}>
+              <div className="flex flex-col gap-4 lg:hidden">
                 {domains.map((d, i) => {
                   const cfg = DOMAIN_CONFIG[d.domain] ?? DOMAIN_CONFIG.listening;
                   return (
@@ -277,6 +330,7 @@ export function HomeDashboardView({
               </div>
             </div>
           </div>
+        </div>
       </motion.div>
     </PageContainer>
   );

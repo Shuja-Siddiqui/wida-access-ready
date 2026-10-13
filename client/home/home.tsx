@@ -10,11 +10,8 @@ import {
 import { useSpokenContent } from "@/hooks/use-spoken-content";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { unlockAudioPlayback } from "@/lib/unlock-audio-playback";
-import { prepareListeningSessionData } from "@/lib/listening-session-data";
-import { formatStudentAnswerForFeedback } from "@/lib/session-answer-format";
 import { Home as HomeIcon } from "lucide-react";
 import { LoadingScreen } from "@/components/loading-screen";
-import confetti from "canvas-confetti";
 
 import type { AnswerRecord, View } from "./home-types";
 import { DOMAIN_CONFIG, domainLabel, resolveSessionStartFromUiKey } from "./home-types";
@@ -28,6 +25,7 @@ import { SessionLoadingView }  from "./components/session-loading-view";
 import { SessionErrorView }    from "./components/session-error-view";
 import { SessionCompleteView } from "./components/session-complete-view";
 import { SessionActiveView }   from "./components/session-active-view";
+import { formatStudentAnswerForFeedback } from "./components/session-answer-format";
 import { useBreadcrumbTrail, type Crumb } from "@/components/breadcrumbs";
 
 export default function Home() {
@@ -141,6 +139,7 @@ export default function Home() {
     speakFeedback,
     speakTaskSession,
     speakQuestion,
+    speakListeningQuestion,
     speakWritingSession,
     speakSpeakingSession,
     stopSpeaking,
@@ -176,17 +175,20 @@ export default function Home() {
 
     autoPlaySessionRef.current = sessionId;
 
-    // Multi-question listening: qIdx effect speaks each question stem only.
+    // Multi-question listening: qIdx effect reads passage + each question.
     // L1–2 tap sessions use ImageLibrarySession's own auto-play.
-    // Reading: never auto-played — student reads on screen.
+    // Reading: instructions only (student reads passage on screen).
     const questionCount = Array.isArray((data as { questions?: unknown[] }).questions)
       ? (data as { questions: unknown[] }).questions.length
       : 0;
     const tapMode =
       (data as { useTapMode?: boolean }).useTapMode === true
       || (kind === "image_library" && (data as { useTapMode?: boolean }).useTapMode !== false);
-    if (kind === "reading") return;
     if (kind === "listening" && (questionCount > 0 || tapMode)) return;
+    if (kind === "reading") {
+      speakTaskSession("reading", data as Record<string, unknown>);
+      return;
+    }
 
     speakTaskSession(kind as "listening" | "speaking" | "writing", data as Record<string, unknown>);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,9 +212,7 @@ export default function Home() {
     const questionText = sessionQuestions[qIdx]?.question?.trim() ?? "";
     spokenListenKeyRef.current = listenKey;
 
-    if (questionText) {
-      speakQuestion(questionText);
-    }
+    speakListeningQuestion(data as Record<string, unknown>, qIdx, questionText);
 
     return () => {
       if (spokenListenKeyRef.current === listenKey) {
@@ -273,28 +273,23 @@ export default function Home() {
       const illustrationUrl =
         inner?.illustrationUrl
         ?? (typeof anchor?.url === "string" ? anchor.url : undefined);
-      const baseInner = inner
-        ? {
-            ...inner,
-            illustrationUrl,
-            imageTags: inner.imageTags ?? inner.tags ?? anchor?.tags,
-            tags: inner.tags ?? anchor?.tags,
-          }
-        : {
-            illustrationUrl,
-            imageTags: anchor?.tags,
-            tags: anchor?.tags,
-          };
-      const normalizedInner =
-        content.type === "listening" || String(content.type).startsWith("listening")
-          ? prepareListeningSessionData(baseInner as Record<string, unknown>)
-          : baseInner;
       const data: SessionData = {
         sessionId,
         anchorImage: anchor ?? null,
         content: {
           type: content.type,
-          data: normalizedInner as SessionData["content"]["data"],
+          data: inner
+            ? {
+                ...inner,
+                illustrationUrl,
+                imageTags: inner.imageTags ?? inner.tags ?? anchor?.tags,
+                tags: inner.tags ?? anchor?.tags,
+              }
+            : {
+                illustrationUrl,
+                imageTags: anchor?.tags,
+                tags: anchor?.tags,
+              },
         },
       };
       setSession(data);
@@ -341,7 +336,6 @@ export default function Home() {
       return;
     }
 
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     setView("complete");
     refetchProgress();
     refetchStreak();
@@ -478,10 +472,16 @@ export default function Home() {
     setLastCorrect(isCorrect);
     setLastSubmittedAnswer(submittedAnswer);
     setShowFeedback(true);
+    const domainForAnswer = (session?.content?.type ?? activeDomain).replace("_academic", "");
+    const submittedText = currentQ
+      ? formatStudentAnswerForFeedback(currentQ, domainForAnswer, submittedAnswer)
+      : typeof submittedAnswer === "string"
+        ? submittedAnswer
+        : JSON.stringify(submittedAnswer);
     setAnswers(prev => [...prev, {
       question: currentQ?.question ?? "",
       content: currentQ,
-      submittedAnswer: formatStudentAnswerForFeedback(submittedAnswer, currentQ),
+      submittedAnswer: submittedText,
       correct: isCorrect,
     }]);
   };
@@ -507,8 +507,12 @@ export default function Home() {
     setLastCorrect(false);
     stopSpeaking();
     if (session?.content?.type === "listening") {
-      const questionText = questions[qIdx]?.question?.trim();
-      if (questionText) speakQuestion(questionText);
+      const questionText = questions[qIdx]?.question?.trim() ?? "";
+      speakListeningQuestion(
+        session.content.data as Record<string, unknown>,
+        qIdx,
+        questionText,
+      );
     }
   };
 
@@ -620,8 +624,11 @@ export default function Home() {
           keyUse: session.keyUse ?? session.content.data?.keyUse,
         }}
         studentId={studentId ?? undefined}
+        sessionId={session.sessionId}
         level={Number(session.levelStart ?? 1)}
-        speakPassage={speakPassage}
+        speakListeningQuestion={speakListeningQuestion}
+        speakTaskSession={speakTaskSession}
+        speakQuestion={speakQuestion}
         speakFeedback={speakFeedback}
         isSpeaking={speaking}
         isLoadingTts={ttsLoading}
@@ -661,6 +668,7 @@ export default function Home() {
       speakFeedback,
       speakTaskSession,
       speakQuestion,
+      speakListeningQuestion,
       speakWritingSession,
       speakSpeakingSession,
       onSpeak:        speakPassage,

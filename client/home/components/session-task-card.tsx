@@ -15,9 +15,9 @@ const DOMAIN_META: Record<
 > = {
   listening: {
     label: "Listening",
-    subtitle: "Listen, then answer",
+    subtitle: "Listen carefully, then answer",
     Icon: Headphones,
-    storyLabel: "Passage",
+    storyLabel: "Audio",
   },
   reading: {
     label: "Reading",
@@ -70,15 +70,20 @@ export function SessionTaskCard({
   const meta = DOMAIN_META[domain];
   const { Icon } = meta;
 
-  const isListening = domain === "listening";
-  const passageText = typeof data.passage === "string" ? data.passage.trim() : "";
-  const audioScriptText =
-    (typeof data.audioScript === "string" ? data.audioScript.trim() : "")
-    || (typeof data.audio_script === "string" ? data.audio_script.trim() : "");
-  const listenStoryText = audioScriptText || (isListening ? passageText : "");
-  /** Listening: never treat `passage` as on-screen reading text — audio only. */
-  const story = isListening ? listenStoryText : passageText || audioScriptText;
-  const showStoryOnScreen = Boolean(story) && !isListening;
+  /** Listening: never show audio script as readable text (assess listening, not reading). */
+  const story =
+    domain === "listening"
+      ? ""
+      : (typeof data.passage === "string" ? data.passage.trim() : "")
+        || (typeof data.audioScript === "string" ? data.audioScript.trim() : "")
+        || (typeof data.audio_script === "string" ? data.audio_script.trim() : "");
+  const hasListeningAudio =
+    domain === "listening"
+    && Boolean(
+      (typeof data.audioScript === "string" && data.audioScript.trim())
+      || (typeof data.audio_script === "string" && data.audio_script.trim())
+      || (typeof data.passage === "string" && data.passage.trim()),
+    );
   const keyUse = typeof data.keyUse === "string" ? data.keyUse.trim() : "";
   const prompt = String(data.prompt ?? "");
   const wordBank = (data.wordBank ?? data.word_bank) as string[] | undefined;
@@ -86,8 +91,7 @@ export function SessionTaskCard({
     (typeof data.scaffold === "string" ? data.scaffold.trim() : "")
     || (typeof data.sentenceFrame === "string" ? data.sentenceFrame.trim() : "")
     || (typeof data.sentence_frame === "string" ? data.sentence_frame.trim() : "");
-  const hasListenAudio = isListening && Boolean(listenStoryText);
-  const hasSpeech = hasListenAudio || buildSessionTaskSpeechSegments(domain, data).length > 0;
+  const hasSpeech = buildSessionTaskSpeechSegments(domain, data).length > 0;
 
   return (
     <div className={cn("flex flex-col gap-4 min-w-0", className)}>
@@ -102,11 +106,20 @@ export function SessionTaskCard({
         </div>
       </div>
 
-      {showStoryOnScreen && (
+      {story && (
         <div className="space-y-2">
           <p className={SESSION_LABEL}>{meta.storyLabel}</p>
           <p className="text-[15px] sm:text-base leading-[1.8] text-foreground/90 whitespace-pre-line">
             {story}
+          </p>
+        </div>
+      )}
+
+      {hasListeningAudio && !story && (
+        <div className="space-y-1.5">
+          <p className={SESSION_LABEL}>{meta.storyLabel}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            The passage is audio only — it is not shown as text. Use Listen again as often as you need.
           </p>
         </div>
       )}

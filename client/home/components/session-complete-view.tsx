@@ -80,10 +80,11 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
 
   const correctCount = answers.filter(a => a.correct).length;
   const total        = answers.length;
-  const pct          = total > 0 ? Math.round((correctCount / total) * 100) : 100;
+  const pct          = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+  const sessionStrong = pct >= 70;
 
   useEffect(() => {
-    if (pct < 60) return;
+    if (!sessionStrong) return;
     const duration = 1800;
     const end = Date.now() + duration;
     const frame = () => {
@@ -102,17 +103,24 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
       if (Date.now() < end) requestAnimationFrame(frame);
     };
     frame();
-  }, [pct]);
+  }, [sessionStrong]);
 
-  const msg        = sessionResult?.message || (pct >= 80 ? "Strong session." : "Keep building momentum.");
+  const msg        = sessionResult?.message || (pct >= 80 ? "Strong session." : pct >= 70 ? "Solid session." : pct > 0 ? "Review what was tricky and try again soon." : "Finish counts — aim for more correct answers next time.");
   const levelDelta = sessionResult?.levelDelta ?? 0;
-  const xpEarned   = sessionResult?.xpEarned ?? 10;
+  const xpEarned   = sessionResult?.xpEarned ?? 0;
   const streakBonus = sessionResult?.streakBonus ?? 0;
   const newStreak  = sessionResult?.newStreak ?? 0;
   const feedback   = sessionResult?.attemptFeedback;
 
+  const completionHeadline =
+    pct >= 80 ? "Great work today"
+    : pct >= 70 ? "Nice effort today"
+    : pct > 0 ? "Session complete"
+    : "Keep practicing";
+
   const xpRows = [
-    { label: "Session", amount: 10, show: true },
+    { label: pct >= 70 ? "Session" : "Participation", amount: pct >= 70 ? 10 : 3, show: pct > 0 && pct < 70 },
+    { label: "Session", amount: 10, show: pct >= 70 },
     { label: "Accuracy", amount: 10, show: pct >= 80 },
     { label: "Excellence", amount: 5, show: pct >= 90 },
     { label: "Perfect", amount: 10, show: pct === 100 },
@@ -136,7 +144,7 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
         <header className="shrink-0 flex items-center justify-between gap-4 mb-5 sm:mb-6">
           <div>
             <p className="heading-eyebrow mb-1">Session complete</p>
-            <h1 className="heading-page text-2xl sm:text-3xl leading-none">Great work today</h1>
+            <h1 className="heading-page text-2xl sm:text-3xl leading-none">{completionHeadline}</h1>
           </div>
           <Button
             onClick={onContinue}
@@ -165,9 +173,15 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
                 </p>
                 <p className="text-sm font-semibold text-foreground mt-1 line-clamp-2">{msg}</p>
                 <div className="flex flex-wrap gap-2 mt-2.5">
-                  {levelDelta !== 0 && (
+                  {levelDelta > 0 && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
                       <TrendingUp className="w-3 h-3" />
+                      {formatLevelDelta(levelDelta)} level
+                    </span>
+                  )}
+                  {levelDelta < 0 && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-muted text-muted-foreground border border-border/60">
+                      <TrendingUp className="w-3 h-3 rotate-180" />
                       {formatLevelDelta(levelDelta)} level
                     </span>
                   )}
@@ -182,7 +196,14 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
 
               <div className="shrink-0 text-right pl-2">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">XP</p>
-                <p className="text-2xl sm:text-3xl font-black tabular-nums text-primary leading-none">+{xpEarned}</p>
+                <p
+                  className={cn(
+                    "text-2xl sm:text-3xl font-black tabular-nums leading-none",
+                    xpEarned > 0 ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  {xpEarned > 0 ? `+${xpEarned}` : "0"}
+                </p>
               </div>
             </div>
 
@@ -193,17 +214,23 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
                   <Zap className="w-4 h-4 text-primary" />
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-foreground">Rewards</h2>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {xpRows.map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 border border-border/40 px-3 py-2"
-                    >
-                      <span className="text-[11px] font-medium text-muted-foreground truncate">{row.label}</span>
-                      <span className="text-xs font-bold tabular-nums text-primary shrink-0">+{row.amount}</span>
-                    </div>
-                  ))}
-                </div>
+                {xpRows.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {xpRows.map((row) => (
+                      <div
+                        key={`${row.label}-${row.amount}`}
+                        className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 border border-border/40 px-3 py-2"
+                      >
+                        <span className="text-[11px] font-medium text-muted-foreground truncate">{row.label}</span>
+                        <span className="text-xs font-bold tabular-nums text-primary shrink-0">+{row.amount}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    No XP bonuses this time. Hit at least 70% correct to earn the full session reward.
+                  </p>
+                )}
               </section>
 
               <section className="p-5 sm:p-6 border-t sm:border-t-0 border-border/50">

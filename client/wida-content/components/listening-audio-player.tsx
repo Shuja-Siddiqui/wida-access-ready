@@ -8,9 +8,17 @@ interface Props {
   audioUrl?: string;
   onPlayed?: () => void;
   compact?: boolean;
+  /** Off in student practice — listening must not be assessed as reading. */
+  allowTranscript?: boolean;
 }
 
-export function ListeningAudioPlayer({ audioScript, audioUrl, onPlayed, compact = false }: Props) {
+export function ListeningAudioPlayer({
+  audioScript,
+  audioUrl,
+  onPlayed,
+  compact = false,
+  allowTranscript = false,
+}: Props) {
   const [playing, setPlaying] = useState(false);
   const [played, setPlayed] = useState(false);
   const [showScript, setShowScript] = useState(false);
@@ -89,28 +97,32 @@ export function ListeningAudioPlayer({ audioScript, audioUrl, onPlayed, compact 
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowScript(v => !v)}
-        className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {showScript ? "Hide transcript" : "Show transcript"}
-      </button>
-
-      <AnimatePresence>
-        {showScript && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="w-full overflow-hidden"
+      {allowTranscript && (
+        <>
+          <button
+            type="button"
+            onClick={() => setShowScript(v => !v)}
+            className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
-            <div className="rounded-xl bg-background border border-border p-3 text-sm text-foreground leading-relaxed italic">
-              "{audioScript}"
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {showScript ? "Hide transcript" : "Show transcript"}
+          </button>
+
+          <AnimatePresence>
+            {showScript && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="w-full overflow-hidden"
+              >
+                <div className="rounded-xl bg-background border border-border p-3 text-sm text-foreground leading-relaxed italic">
+                  "{audioScript}"
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
     </div>
   );
 }

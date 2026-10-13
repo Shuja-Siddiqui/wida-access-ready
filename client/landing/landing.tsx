@@ -33,8 +33,8 @@ import { useGetBillingPlans, getGetBillingPlansQueryKey, type Plan } from "@/api
 const DOMAINS = [
   { label: "Listening",  colorVar: "trust-blue",     color: "text-trust-blue",     bg: "bg-trust-blue/10",     gradientFrom: "from-trust-blue",     series: [1.5,1.8,2.2,2.6,3.1,3.6,4.0] },
   { label: "Speaking",   colorVar: "growth-green",   color: "text-growth-green",   bg: "bg-growth-green/10",   gradientFrom: "from-growth-green",   series: [2.0,2.2,2.3,2.7,3.0,3.4,3.9] },
-  { label: "Reading",    colorVar: "energy-orange",  color: "text-energy-orange",  bg: "bg-energy-orange/10",  gradientFrom: "from-energy-orange",  series: [1.0,1.6,2.1,2.5,3.0,3.6,4.2] },
-  { label: "Writing",    colorVar: "achieve-purple", color: "text-achieve-purple", bg: "bg-achieve-purple/10", gradientFrom: "from-achieve-purple", series: [1.8,2.1,2.4,2.8,3.2,3.7,4.1] },
+  { label: "Reading",    colorVar: "logo-gold",  color: "text-logo-gold",  bg: "bg-logo-gold/10",  gradientFrom: "from-logo-gold",  series: [1.0,1.6,2.1,2.5,3.0,3.6,4.2] },
+  { label: "Writing",    colorVar: "logo-teal", color: "text-logo-teal", bg: "bg-logo-teal/10", gradientFrom: "from-logo-teal", series: [1.8,2.1,2.4,2.8,3.2,3.7,4.1] },
 ];
 
 const DOMAIN_DETAILS = [
@@ -55,16 +55,16 @@ const DOMAIN_DETAILS = [
     exitThreshold: 4.0, series: [2.0,2.2,2.3,2.7,3.0,3.4,3.9],
   },
   {
-    label: "Reading", icon: BookOpen, colorVar: "energy-orange",
-    color: "text-energy-orange", bg: "bg-energy-orange/10", gradientFrom: "from-energy-orange",
+    label: "Reading", icon: BookOpen, colorVar: "logo-gold",
+    color: "text-logo-gold", bg: "bg-logo-gold/10", gradientFrom: "from-logo-gold",
     tagline: "From decoding to grade-level meaning",
     body: "Students read leveled passages and answer questions aligned to the exact exit threshold for their state. Texts grow longer and more complex as comprehension climbs toward proficiency.",
     points: ["Passages aligned to each state's exit bar","Question types mirror the real assessment","Complexity scales with comprehension"],
     exitThreshold: 4.0, series: [1.0,1.6,2.1,2.5,3.0,3.6,4.2],
   },
   {
-    label: "Writing", icon: PenLine, colorVar: "achieve-purple",
-    color: "text-achieve-purple", bg: "bg-achieve-purple/10", gradientFrom: "from-achieve-purple",
+    label: "Writing", icon: PenLine, colorVar: "logo-teal",
+    color: "text-logo-teal", bg: "bg-logo-teal/10", gradientFrom: "from-logo-teal",
     tagline: "Feedback on every sentence",
     body: "Writing prompts collect a real response, then AI gives targeted feedback on grammar, vocabulary, and organization. Students revise and resubmit — turning each session into measurable growth.",
     points: ["AI feedback on grammar, vocabulary, structure","Prompts matched to exit-test writing tasks","Revise-and-resubmit builds durable gains"],

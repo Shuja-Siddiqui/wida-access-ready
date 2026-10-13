@@ -176,20 +176,17 @@ export default function Home() {
 
     autoPlaySessionRef.current = sessionId;
 
-    // Multi-question listening: qIdx effect reads passage + each question.
+    // Multi-question listening: qIdx effect speaks each question stem only.
     // L1–2 tap sessions use ImageLibrarySession's own auto-play.
-    // Reading: instructions only (student reads passage on screen).
+    // Reading: never auto-played — student reads on screen.
     const questionCount = Array.isArray((data as { questions?: unknown[] }).questions)
       ? (data as { questions: unknown[] }).questions.length
       : 0;
     const tapMode =
       (data as { useTapMode?: boolean }).useTapMode === true
       || (kind === "image_library" && (data as { useTapMode?: boolean }).useTapMode !== false);
+    if (kind === "reading") return;
     if (kind === "listening" && (questionCount > 0 || tapMode)) return;
-    if (kind === "reading") {
-      speakTaskSession("reading", data as Record<string, unknown>);
-      return;
-    }
 
     speakTaskSession(kind as "listening" | "speaking" | "writing", data as Record<string, unknown>);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,13 +210,7 @@ export default function Home() {
     const questionText = sessionQuestions[qIdx]?.question?.trim() ?? "";
     spokenListenKeyRef.current = listenKey;
 
-    if (qIdx === 0) {
-      speakTaskSession(
-        "listening",
-        data as Record<string, unknown>,
-        questionText ? { question: questionText } : undefined,
-      );
-    } else if (questionText) {
+    if (questionText) {
       speakQuestion(questionText);
     }
 

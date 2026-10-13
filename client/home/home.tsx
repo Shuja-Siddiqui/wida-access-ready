@@ -210,7 +210,13 @@ export default function Home() {
     const questionText = sessionQuestions[qIdx]?.question?.trim() ?? "";
     spokenListenKeyRef.current = listenKey;
 
-    if (questionText) {
+    if (qIdx === 0) {
+      speakTaskSession(
+        "listening",
+        data as Record<string, unknown>,
+        questionText ? { question: questionText } : undefined,
+      );
+    } else if (questionText) {
       speakQuestion(questionText);
     }
 

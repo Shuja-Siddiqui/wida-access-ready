@@ -34,7 +34,10 @@ export function SessionActiveView() {
   const data        = content.data;
   if (!data) return null;
   const theme       = SESSION_THEMES[normalizeSessionDomain(type ?? activeDomain)];
-  const mediaUrl      = data.illustrationUrl ?? session.anchorImage?.url ?? null;
+  const mediaUrl      =
+    data.illustrationUrl
+    ?? session.anchorImage?.url
+    ?? null;
   const hasTaskContent = Boolean(
     data.passage || data.audioScript || data.prompt || data.scaffold || data.sentenceFrame || data.sentence_frame,
   );

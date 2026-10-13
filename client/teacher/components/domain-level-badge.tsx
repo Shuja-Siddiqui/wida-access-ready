@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 const DOMAIN_COLORS: Record<string, string> = {
   listening: "text-trust-blue",
   speaking:  "text-growth-green",
-  reading:   "text-logo-gold",
-  writing:   "text-logo-teal",
+  reading:   "text-energy-orange",
+  writing:   "text-achieve-purple",
 };
 
 export function DomainLevelBadge({

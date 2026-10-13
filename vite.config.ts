@@ -24,9 +24,6 @@ export default defineConfig(async ({ command }) => ({
     },
     dedupe: ["react", "react-dom"],
   },
-  optimizeDeps: {
-    include: ["microsoft-cognitiveservices-speech-sdk"],
-  },
   root: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),

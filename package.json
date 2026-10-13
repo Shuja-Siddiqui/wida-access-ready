@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "express": "^5",
-    "microsoft-cognitiveservices-speech-sdk": "^1.52.0",
     "redis": "^6.2.1",
     "xlsx": "^0.18.5"
   },

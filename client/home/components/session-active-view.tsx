@@ -150,9 +150,10 @@ export function SessionActiveView() {
                 domain={domainKey}
                 mediaUrl={mediaUrl}
                 visual={data.visual}
-                referenceLabel={type === "reading" ? "Picture" : "Reference"}
+                className="flex-1 min-h-0"
+                referenceLabel={type === "reading" ? "Picture" : domainKey === "listening" ? "Listen" : "Reference"}
                 referencePanel={
-                  hasTaskContent ? (
+                  hasTaskContent || domainKey === "listening" ? (
                     <SessionTaskCard
                       domain={domainKey}
                       data={data}

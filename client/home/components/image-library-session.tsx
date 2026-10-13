@@ -14,6 +14,8 @@ import { useApi } from "@/hooks/use-api";
 import { ItemCoachingCard, coachingSpeech, aiItemPassed, type ItemFeedbackPayload } from "./item-coaching-card";
 import { AnswerStepButtons } from "./answer-step-buttons";
 import { ListenAgainButton } from "./listen-again-button";
+import { SessionResponsiveLayout } from "./session-responsive-layout";
+import { SessionWorkScroll } from "./session-work-scroll";
 import type { CropBox } from "./image-crop";
 
 interface Detection {
@@ -423,11 +425,95 @@ export function ImageLibrarySession({
   const waitingCoach = showFeedback && coachLoading;
   const nextAction = waitingCoach ? undefined : passed ? "next" as const : "retry" as const;
 
-  return (
-    <div className="flex flex-col gap-4 w-full max-w-xl mx-auto px-4 sm:px-6 py-6 pb-8">
+  const renderTapBoxes = () => {
+    if (isTextChoice || currentQ.type !== "image_object_tap" || !imageUrl) return null;
+    const PALETTE = [
+      { border: "#3B82F6", fill: "rgba(59,130,246,0.18)", badge: "#1D4ED8" },
+      { border: "#F59E0B", fill: "rgba(245,158,11,0.18)",  badge: "#92400E" },
+      { border: "#8B5CF6", fill: "rgba(139,92,246,0.18)", badge: "#5B21B6" },
+    ];
+    const annotated = choices.map((choice, i) => ({ choice, paletteIdx: i }));
+    annotated.sort(
+      (a, b) =>
+        b.choice.box.width * b.choice.box.height -
+        a.choice.box.width * a.choice.box.height,
+    );
 
-      {/* Domain badge + progress */}
-      <div className="flex items-center justify-between">
+    return annotated.map(({ choice, paletteIdx: i }, renderOrder) => {
+      const isTapped = tappedLabel !== null && labelsMatch(choice.label, tappedLabel);
+      const isTarget = choice.isCorrect;
+      let { border, fill } = PALETTE[i % PALETTE.length];
+      let boxOpacity = audioActive ? 0.75 : 1;
+
+      if (showFeedback) {
+        if (isTarget)      { border = "#16A34A"; fill = "rgba(22,163,74,0.25)"; }
+        else if (isTapped) { border = "#EF4444"; fill = "rgba(239,68,68,0.25)"; }
+        else               { boxOpacity = 0.35; }
+      }
+
+      const interactive = canTap && !showFeedback;
+      const raw = choice.box;
+      const minW = 0.18, minH = 0.14;
+      const w = Math.max(raw.width,  minW);
+      const h = Math.max(raw.height, minH);
+      const cx = raw.x + raw.width  / 2;
+      const cy = raw.y + raw.height / 2;
+      const x  = Math.max(0, Math.min(1 - w, cx - w / 2));
+      const y  = Math.max(0, Math.min(1 - h, cy - h / 2));
+
+      const clipPath = choice.points && choice.points.length >= 3
+        ? "polygon(" + choice.points.map(([px, py]) =>
+            `${((px - x) / w * 100).toFixed(1)}% ${((py - y) / h * 100).toFixed(1)}%`
+          ).join(", ") + ")"
+        : undefined;
+
+      return (
+        <motion.button
+          key={i}
+          disabled={!interactive}
+          onClick={() => handleBoxTap(choice.label)}
+          animate={{ opacity: boxOpacity }}
+          whileTap={{ scale: interactive ? 0.96 : 1 }}
+          transition={{ duration: 0.15 }}
+          className="absolute"
+          style={{
+            left:            `${x * 100}%`,
+            top:             `${y * 100}%`,
+            width:           `${w * 100}%`,
+            height:          `${h * 100}%`,
+            border:          clipPath ? "none" : `3px solid ${border}`,
+            borderRadius:    clipPath ? 0 : 10,
+            backgroundColor: fill,
+            cursor:          interactive ? "pointer" : "default",
+            boxShadow:       clipPath ? undefined : `0 0 0 2px ${border}55, 0 2px 8px ${border}33`,
+            filter:          clipPath ? `drop-shadow(0 0 4px ${border}) drop-shadow(0 0 8px ${border}55)` : undefined,
+            clipPath,
+            zIndex:          renderOrder + 1,
+          }}
+        >
+          <AnimatePresence>
+            {showFeedback && (isTarget || isTapped) && (
+              <motion.span
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 22 }}
+                className="absolute top-1 right-1"
+              >
+                {isTarget
+                  ? <CheckCircle2 className="w-5 h-5 text-green-600 bg-white rounded-full drop-shadow" />
+                  : <XCircle      className="w-5 h-5 text-red-500   bg-white rounded-full drop-shadow" />}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.button>
+      );
+    });
+  };
+
+  return (
+    <div className="flex flex-1 min-h-0 w-full flex-col px-4 sm:px-6 py-4 sm:py-6 lg:py-6">
+
+      <div className="flex items-center justify-between shrink-0 mb-4 lg:mb-5">
         <span
           className="text-xs font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
           style={{ color: "hsl(338 100% 65%)", background: "hsl(338 100% 65% / .12)" }}
@@ -439,152 +525,71 @@ export function ImageLibrarySession({
         </span>
       </div>
 
-      {/* Passage card — shows TTS state; passage names every answer */}
-      <div
-        className={`rounded-xl border bg-card/80 shadow-sm px-4 py-4 space-y-3 transition-colors duration-300 ${
-          audioActive ? "border-primary/25 bg-primary/[0.03]" : "border-border/60"
-        }`}
-      >
-        <div className="flex gap-3 items-start">
-          <BookOpen className="w-4 h-4 mt-0.5 shrink-0 text-sky-600 dark:text-sky-400" />
-          <p className="text-sm text-foreground leading-relaxed flex-1 min-w-0">{passageText}</p>
-        </div>
-        <ListenAgainButton
-          onListen={handleReplay}
-          onStop={stopSpeaking}
-          speaking={isSpeaking}
-          domain="listening"
-          fullWidth
-        />
-      </div>
-
-      {/* "Listen first" hint while audio is playing */}
-      {audioActive && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center text-xs font-semibold text-muted-foreground"
-        >
-          {currentQ?.type === "image_yes_no"
-            ? "Listen to the story — then agree or disagree"
-            : isTextChoice
-              ? "Listen to the story — then choose the correct answer"
-              : "Listen to the story — then tap the correct object"}
-        </motion.p>
-      )}
-
-      {/* Scene image — boxes overlaid only in box_tap mode */}
-      <div className="relative w-full rounded-2xl overflow-hidden border border-border/40 bg-muted/20 select-none">
-        {imageUrl ? (
-          <img src={imageUrl} alt={topic} className="w-full block" draggable={false} />
-        ) : (
-          <div className="w-full aspect-video flex flex-col items-center justify-center gap-2 bg-muted text-muted-foreground">
-            <ImageIcon className="w-8 h-8 opacity-30" />
-            <p className="text-xs">Image unavailable</p>
-          </div>
-        )}
-
-        {/* Bounding-box choices — only in box_tap mode */}
-        {!isTextChoice && currentQ.type === "image_object_tap" && imageUrl && (() => {
-          // Sort largest → smallest so smaller boxes render last (on top) and
-          // always win pointer events when boxes overlap.
-          const PALETTE = [
-            { border: "#3B82F6", fill: "rgba(59,130,246,0.18)", badge: "#1D4ED8" },
-            { border: "#F59E0B", fill: "rgba(245,158,11,0.18)",  badge: "#92400E" },
-            { border: "#8B5CF6", fill: "rgba(139,92,246,0.18)", badge: "#5B21B6" },
-          ];
-          // Annotate each choice with its original palette index before sorting
-          const annotated = choices.map((choice, i) => ({ choice, paletteIdx: i }));
-          annotated.sort(
-            (a, b) =>
-              b.choice.box.width * b.choice.box.height -
-              a.choice.box.width * a.choice.box.height,
-          );
-
-          return annotated.map(({ choice, paletteIdx: i }, renderOrder) => {
-          const isTapped = tappedLabel !== null && labelsMatch(choice.label, tappedLabel);
-          const isTarget = choice.isCorrect;
-
-          let { border, fill, badge } = PALETTE[i % PALETTE.length];
-
-          // Boxes are always visible — students need to see them WHILE listening.
-          // During audio: slightly dimmed but fully visible. After audio: full brightness.
-          let boxOpacity = audioActive ? 0.75 : 1;
-
-          if (showFeedback) {
-            if (isTarget)      { border = "#16A34A"; fill = "rgba(22,163,74,0.25)";  badge = "#14532D"; }
-            else if (isTapped) { border = "#EF4444"; fill = "rgba(239,68,68,0.25)";  badge = "#7F1D1D"; }
-            else               { boxOpacity = 0.35; }
-          }
-
-          const interactive = canTap && !showFeedback;
-
-          // Enforce minimum tap size: grow boxes smaller than 18% wide or 14% tall
-          // so they're always finger-tappable (DINO can return tiny person-sized boxes).
-          const raw = choice.box;
-          const minW = 0.18, minH = 0.14;
-          const w = Math.max(raw.width,  minW);
-          const h = Math.max(raw.height, minH);
-          // Centre-expand: keep the centre point, grow outward, clamp to [0,1]
-          const cx = raw.x + raw.width  / 2;
-          const cy = raw.y + raw.height / 2;
-          const x  = Math.max(0, Math.min(1 - w, cx - w / 2));
-          const y  = Math.max(0, Math.min(1 - h, cy - h / 2));
-
-          // Polygon clip-path: express each vertex as a percentage of the button bounds
-          const clipPath = choice.points && choice.points.length >= 3
-            ? "polygon(" + choice.points.map(([px, py]) =>
-                `${((px - x) / w * 100).toFixed(1)}% ${((py - y) / h * 100).toFixed(1)}%`
-              ).join(", ") + ")"
-            : undefined;
-
-          return (
-            <motion.button
-              key={i}
-              disabled={!interactive}
-              onClick={() => handleBoxTap(choice.label)}
-              animate={{ opacity: boxOpacity }}
-              whileTap={{ scale: interactive ? 0.96 : 1 }}
-              transition={{ duration: 0.15 }}
-              className="absolute"
-              style={{
-                left:            `${x * 100}%`,
-                top:             `${y * 100}%`,
-                width:           `${w * 100}%`,
-                height:          `${h * 100}%`,
-                border:          clipPath ? "none" : `3px solid ${border}`,
-                borderRadius:    clipPath ? 0 : 10,
-                backgroundColor: fill,
-                cursor:          interactive ? "pointer" : "default",
-                boxShadow:       clipPath ? undefined : `0 0 0 2px ${border}55, 0 2px 8px ${border}33`,
-                // drop-shadow follows the clip-path outline for polygon shapes
-                filter:          clipPath ? `drop-shadow(0 0 4px ${border}) drop-shadow(0 0 8px ${border}55)` : undefined,
-                clipPath,
-                // Smaller boxes (rendered later) get a higher z-index so they
-                // always intercept taps even when partially covered by a larger box.
-                zIndex:          renderOrder + 1,
-              }}
+      <SessionResponsiveLayout
+        domain="listening"
+        referenceLabel="Scene"
+        referencePanel={
+          <div className="flex flex-col gap-4 min-w-0">
+            <div
+              className={`rounded-xl border bg-card/80 shadow-sm px-4 py-4 space-y-3 transition-colors duration-300 ${
+                audioActive ? "border-primary/25 bg-primary/[0.03]" : "border-border/60"
+              }`}
             >
-              <AnimatePresence>
-                {showFeedback && (isTarget || isTapped) && (
-                  <motion.span
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 22 }}
-                    className="absolute top-1 right-1"
-                  >
-                    {isTarget
-                      ? <CheckCircle2 className="w-5 h-5 text-green-600 bg-white rounded-full drop-shadow" />
-                      : <XCircle      className="w-5 h-5 text-red-500   bg-white rounded-full drop-shadow" />}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          );
-        });
-        })()}
-      </div>
+              <div className="flex gap-3 items-start">
+                <BookOpen className="w-4 h-4 mt-0.5 shrink-0 text-sky-600 dark:text-sky-400" />
+                <p className="text-sm text-foreground leading-relaxed flex-1 min-w-0">{passageText}</p>
+              </div>
+              <ListenAgainButton
+                onListen={handleReplay}
+                onStop={stopSpeaking}
+                speaking={isSpeaking}
+                domain="listening"
+                fullWidth
+              />
+            </div>
 
+            {audioActive && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-xs font-semibold text-muted-foreground lg:text-center"
+              >
+                {currentQ?.type === "image_yes_no"
+                  ? "Listen to the story — then agree or disagree"
+                  : isTextChoice
+                    ? "Listen to the story — then choose the correct answer"
+                    : "Listen to the story — then tap the correct object in the scene"}
+              </motion.p>
+            )}
+
+            <div className="relative w-full rounded-2xl overflow-hidden border border-border/40 bg-muted/20 select-none lg:max-h-[min(72vh,36rem)]">
+              {imageUrl ? (
+                <img src={imageUrl} alt={topic} className="w-full block object-contain max-h-[min(72vh,36rem)]" draggable={false} />
+              ) : (
+                <div className="w-full aspect-video flex flex-col items-center justify-center gap-2 bg-muted text-muted-foreground">
+                  <ImageIcon className="w-8 h-8 opacity-30" />
+                  <p className="text-xs">Image unavailable</p>
+                </div>
+              )}
+              {renderTapBoxes()}
+            </div>
+          </div>
+        }
+        className="flex-1 min-h-0"
+      >
+      <SessionWorkScroll
+        footer={
+          showFeedback ? (
+            <AnswerStepButtons
+              loading={coachLoading}
+              passed={passed}
+              isLast={qIdx >= questions.length - 1}
+              onAdvance={handleNext}
+              onRetry={handleTryAgain}
+            />
+          ) : undefined
+        }
+      >
       {/* Question card */}
       <AnimatePresence mode="wait">
         <motion.div key={qIdx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -600,8 +605,8 @@ export function ImageLibrarySession({
           {currentQ.type !== "image_yes_no" && (
           <p className="text-xs text-muted-foreground mt-1 font-medium">
             {(isTextChoice || (currentQ.type === "image_object_tap" && choices.length === 0))
-                ? "Choose the correct answer below"
-                : "Tap the correct object in the image above"}
+                ? "Choose the correct answer"
+                : "Tap the correct object in the scene"}
           </p>
           )}
         </motion.div>
@@ -712,17 +717,8 @@ export function ImageLibrarySession({
         </motion.div>
       )}
 
-      {showFeedback && (
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-          <AnswerStepButtons
-            loading={coachLoading}
-            passed={passed}
-            isLast={qIdx >= questions.length - 1}
-            onAdvance={handleNext}
-            onRetry={handleTryAgain}
-          />
-        </motion.div>
-      )}
+      </SessionWorkScroll>
+      </SessionResponsiveLayout>
     </div>
   );
 }

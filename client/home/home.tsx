@@ -11,6 +11,10 @@ import { useSpokenContent } from "@/hooks/use-spoken-content";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { unlockAudioPlayback } from "@/lib/unlock-audio-playback";
 import { prepareListeningSessionData } from "@/lib/listening-session-data";
+import {
+  normalizeImageLibrarySessionData,
+  shouldUseImageLibrarySession,
+} from "@/lib/image-library-session-routing";
 import { formatStudentAnswerForFeedback } from "@/lib/session-answer-format";
 import { Home as HomeIcon } from "lucide-react";
 import { LoadingScreen } from "@/components/loading-screen";
@@ -172,7 +176,8 @@ export default function Home() {
     const sessionId: string = session.sessionId;
     if (autoPlaySessionRef.current === sessionId) return;
     if (!data || typeof data !== "object") return;
-    if (kind !== "listening" && kind !== "reading" && kind !== "speaking" && kind !== "writing") return;
+    if (kind !== "listening" && kind !== "reading" && kind !== "speaking" && kind !== "writing" && kind !== "image_library") return;
+    if (shouldUseImageLibrarySession(session.content)) return;
 
     autoPlaySessionRef.current = sessionId;
 
@@ -182,11 +187,8 @@ export default function Home() {
     const questionCount = Array.isArray((data as { questions?: unknown[] }).questions)
       ? (data as { questions: unknown[] }).questions.length
       : 0;
-    const tapMode =
-      (data as { useTapMode?: boolean }).useTapMode === true
-      || (kind === "image_library" && (data as { useTapMode?: boolean }).useTapMode !== false);
     if (kind === "reading") return;
-    if (kind === "listening" && (questionCount > 0 || tapMode)) return;
+    if (kind === "listening" && questionCount > 0) return;
 
     speakTaskSession(kind as "listening" | "speaking" | "writing", data as Record<string, unknown>);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -199,7 +201,7 @@ export default function Home() {
     if (kind !== "listening") return;
     const data = session.content?.data;
     if (!data || typeof data !== "object") return;
-    if ((data as { useTapMode?: boolean }).useTapMode === true) return;
+    if (shouldUseImageLibrarySession(session.content)) return;
 
     const sessionQuestions = (data as { questions?: Array<{ question?: string }> }).questions ?? [];
     if (sessionQuestions.length === 0) return;
@@ -606,19 +608,20 @@ export default function Home() {
     );
   }
 
-  // L1–2 tap mode bypasses the regular session pipeline (useTapMode flag or legacy image_library type).
-  const useTapMode =
-    session.content.data?.useTapMode === true
-    || (session.content.type === "image_library" && session.content.data?.useTapMode !== false);
-
-  if (useTapMode) {
+  // L1–2 image tap (image_library API type or listening fallback with tap questions + image).
+  if (shouldUseImageLibrarySession(session.content)) {
+    const libraryData = normalizeImageLibrarySessionData({
+      ...session.content.data,
+      illustrationUrl:
+        session.content.data?.illustrationUrl
+        ?? session.anchorImage?.url
+        ?? undefined,
+      keyUse: session.keyUse ?? session.content.data?.keyUse,
+    });
     return (
       <div className="flex flex-1 min-h-0 w-full flex-col">
       <ImageLibrarySession
-        data={{
-          ...session.content.data,
-          keyUse: session.keyUse ?? session.content.data?.keyUse,
-        }}
+        data={libraryData}
         studentId={studentId ?? undefined}
         level={Number(session.levelStart ?? 1)}
         speakPassage={speakPassage}

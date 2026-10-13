@@ -344,8 +344,13 @@ export function resolveQuestionUi(
 
   if (type === "image_grid") return "image_grid";
   if (type === "object_detect" && q.imageSrc) return "object_detect";
-  if (type === "image_object_tap") return "image_object_tap";
-  if (type === "image_yes_no") return "image_yes_no";
+  if (type === "image_object_tap" || type === "image_explain_mc") {
+    return hasOptions(q) ? "multiple_choice" : "image_object_tap";
+  }
+  if (type === "image_yes_no") {
+    if (q.correctAnswer === "agree" || q.correctAnswer === "disagree") return "agree_disagree";
+    return hasOptions(q) ? "multiple_choice" : "image_yes_no";
+  }
 
   if (type === "sequence_order" || type === "sequence_ordering") {
     return hasSequenceShape(q) ? "sequence" : hasOptions(q) ? "multiple_choice" : "unsupported";

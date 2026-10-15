@@ -141,7 +141,7 @@ export default function SignupDistrict() {
           </ul>
         </div>
 
-        <p className="text-white/50 text-sm font-medium relative z-10">Built by Fugees Family, Inc.</p>
+        <p className="text-white/50 text-sm font-medium relative z-10">Access Ready</p>
       </div>
 
       {/* ── Right form panel ──────────────────────────────────────── */}

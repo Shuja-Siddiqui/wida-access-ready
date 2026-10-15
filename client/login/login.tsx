@@ -137,7 +137,7 @@ export default function Login() {
         </div>
 
         <p className="text-white/50 text-sm font-medium relative z-10">
-          Built by Fugees Family, Inc.
+          Access Ready
         </p>
       </div>
 

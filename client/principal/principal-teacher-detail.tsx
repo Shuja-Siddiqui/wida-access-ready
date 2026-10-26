@@ -15,6 +15,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { principalApi, type PrincipalProfile, type TeacherStudent, type SchoolStudent } from "./api";
+import { useSchool } from "@/contexts/school-context";
 
 const DOMAIN_COLORS: Record<string, string> = {
   listening: "text-primary bg-primary/10",
@@ -28,6 +29,7 @@ export default function PrincipalTeacherDetail() {
   const [, setLocation] = useLocation();
   const { request } = useApi();
   const { toast } = useToast();
+  const { invalidate: invalidateSchoolRoster } = useSchool();
 
   const [teacher, setTeacher] = useState<PrincipalProfile | null>(null);
   const [students, setStudents] = useState<TeacherStudent[]>([]);
@@ -143,8 +145,8 @@ export default function PrincipalTeacherDetail() {
         description: `Students assigned to ${teacher?.name ?? "teacher"}.`,
       });
       setAssignOpen(false);
-      // Refresh only the student list — avoids blanking the page
       void reloadStudents(teacherId);
+      void invalidateSchoolRoster();
     } catch {
       toast({ title: "Failed to save assignments", variant: "destructive" });
     } finally {

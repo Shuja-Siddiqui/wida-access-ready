@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthConfig } from "@/hooks/use-auth-config";
-import { useApi, ApiError } from "@/hooks/use-api";
+import { useApi, ApiError, extractErrorMessage } from "@/hooks/use-api";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, Eye, EyeOff, Check } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
@@ -34,6 +34,10 @@ export default function Login() {
   const [submitting, setSubmitting]           = useState(false);
   const [errorMsg, setErrorMsg]               = useState("");
   const [needsVerification, setNeedsVerification] = useState(false);
+  const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSetupDone, setPasswordSetupDone] = useState(false);
   const [resendSent, setResendSent]           = useState(false);
 
   useEffect(() => {
@@ -78,11 +82,20 @@ export default function Login() {
       else if (data.userType === "district_admin") setLocation("/district");
       else                                      setLocation("/teacher");
     } catch (err) {
-      if (
-        err instanceof ApiError && err.status === 403 &&
-        (err.data as { details?: { requiresVerification?: boolean } } | null)?.details?.requiresVerification
-      ) {
+      const details = (err instanceof ApiError ? err.data : null) as {
+        details?: { requiresVerification?: boolean; requiresPasswordSetup?: boolean };
+      } | null;
+
+      if (err instanceof ApiError && err.status === 403 && details?.details?.requiresVerification) {
         setNeedsVerification(true);
+        setNeedsPasswordSetup(false);
+        setSubmitting(false);
+        return;
+      }
+      if (err instanceof ApiError && err.status === 403 && details?.details?.requiresPasswordSetup) {
+        setNeedsPasswordSetup(true);
+        setNeedsVerification(false);
+        setPassword("");
         setSubmitting(false);
         return;
       }
@@ -172,7 +185,15 @@ export default function Login() {
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => { setRole(t.id); setErrorMsg(""); setNeedsVerification(false); }}
+                  onClick={() => {
+                    setRole(t.id);
+                    setErrorMsg("");
+                    setNeedsVerification(false);
+                    setNeedsPasswordSetup(false);
+                    setPasswordSetupDone(false);
+                    setNewPassword("");
+                    setConfirmPassword("");
+                  }}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${
                     role === t.id
                       ? "bg-primary text-primary-foreground shadow-sm"
@@ -254,7 +275,86 @@ export default function Login() {
                 </div>
               )}
 
-              {!needsVerification && errorMsg && (
+              {needsPasswordSetup && (
+                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-foreground">Create your password</p>
+                    <p className="text-sm text-muted-foreground">
+                      {role === "admin"
+                        ? "Your district created your account. Set a password below, or use the link in your invitation email. Then sign in again."
+                        : "Set a password below, then sign in again with it."}
+                    </p>
+                  </div>
+                  {
+                    <>
+                      <InputField
+                        label="New password"
+                        id="new-password"
+                        type="password"
+                        icon={Lock}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="At least 8 characters"
+                        autoComplete="new-password"
+                      />
+                      <InputField
+                        label="Confirm password"
+                        id="confirm-password"
+                        type="password"
+                        icon={Lock}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Repeat password"
+                        autoComplete="new-password"
+                      />
+                      <Button
+                        type="button"
+                        disabled={
+                          submitting ||
+                          newPassword.length < 8 ||
+                          newPassword !== confirmPassword
+                        }
+                        className="btn-brand w-full font-bold rounded-xl"
+                        onClick={async () => {
+                          setErrorMsg("");
+                          setSubmitting(true);
+                          try {
+                            await request("/api/auth/set-initial-password", {
+                              method: "POST",
+                              body: JSON.stringify({
+                                email: email.trim(),
+                                password: newPassword,
+                                role: apiRole,
+                              }),
+                            });
+                            setNeedsPasswordSetup(false);
+                            setNewPassword("");
+                            setConfirmPassword("");
+                            setErrorMsg("");
+                            setPasswordSetupDone(true);
+                          } catch (setupErr) {
+                            setErrorMsg(extractErrorMessage(setupErr, "Could not save password."));
+                          } finally {
+                            setSubmitting(false);
+                          }
+                        }}
+                      >
+                        {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Save password"}
+                      </Button>
+                    </>
+                  }
+                </div>
+              )}
+
+              {passwordSetupDone && (
+                <div className="rounded-xl bg-growth-green/10 border border-growth-green/30 px-4 py-3">
+                  <p className="text-sm font-semibold text-growth-green">
+                    Password saved. Sign in again with your email and new password.
+                  </p>
+                </div>
+              )}
+
+              {!needsVerification && !needsPasswordSetup && errorMsg && (
                 <div className="rounded-xl bg-destructive/8 border border-destructive/30 px-4 py-3">
                   <p className="text-sm font-semibold text-destructive">{errorMsg}</p>
                 </div>
@@ -281,7 +381,7 @@ export default function Login() {
             )}
 
             <p className="text-center text-sm text-muted-foreground font-medium mt-8">
-              New to goELprep?{" "}
+              New to Access Ready?{" "}
               <button
                 onClick={() => setLocation("/signup")}
                 className="font-bold text-primary hover:underline"

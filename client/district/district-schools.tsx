@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -36,9 +36,11 @@ const EMPTY_FORM: FormState = {
 
 export default function DistrictSchools() {
   const [, setLocation] = useLocation();
-  const { ready, userType } = useAuth();
+  const { ready, userType, districtId: authDistrictId } = useAuth();
   const { toast } = useToast();
-  const { district, schools, isLoading } = useDistrict();
+  const { district, schools, isLoading, invalidate } = useDistrict();
+  const formRef = useRef<HTMLFormElement>(null);
+  const successRef = useRef<HTMLDivElement>(null);
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -58,30 +60,64 @@ export default function DistrictSchools() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!district?.id) return;
+
+    const formEl = formRef.current;
+    if (formEl && !formEl.checkValidity()) {
+      formEl.reportValidity();
+      toast({
+        title: "Missing or invalid fields",
+        description: "Check school name, principal name, and a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const districtId = district?.id ?? authDistrictId;
+    if (!districtId) {
+      toast({
+        title: "District not loaded",
+        description: "Refresh the page or sign in again, then retry.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const schoolName = form.schoolName.trim();
+    const principalName = form.principalName.trim();
+    const principalEmail = form.principalEmail.trim().toLowerCase();
+
     setSubmitting(true);
     try {
-      await customFetch<{ ok: boolean }>(
-        `/api/districts/${district.id}/schools`,
+      await customFetch<{ ok: boolean; invitationEmailSent?: boolean }>(
+        `/api/districts/${districtId}/schools`,
         {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name:       form.schoolName.trim(),
-            state:      form.state.trim() || undefined,
+            name: schoolName,
+            state: form.state.trim() || undefined,
             schoolCode: form.schoolCode.trim() || undefined,
             principal: {
-              name:  form.principalName.trim(),
-              email: form.principalEmail.trim(),
+              name: principalName,
+              email: principalEmail,
             },
           }),
         },
       );
-      setInvited({ principalName: form.principalName.trim(), principalEmail: form.principalEmail.trim() });
+      setInvited({ principalName, principalEmail });
       setShowForm(false);
       setForm(EMPTY_FORM);
+      toast({
+        title: "Invitation sent",
+        description: `${principalName} will receive an email to set up their principal account.`,
+      });
+      requestAnimationFrame(() => {
+        successRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+      await invalidate();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to send invitation";
-      toast({ title: msg, variant: "destructive" });
+      toast({ title: "Could not send invitation", description: msg, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -135,7 +171,7 @@ export default function DistrictSchools() {
               </button>
             </div>
 
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
+            <form ref={formRef} onSubmit={(e) => void handleSubmit(e)} className="space-y-6" noValidate>
               {/* School details */}
               <div>
                 <p className="text-xs font-black uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-1.5">
@@ -198,7 +234,9 @@ export default function DistrictSchools() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground mt-3">
-                  An invitation will be sent to the principal. The school is created in the system when they accept and set their password.
+                  The school and principal appear on your dashboard right away. You can activate or
+                  deactivate them anytime. They must set a password via the invitation email (or
+                  Administrator login → create password) before they can sign in.
                 </p>
               </div>
 
@@ -215,12 +253,19 @@ export default function DistrictSchools() {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-sm shadow-primary/25"
+                  aria-busy={submitting}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-sm shadow-primary/25 min-w-[10.5rem]"
                 >
                   {submitting ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending…</>
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending…
+                    </>
                   ) : (
-                    <><Mail className="w-4 h-4 mr-2" /> Send Invitation</>
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      Send Invitation
+                    </>
                   )}
                 </Button>
               </div>
@@ -233,6 +278,7 @@ export default function DistrictSchools() {
       <AnimatePresence>
         {invited && (
           <motion.div
+            ref={successRef}
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
@@ -261,7 +307,9 @@ export default function DistrictSchools() {
                   <span className="font-mono break-all">{invited.principalEmail}</span>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  {invited.principalName} will receive a link to set their password and activate their account. The school is created when they accept. The link expires in 7 days.
+                  {invited.principalName} will receive a link to set their password. The school is
+                  already in your district — manage them from the dashboard. The link expires in 7
+                  days.
                 </p>
               </div>
             </div>

@@ -173,6 +173,9 @@ function buildCrumbs(
   if (/^\/principal\/student\/[^/]+$/.test(location)) {
     return [home(), { label: names.studentName, icon: Users }];
   }
+  if (/^\/district\/student\/[^/]+$/.test(location)) {
+    return [home(), { label: names.studentName, icon: Users }];
+  }
 
   const parts = location.split("/").filter(Boolean);
   const crumbs: Crumb[] = [home()];
@@ -191,7 +194,7 @@ export function Breadcrumbs({ userType, items }: { userType: UserType; items?: C
   const [rawLocation] = useLocation();
   const location = rawLocation.replace(/[?#].*$/, "").replace(/\/+$/, "") || "/";
 
-  const studentMatch = location.match(/^\/(?:teacher|principal)\/student\/([^/]+)/);
+  const studentMatch = location.match(/^\/(?:teacher|principal|district)\/student\/([^/]+)/);
   const teacherMatch = location.match(/^\/principal\/teacher\/([^/]+)/);
   const detailStudentId = studentMatch?.[1] ?? "";
   const detailTeacherId = teacherMatch?.[1] ?? "";

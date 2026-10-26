@@ -321,7 +321,17 @@ export default function Checkout() {
     setClientSecret(null);
     checkoutIntent
       .mutateAsync({ data: { ownerId, ownerType, planId, seatCount } })
-      .then((result) => setClientSecret(result.clientSecret))
+      .then((result) => {
+        const mock =
+          (result as { mockSuccess?: boolean }).mockSuccess ||
+          result.clientSecret === "mock_success";
+        if (mock) {
+          setFinalizing(true);
+          void handleSuccess();
+          return;
+        }
+        setClientSecret(result.clientSecret);
+      })
       .catch(() => {
         toast({ title: "Something went wrong", description: "Could not start checkout. Please try again.", variant: "destructive" });
         setLocation("/billing");

@@ -8,7 +8,7 @@ import { AppInput } from "@/components/app-input";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/profile/components/avatar-upload";
 import { ProfilePageShell } from "@/profile/components/profile-page-shell";
-import { Mail, Loader2, User } from "lucide-react";
+import { Building2, Mail, Loader2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function EducatorProfile({ teacherId }: { teacherId: string }) {
@@ -21,10 +21,13 @@ export function EducatorProfile({ teacherId }: { teacherId: string }) {
   const [name, setName] = useState("");
   const [school, setSchool] = useState("");
 
+  const schoolManaged = Boolean(teacher?.schoolId);
+  const displaySchool = teacher?.schoolName ?? teacher?.school ?? "";
+
   useEffect(() => {
     if (teacher) {
       setName(teacher.name);
-      setSchool(teacher.school ?? "");
+      if (!teacher.schoolId) setSchool(teacher.school ?? "");
     }
   }, [teacher]);
 
@@ -32,8 +35,9 @@ export function EducatorProfile({ teacherId }: { teacherId: string }) {
     return <LoadingScreen />;
   }
 
-  const dirty =
-    name.trim() !== teacher.name || (school.trim() || "") !== (teacher.school ?? "");
+  const dirty = schoolManaged
+    ? name.trim() !== teacher.name
+    : name.trim() !== teacher.name || (school.trim() || "") !== (teacher.school ?? "");
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -43,10 +47,9 @@ export function EducatorProfile({ teacherId }: { teacherId: string }) {
     try {
       await updateTeacher.mutateAsync({
         teacherId,
-        data: {
-          name: name.trim(),
-          school: school.trim() || null,
-        },
+        data: schoolManaged
+          ? { name: name.trim() }
+          : { name: name.trim(), school: school.trim() || null },
       });
       await queryClient.invalidateQueries({ queryKey });
       refetchTeacher();
@@ -79,7 +82,7 @@ export function EducatorProfile({ teacherId }: { teacherId: string }) {
     <PageContainer maxWidth="max-w-5xl">
       <ProfilePageShell
         displayName={name || teacher.name}
-        roleLabel="Educator"
+        roleLabel={teacher.role === "parent" ? "Parent" : "Teacher"}
         roleTone="educator"
         avatar={
           <AvatarUpload
@@ -90,7 +93,14 @@ export function EducatorProfile({ teacherId }: { teacherId: string }) {
         }
         lockedDetails={[
           { icon: Mail, label: "Email", value: teacher.email },
-          { icon: User, label: "Account type", value: "Parent / Teacher" },
+          {
+            icon: User,
+            label: "Account type",
+            value: teacher.role === "parent" ? "Parent" : schoolManaged ? "School teacher" : "Independent teacher",
+          },
+          ...(schoolManaged
+            ? [{ icon: Building2, label: "School", value: displaySchool || "—" } as const]
+            : []),
         ]}
         footer={
           <button
@@ -116,13 +126,15 @@ export function EducatorProfile({ teacherId }: { teacherId: string }) {
           onChange={(e) => setName(e.target.value)}
         />
 
-        <AppInput
-          label="School / Organization"
-          id="profile-school"
-          value={school}
-          onChange={(e) => setSchool(e.target.value)}
-          placeholder="e.g. Lincoln Middle School"
-        />
+        {!schoolManaged && (
+          <AppInput
+            label="School / Organization"
+            id="profile-school"
+            value={school}
+            onChange={(e) => setSchool(e.target.value)}
+            placeholder="e.g. Lincoln Middle School"
+          />
+        )}
       </ProfilePageShell>
     </PageContainer>
   );

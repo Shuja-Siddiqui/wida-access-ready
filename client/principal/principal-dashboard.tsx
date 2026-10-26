@@ -32,8 +32,17 @@ export default function PrincipalDashboard() {
   const { request } = useApi();
   const { toast } = useToast();
 
-  const { school, schoolId, teachers, students, teacherCount, studentCount, isLoading, invalidate } =
-    useSchool();
+  const {
+    school,
+    schoolId,
+    teachers,
+    allStaff,
+    students,
+    teacherCount,
+    studentCount,
+    isLoading,
+    invalidate,
+  } = useSchool();
 
   const [tab, setTab] = useState<"teachers" | "students">("teachers");
 
@@ -65,6 +74,7 @@ export default function PrincipalDashboard() {
   const [inviteFirstName, setInviteFirstName] = useState("");
   const [inviteLastName, setInviteLastName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteEmailVerified, setInviteEmailVerified] = useState(false);
   const [inviting, setInviting] = useState(false);
 
   // ── Add student dialog ───────────────────────────────────────────────────
@@ -82,6 +92,7 @@ export default function PrincipalDashboard() {
     setInviteFirstName("");
     setInviteLastName("");
     setInviteEmail("");
+    setInviteEmailVerified(false);
     setInviteDialogOpen(true);
   }
 
@@ -91,7 +102,12 @@ export default function PrincipalDashboard() {
     setInviting(true);
     try {
       await principalApi.inviteTeacher(
-        { firstName: inviteFirstName.trim(), lastName: inviteLastName.trim(), email: inviteEmail.trim() },
+        {
+          firstName: inviteFirstName.trim(),
+          lastName: inviteLastName.trim(),
+          email: inviteEmail.trim(),
+          emailVerified: inviteEmailVerified,
+        },
         request,
       );
       toast({
@@ -138,7 +154,7 @@ export default function PrincipalDashboard() {
   }
 
   const teacherName = (id: string) =>
-    teachers.find((t) => t.id === id)?.name ?? "Unassigned";
+    allStaff.find((t) => t.id === id)?.name ?? (id ? "Assigned teacher" : "Unassigned");
 
   return (
     <PageContainer maxWidth="max-w-5xl" className="space-y-8">
@@ -238,7 +254,8 @@ export default function PrincipalDashboard() {
                   />
                 </div>
                 <p className="text-[10px] text-muted-foreground">
-                  district-allocated
+                  {seats.seatsUsed} enrolled · {seats.seatsRemaining ?? 0} open of{" "}
+                  {seats.seatsAllocated} district-assigned
                 </p>
               </>
             ) : (
@@ -356,9 +373,23 @@ export default function PrincipalDashboard() {
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="teacher@school.edu"
             />
+            <label className="flex items-start gap-3 rounded-xl border border-border/40 bg-muted/20 px-3 py-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
+                checked={inviteEmailVerified}
+                onChange={(e) => setInviteEmailVerified(e.target.checked)}
+              />
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                <span className="font-bold text-foreground">Mark email as verified</span> — you confirm this
+                address is correct. They still must use the invitation link to create a password before logging
+                in. This is not a separate verification email.
+              </span>
+            </label>
             <p className="text-xs text-muted-foreground">
-              They'll receive an email with a link to set up their password and join your school.
-              They will <strong>not</strong> be billed — your plan covers their access.
+              They'll receive an <strong className="font-bold text-foreground">invitation</strong> email with a
+              link to set their password and join your school. They will not be billed — your plan covers their
+              access.
             </p>
             <DialogFooter className="pt-2">
               <Button type="button" variant="outline" className="rounded-xl font-bold">

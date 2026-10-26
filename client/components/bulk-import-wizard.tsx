@@ -22,6 +22,11 @@ const TELPAS_LEVELS = ["Beginning", "Intermediate", "Advanced", "Advanced High"]
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function parseYesCell(raw: string): boolean {
+  const v = raw.trim().toLowerCase();
+  return v === "yes" || v === "y" || v === "true" || v === "1";
+}
+
 interface ParsedRow {
   rowNum: number;
   name: string;
@@ -31,6 +36,8 @@ interface ParsedRow {
   homeLanguage: string;
   guardianId: string;
   schoolId: string;
+  emailVerified: boolean;
+  password: string;
   listening: string;
   speaking: string;
   reading: string;
@@ -66,6 +73,14 @@ function validateRow(raw: Record<string, string>, rowNum: number): ParsedRow {
   const speaking = get(["Speaking", "speaking"]);
   const reading = get(["Reading", "reading"]);
   const writing = get(["Writing", "writing"]);
+  const emailVerifiedRaw = get([
+    "Email Verified",
+    "Email Verification",
+    "emailVerified",
+    "email_verified",
+    "Verify Email",
+  ]);
+  const password = get(["Password", "password", "Initial Password"]);
 
   const errors: string[] = [];
   if (!name) errors.push("Name is required");
@@ -77,6 +92,10 @@ function validateRow(raw: Record<string, string>, rowNum: number): ParsedRow {
     errors.push(`Assessment must be one of: ${ASSESSMENTS.join(", ")}`);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     errors.push("Email format is invalid");
+  if (password && !email)
+    errors.push("Password requires an email address");
+  if (password && password.length < 8)
+    errors.push("Password must be at least 8 characters");
   if (guardianId && !UUID_RE.test(guardianId))
     errors.push("Teacher ID must be a valid UUID");
   if (schoolId && !UUID_RE.test(schoolId))
@@ -94,19 +113,38 @@ function validateRow(raw: Record<string, string>, rowNum: number): ParsedRow {
     }
   }
 
-  return { rowNum, name, email, gradeBand, stateAssessment, homeLanguage, guardianId, schoolId, listening, speaking, reading, writing, errors };
+  return {
+    rowNum,
+    name,
+    email,
+    gradeBand,
+    stateAssessment,
+    homeLanguage,
+    guardianId,
+    schoolId,
+    emailVerified: parseYesCell(emailVerifiedRaw),
+    password,
+    listening,
+    speaking,
+    reading,
+    writing,
+    errors,
+  };
 }
 
-function buildStudentPayload(row: ParsedRow) {
+function buildStudentPayload(row: ParsedRow, defaultSchoolId?: string) {
   const isTelpas = row.stateAssessment === "TELPAS";
+  const schoolId = row.schoolId || defaultSchoolId || undefined;
   return {
     name: row.name,
     email: row.email || undefined,
+    emailVerified: row.emailVerified || undefined,
+    password: row.password || undefined,
     gradeBand: row.gradeBand,
     stateAssessment: row.stateAssessment,
     homeLanguage: row.homeLanguage || undefined,
     guardianId: row.guardianId || undefined,
-    schoolId: row.schoolId || undefined,
+    schoolId,
     ...(isTelpas
       ? {
           telpasListening: row.listening || undefined,
@@ -123,23 +161,163 @@ function buildStudentPayload(row: ParsedRow) {
   };
 }
 
+/** Column order for downloaded .xlsx templates (must match validateRow header aliases). */
+export const BULK_IMPORT_TEMPLATE_HEADERS_SOLO = [
+  "Name",
+  "Email",
+  "Grade Band",
+  "State Assessment",
+  "Home Language",
+  "Listening",
+  "Speaking",
+  "Reading",
+  "Writing",
+  "Email Verified",
+  "Password",
+] as const;
+
+export const BULK_IMPORT_TEMPLATE_HEADERS_ORG = [
+  "Name",
+  "Email",
+  "Grade Band",
+  "State Assessment",
+  "Home Language",
+  "Teacher ID",
+  "School ID",
+  "Listening",
+  "Speaking",
+  "Reading",
+  "Writing",
+  "Email Verified",
+  "Password",
+] as const;
+
+const SOLO_TEMPLATE_EXAMPLES: Record<(typeof BULK_IMPORT_TEMPLATE_HEADERS_SOLO)[number], string>[] = [
+  {
+    Name: "Maria Garcia",
+    Email: "maria@school.edu",
+    "Grade Band": "6-8",
+    "State Assessment": "WIDA",
+    "Home Language": "Spanish",
+    Listening: "2.5",
+    Speaking: "2.0",
+    Reading: "3.0",
+    Writing: "2.5",
+    "Email Verified": "yes",
+    Password: "12345678",
+  },
+  {
+    Name: "Ahmed Hassan",
+    Email: "ahmed@school.edu",
+    "Grade Band": "9-12",
+    "State Assessment": "TELPAS",
+    "Home Language": "Arabic",
+    Listening: "Beginning",
+    Speaking: "Intermediate",
+    Reading: "Beginning",
+    Writing: "Beginning",
+    "Email Verified": "",
+    Password: "",
+  },
+  {
+    Name: "Linh Nguyen",
+    Email: "linh@school.edu",
+    "Grade Band": "3-5",
+    "State Assessment": "ELPAC",
+    "Home Language": "Vietnamese",
+    Listening: "3",
+    Speaking: "2",
+    Reading: "3",
+    Writing: "2",
+    "Email Verified": "yes",
+    Password: "",
+  },
+  {
+    Name: "Fatou Diallo",
+    Email: "",
+    "Grade Band": "K-2",
+    "State Assessment": "WIDA",
+    "Home Language": "French",
+    Listening: "",
+    Speaking: "",
+    Reading: "",
+    Writing: "",
+    "Email Verified": "",
+    Password: "",
+  },
+];
+
+const ORG_TEMPLATE_EXAMPLES: Record<(typeof BULK_IMPORT_TEMPLATE_HEADERS_ORG)[number], string>[] = [
+  {
+    Name: "Maria Garcia",
+    Email: "maria@school.edu",
+    "Grade Band": "6-8",
+    "State Assessment": "WIDA",
+    "Home Language": "Spanish",
+    "Teacher ID": "",
+    "School ID": "00000000-0000-4000-8000-000000000002",
+    Listening: "2.5",
+    Speaking: "2.0",
+    Reading: "3.0",
+    Writing: "2.5",
+    "Email Verified": "yes",
+    Password: "12345678",
+  },
+  {
+    Name: "Ahmed Hassan",
+    Email: "ahmed@school.edu",
+    "Grade Band": "9-12",
+    "State Assessment": "TELPAS",
+    "Home Language": "Arabic",
+    "Teacher ID": "00000000-0000-4000-8000-000000000001",
+    "School ID": "",
+    Listening: "Beginning",
+    Speaking: "Intermediate",
+    Reading: "Beginning",
+    Writing: "Beginning",
+    "Email Verified": "",
+    Password: "",
+  },
+  {
+    Name: "Linh Nguyen",
+    Email: "linh@school.edu",
+    "Grade Band": "3-5",
+    "State Assessment": "ELPAC",
+    "Home Language": "Vietnamese",
+    "Teacher ID": "",
+    "School ID": "00000000-0000-4000-8000-000000000002",
+    Listening: "3",
+    Speaking: "2",
+    Reading: "3",
+    Writing: "2",
+    "Email Verified": "yes",
+    Password: "",
+  },
+  {
+    Name: "Fatou Diallo",
+    Email: "",
+    "Grade Band": "K-2",
+    "State Assessment": "WIDA",
+    "Home Language": "French",
+    "Teacher ID": "",
+    "School ID": "",
+    Listening: "",
+    Speaking: "",
+    Reading: "",
+    Writing: "",
+    "Email Verified": "",
+    Password: "",
+  },
+];
+
 export function downloadImportTemplate(showOrgColumns: boolean) {
   const headers = showOrgColumns
-    ? ["Name", "Email", "Grade Band", "State Assessment", "Home Language", "Teacher ID", "School ID", "Listening", "Speaking", "Reading", "Writing"]
-    : ["Name", "Email", "Grade Band", "State Assessment", "Home Language", "Listening", "Speaking", "Reading", "Writing"];
-  const examples = showOrgColumns
-    ? [
-        ["Maria Garcia", "maria@school.edu", "6-8", "WIDA", "Spanish", "", "", "2.5", "2.0", "3.0", "2.5"],
-        ["Ahmed Hassan", "ahmed@school.edu", "9-12", "TELPAS", "Arabic", "00000000-0000-4000-8000-000000000001", "", "Beginning", "Intermediate", "Beginning", "Beginning"],
-        ["Linh Nguyen", "linh@school.edu", "3-5", "ELPAC", "Vietnamese", "", "00000000-0000-4000-8000-000000000002", "3", "2", "3", "2"],
-        ["Fatou Diallo", "", "K-2", "WIDA", "French", "", "", "", "", "", ""],
-      ]
-    : [
-        ["Maria Garcia", "maria@school.edu", "6-8", "WIDA", "Spanish", "2.5", "2.0", "3.0", "2.5"],
-        ["Ahmed Hassan", "ahmed@school.edu", "9-12", "TELPAS", "Arabic", "Beginning", "Intermediate", "Beginning", "Beginning"],
-        ["Linh Nguyen", "linh@school.edu", "3-5", "ELPAC", "Vietnamese", "3", "2", "3", "2"],
-        ["Fatou Diallo", "", "K-2", "WIDA", "French", "", "", "", ""],
-      ];
+    ? [...BULK_IMPORT_TEMPLATE_HEADERS_ORG]
+    : [...BULK_IMPORT_TEMPLATE_HEADERS_SOLO];
+  const examples = showOrgColumns ? ORG_TEMPLATE_EXAMPLES : SOLO_TEMPLATE_EXAMPLES;
+
+  const ws = XLSX.utils.json_to_sheet(examples, { header: headers });
+
   const notes = [
     [""],
     ["NOTES:"],
@@ -148,20 +326,39 @@ export function downloadImportTemplate(showOrgColumns: boolean) {
     ...(showOrgColumns
       ? [
           ["Teacher ID and School ID are optional — leave blank to assign later in the app"],
-          ["District imports: School ID assigns the student to a school"],
+          ["District imports: pick a school in the app; blank School ID cells use that school"],
+          ["Per-row School ID in the file overrides the selected school"],
           ["Principal imports: school is set automatically; Teacher ID assigns to a teacher"],
         ]
       : []),
     ["TELPAS domain scores: Beginning, Intermediate, Advanced, Advanced High"],
     ["Other assessments use numeric scores (e.g. 2.5 for WIDA, 3 for ELPAC)"],
-    ["Email is optional but required to send the student a password setup invite"],
+    ["Email is optional; required for login, invites, Email Verified, or Password columns"],
+    ["Email Verified: yes / y / true / 1 — marks email verified (no verification email when yes)"],
+    ["Password: min 8 characters — creates login immediately (bcrypt); skips invite email"],
+    ["Example row 1: verified + password = student can sign in right away"],
+    ["Example row 2: email, no password = invite email to set password"],
+    ["Example row 3: verified yes, no password = verified flag only; invite still sent if email present"],
   ];
 
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...examples, ...notes]);
+  const dataRowCount = examples.length + 1;
+  notes.forEach((noteRow, rowOffset) => {
+    noteRow.forEach((cell, col) => {
+      const addr = XLSX.utils.encode_cell({ r: dataRowCount + rowOffset, c: col });
+      ws[addr] = { t: "s", v: cell };
+    });
+  });
+  const lastNoteRow = dataRowCount + notes.length - 1;
+  ws["!ref"] = XLSX.utils.encode_range({
+    s: { r: 0, c: 0 },
+    e: { r: lastNoteRow, c: headers.length - 1 },
+  });
+
   ws["!cols"] = (showOrgColumns
-    ? [22, 28, 14, 18, 16, 38, 38, 12, 12, 12, 12]
-    : [22, 28, 14, 18, 16, 12, 12, 12, 12]
+    ? [22, 28, 14, 18, 16, 38, 38, 12, 12, 12, 12, 16, 14]
+    : [22, 28, 14, 18, 16, 12, 12, 12, 12, 16, 14]
   ).map((w) => ({ wch: w }));
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Students");
   XLSX.writeFile(wb, "goELprep_Student_Import_Template.xlsx");
@@ -169,14 +366,22 @@ export function downloadImportTemplate(showOrgColumns: boolean) {
 
 type Step = "upload" | "preview" | "importing" | "results";
 
+export interface DistrictImportSchool {
+  id: string;
+  name: string;
+}
+
 interface BulkImportWizardProps {
   /** Solo teachers import to their own roster; org staff stamp school/district from their account. */
   mode: "teacher" | "org";
+  /** When set (district admin import), user must pick a school before upload; blank School ID rows use it. */
+  districtSchools?: DistrictImportSchool[];
   onBack: () => void;
 }
 
-export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
+export function BulkImportWizard({ mode, onBack, districtSchools }: BulkImportWizardProps) {
   const showOrgColumns = mode === "org";
+  const requireDistrictSchool = Boolean(districtSchools && districtSchools.length > 0);
   const { request } = useApi();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -186,8 +391,20 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [results, setResults] = useState<ImportResult[]>([]);
   const [importSummary, setImportSummary] = useState({ created: 0, failed: 0 });
+  const [importProgress, setImportProgress] = useState({ processed: 0, total: 0 });
+  const [selectedSchoolId, setSelectedSchoolId] = useState("");
+
+  const selectedSchool = districtSchools?.find((s) => s.id === selectedSchoolId);
 
   const parseFile = useCallback((file: File) => {
+    if (requireDistrictSchool && !selectedSchoolId) {
+      toast({
+        title: "Select a school first",
+        description: "Choose which school these students belong to, then upload your file.",
+        variant: "destructive",
+      });
+      return;
+    }
     setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -208,7 +425,7 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
       }
     };
     reader.readAsArrayBuffer(file);
-  }, [toast]);
+  }, [toast, requireDistrictSchool, selectedSchoolId]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -225,26 +442,100 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
   const validRows = rows.filter((r) => r.errors.length === 0);
   const invalidRows = rows.filter((r) => r.errors.length > 0);
 
-  const handleImport = async () => {
-    setStep("importing");
-    try {
-      const data = await request<{ results: ImportResult[]; created: number; failed: number }>(
-        "/api/students/bulk-import",
-        {
-          method: "POST",
-          body: JSON.stringify({ students: validRows.map(buildStudentPayload) }),
+  async function pollImportJob(jobId: string) {
+    const pollMs = 1500;
+    const maxMs = 20 * 60 * 1000;
+    const deadline = Date.now() + maxMs;
+
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, pollMs));
+      try {
+        const job = await request<{
+          status: "running" | "completed" | "failed";
+          total: number;
+          processed: number;
+          created: number;
+          failed: number;
+          results: ImportResult[];
+          error?: string;
+        }>(`/api/students/bulk-import/jobs/${jobId}`);
+
+        setImportProgress({ processed: job.processed, total: job.total });
+
+        if (job.status === "completed") {
+          setResults(job.results);
+          setImportSummary({ created: job.created, failed: job.failed });
+          setStep("results");
+          return;
         }
-      );
-      setResults(data.results);
-      setImportSummary({ created: data.created, failed: data.failed });
-      setStep("results");
+        if (job.status === "failed") {
+          toast({
+            title: "Import failed",
+            description: job.error ?? "Something went wrong on the server.",
+            variant: "destructive",
+          });
+          setStep("preview");
+          return;
+        }
+      } catch {
+        /* job may still be running if poll hiccups */
+      }
+    }
+
+    toast({
+      title: "Import still running",
+      description: "Processing continues on the server. Check the district dashboard for new students.",
+    });
+    setStep("preview");
+  }
+
+  const handleImport = async () => {
+    if (requireDistrictSchool && !selectedSchoolId) {
+      toast({
+        title: "Select a school",
+        description: "Choose a school before importing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setStep("importing");
+    setImportProgress({ processed: 0, total: validRows.length });
+    try {
+      const start = await request<{
+        jobId: string;
+        status: string;
+        total: number;
+        message?: string;
+      }>("/api/students/bulk-import", {
+        method: "POST",
+        body: JSON.stringify({
+          students: validRows.map((r) => buildStudentPayload(r, selectedSchoolId || undefined)),
+          ...(selectedSchoolId ? { defaultSchoolId: selectedSchoolId } : {}),
+        }),
+      });
+
+      if (!start.jobId) {
+        throw new Error("Server did not start a background import job");
+      }
+
+      setImportProgress({ processed: 0, total: start.total });
+      toast({
+        title: "Import started",
+        description: start.message ?? "You can leave this page — work continues on the server.",
+      });
+      void pollImportJob(start.jobId);
     } catch (err) {
       toast({ title: "Import failed", description: extractErrorMessage(err), variant: "destructive" });
       setStep("preview");
     }
   };
 
-  const reset = () => { setStep("upload"); setRows([]); setResults([]); setFileName(""); };
+  const reset = () => {
+    setStep("upload");
+    setRows([]);
+    setResults([]);
+    setFileName("");
+  };
 
   return (
     <PageContainer maxWidth="max-w-5xl" className="space-y-6">
@@ -265,13 +556,61 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
       <AnimatePresence mode="wait">
         {step === "upload" && (
           <motion.div key="upload" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            {districtSchools && districtSchools.length === 0 && (
+              <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-foreground">
+                <p className="font-bold">No schools in your district yet</p>
+                <p className="text-muted-foreground mt-1">Add a school first, then return here to import students.</p>
+              </div>
+            )}
+
+            {requireDistrictSchool && (
+              <div className="mb-5 space-y-2">
+                <label htmlFor="district-import-school" className="text-xs font-black uppercase tracking-wide text-muted-foreground">
+                  School for this import *
+                </label>
+                <select
+                  id="district-import-school"
+                  value={selectedSchoolId}
+                  onChange={(e) => setSelectedSchoolId(e.target.value)}
+                  className="flex h-12 w-full max-w-md rounded-xl border border-border/40 bg-card px-4 text-sm font-bold text-foreground shadow-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="">Select a school…</option>
+                  {districtSchools!.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground max-w-xl">
+                  Students without a <strong className="font-bold">School ID</strong> column in your file will be
+                  assigned to this school. Rows with their own School ID keep that value. If this school has no seat
+                  cap yet, we automatically assign enough seats from your district plan for this import (e.g. 10
+                  students → at least 10 seats for this school).
+                </p>
+              </div>
+            )}
+
             {/* Drop zone */}
             <div
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
-              onClick={() => fileInputRef.current?.click()}
-              className={`relative group cursor-pointer rounded-3xl border-4 transition-all duration-200 shadow-sm bg-card  hover:-translate-y-1 hover:shadow-sm ${
+              onClick={() => {
+                if (requireDistrictSchool && !selectedSchoolId) {
+                  toast({
+                    title: "Select a school first",
+                    description: "Choose a school before uploading your spreadsheet.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                fileInputRef.current?.click();
+              }}
+              className={`relative group rounded-3xl border-4 transition-all duration-200 shadow-sm bg-card ${
+                requireDistrictSchool && !selectedSchoolId
+                  ? "cursor-not-allowed opacity-60 border-border/40"
+                  : "cursor-pointer hover:-translate-y-1 hover:shadow-sm"
+              } ${
                 dragging
                   ? "border-primary bg-primary/5"
                   : "border-border/40"
@@ -325,6 +664,12 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
                 <p className="font-extrabold text-foreground text-lg">Preview — {fileName}</p>
                 <p className="text-sm text-muted-foreground">
                   {validRows.length} valid · {invalidRows.length > 0 ? `${invalidRows.length} with errors (will be skipped)` : "no errors"}
+                  {selectedSchool && (
+                    <>
+                      {" "}
+                      · Default school: <span className="font-bold text-foreground">{selectedSchool.name}</span>
+                    </>
+                  )}
                 </p>
               </div>
               <div className="flex gap-3">
@@ -376,6 +721,8 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
                       <TableHead className="font-extrabold text-foreground h-12">Speaking</TableHead>
                       <TableHead className="font-extrabold text-foreground h-12">Reading</TableHead>
                       <TableHead className="font-extrabold text-foreground h-12">Writing</TableHead>
+                      <TableHead className="font-extrabold text-foreground h-12">Verified</TableHead>
+                      <TableHead className="font-extrabold text-foreground h-12">Password</TableHead>
                       <TableHead className="font-extrabold text-foreground h-12 text-right">Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -395,13 +742,22 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
                         {showOrgColumns && (
                           <>
                             <TableCell className="text-xs text-muted-foreground font-mono max-w-[120px] truncate">{r.guardianId || "—"}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground font-mono max-w-[120px] truncate">{r.schoolId || "—"}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground font-mono max-w-[120px] truncate">
+                              {r.schoolId || selectedSchoolId || "—"}
+                              {!r.schoolId && selectedSchoolId && (
+                                <span className="block text-[10px] text-primary font-sans font-bold not-italic">
+                                  from picker
+                                </span>
+                              )}
+                            </TableCell>
                           </>
                         )}
                         <TableCell className="text-sm text-muted-foreground">{r.listening || "—"}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{r.speaking || "—"}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{r.reading || "—"}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{r.writing || "—"}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{r.emailVerified ? "yes" : "—"}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{r.password ? "••••••••" : "—"}</TableCell>
                         <TableCell className="text-right">
                           {r.errors.length === 0
                             ? <CheckCircle className="w-5 h-5 text-growth-green ml-auto" />
@@ -417,11 +773,21 @@ export function BulkImportWizard({ mode, onBack }: BulkImportWizardProps) {
         )}
 
         {step === "importing" && (
-          <motion.div key="importing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-24 gap-6">
+          <motion.div key="importing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-24 gap-6 max-w-md mx-auto">
             <PageLoader />
-            <div className="text-center space-y-1">
+            <div className="text-center space-y-2">
               <p className="font-extrabold text-foreground text-xl">Importing students…</p>
-              <p className="text-muted-foreground font-medium">Creating accounts and sending invite emails. This may take a moment.</p>
+              <p className="text-muted-foreground font-medium text-sm">
+                Creating accounts and sending invite emails on the server.
+              </p>
+              {importProgress.total > 0 && (
+                <p className="text-sm font-bold text-foreground">
+                  {importProgress.processed} / {importProgress.total} processed
+                </p>
+              )}
+              <p className="text-xs text-primary font-bold pt-2">
+                Safe to close this tab — the import will keep running until it finishes.
+              </p>
             </div>
           </motion.div>
         )}

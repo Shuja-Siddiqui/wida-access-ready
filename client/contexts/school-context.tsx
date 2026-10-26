@@ -16,7 +16,10 @@ const STALE_ROSTER = 3 * 60 * 1000;
 interface SchoolContextValue {
   school: SchoolInfo | null;
   schoolId: string | null;
+  /** Teachers at this school (excludes the logged-in principal profile). */
   teachers: SchoolTeacher[];
+  /** All staff at this school — use for resolving assigned teacher names. */
+  allStaff: SchoolTeacher[];
   students: SchoolStudent[];
   teacherCount: number;
   studentCount: number;
@@ -56,9 +59,11 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     staleTime: STALE_ROSTER,
   });
 
+  const allStaff = useMemo(() => teachersQuery.data ?? [], [teachersQuery.data]);
+
   const teachers = useMemo(
-    () => (teachersQuery.data ?? []).filter((t) => t.id !== teacherId),
-    [teachersQuery.data, teacherId],
+    () => allStaff.filter((t) => t.id !== teacherId),
+    [allStaff, teacherId],
   );
 
   const students = useMemo(
@@ -81,6 +86,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
       school: schoolQuery.data ?? null,
       schoolId,
       teachers,
+      allStaff,
       students,
       teacherCount,
       studentCount,
@@ -95,6 +101,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
       schoolQuery.isLoading,
       schoolId,
       teachers,
+      allStaff,
       students,
       teacherCount,
       studentCount,

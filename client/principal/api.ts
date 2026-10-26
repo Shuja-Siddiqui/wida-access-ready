@@ -37,7 +37,7 @@ export interface SchoolStudent {
   stateAssessment: string;
   currentStreak: number;
   totalXp: number;
-  guardianId: string;
+  guardianId?: string | null;
 }
 
 export interface TeacherStudent {
@@ -117,7 +117,12 @@ export const principalApi = {
     ),
 
   inviteTeacher: (
-    params: { firstName: string; lastName: string; email: string },
+    params: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      emailVerified?: boolean;
+    },
     req: Req,
   ) =>
     req<{ ok: boolean }>("/api/auth/invite/educator", {

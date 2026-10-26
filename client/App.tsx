@@ -36,6 +36,7 @@ import PrincipalBulkImport from "@/principal/principal-bulk-import";
 import DistrictDashboard from "@/district/district-dashboard";
 import DistrictBulkImport from "@/district/district-bulk-import";
 import DistrictSchools from "@/district/district-schools";
+import DistrictStudentDetail from "@/district/district-student-detail";
 import VerifyEmail from "@/verify-email/verify-email";
 import AcceptInvite from "@/accept-invite/accept-invite";
 import Signup from "@/signup/signup";
@@ -75,6 +76,7 @@ function Router() {
       <Route path="/district" component={DistrictDashboard} />
       <Route path="/district/schools" component={DistrictSchools} />
       <Route path="/district/import" component={DistrictBulkImport} />
+      <Route path="/district/student/:studentId" component={DistrictStudentDetail} />
       <Route path="/signup" component={Signup} />
       <Route path="/signup/educator" component={SignupEducator} />
       <Route path="/signup/district" component={SignupDistrict} />

@@ -21,6 +21,7 @@ interface InviteInfo {
   gradeBand?: string;
   stateAssessment?: string;
   homeLanguage?: string;
+  districtName?: string;
 }
 
 export default function AcceptInvite() {
@@ -67,7 +68,14 @@ export default function AcceptInvite() {
     setSubmitting(true);
 
     try {
-      const data = await request<{ token?: string; studentId?: string; teacherId?: string }>(
+      const data = await request<{
+        token?: string;
+        studentId?: string;
+        teacherId?: string;
+        userType?: string;
+        role?: string;
+        districtId?: string;
+      }>(
         "/api/auth/invite/accept",
         {
           method: "POST",
@@ -79,13 +87,21 @@ export default function AcceptInvite() {
         loginWithToken(data.token, {
           studentId: data.studentId,
           teacherId: data.teacherId,
+          userType: data.userType,
+          role: data.role,
+          districtId: data.districtId,
         });
       }
 
       setStep("success");
       // Route educators to their dashboard automatically
       if (data.teacherId && !data.studentId) {
-        const dest = invite?.inviteeRole === "principal" ? "/principal" : "/teacher";
+        const dest =
+          invite?.inviteeRole === "district_admin"
+            ? "/district"
+            : invite?.inviteeRole === "principal"
+              ? "/principal"
+              : "/teacher";
         setTimeout(() => setLocation(dest), 2000);
       }
     } catch (err) {
@@ -111,9 +127,11 @@ export default function AcceptInvite() {
   const roleLabel =
     invite?.inviterRole === "parent"
       ? "parent"
-      : invite?.inviterRole === "district_admin"
-        ? "district administrator"
-        : "teacher";
+      : invite?.inviterRole === "super_admin"
+        ? "platform administrator"
+        : invite?.inviterRole === "district_admin"
+          ? "district administrator"
+          : "teacher";
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-8">
@@ -151,6 +169,11 @@ export default function AcceptInvite() {
                 <div className="bg-muted border border-border/40 rounded-xl p-5  space-y-2">
                   <p className="text-lg font-bold text-foreground tracking-wide">{invite.inviteeName}</p>
                   <p className="text-sm font-bold text-muted-foreground">{invite.inviteeEmail}</p>
+                  {invite.inviteeRole === "district_admin" && invite.districtName && (
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-2">
+                      District: <span className="text-foreground">{invite.districtName}</span>
+                    </p>
+                  )}
                   {invite.stateAssessment && (
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-2">
                       Assessment: <span className="text-foreground">{invite.stateAssessment}</span>
@@ -224,14 +247,16 @@ export default function AcceptInvite() {
                 <div className="text-center space-y-3">
                   <p className="text-3xl font-bold text-foreground tracking-tight">You're in!</p>
                   <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-                    {invite?.inviteeRole === "principal"
+                    {invite?.inviteeRole === "district_admin" ||
+                    invite?.inviteeRole === "principal" ||
+                    invite?.inviteeRole === "teacher"
                       ? "Taking you to your dashboard…"
-                      : invite?.inviteeRole === "teacher"
-                        ? "Taking you to your dashboard…"
-                        : "Ready to start practicing?"}
+                      : "Ready to start practicing?"}
                   </p>
                 </div>
-                {invite?.inviteeRole !== "teacher" && invite?.inviteeRole !== "principal" && (
+                {invite?.inviteeRole !== "teacher" &&
+                  invite?.inviteeRole !== "principal" &&
+                  invite?.inviteeRole !== "district_admin" && (
                   <Button
                     className="btn-brand w-full h-14 text-lg rounded-xl mt-6"
                     onClick={() => setLocation("/home")}

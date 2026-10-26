@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { districtApi } from "./api";
+import { customFetch } from "@/api-generated/custom-fetch";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CreditCard,
@@ -37,6 +40,9 @@ function InviteSchoolModal({
 
   const allocationMap = Object.fromEntries(
     allocations.map((a) => [a.schoolId, a.seatsAllocated]),
+  );
+  const enrolledMap = Object.fromEntries(
+    allocations.map((a) => [a.schoolId, a.seatsEnrolled ?? 0]),
   );
 
   const [seats, setSeats] = useState<Record<string, number>>(
@@ -91,9 +97,9 @@ function InviteSchoolModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
           <div>
-            <h2 className="text-lg font-black text-foreground">Invite Schools</h2>
+            <h2 className="text-lg font-black text-foreground">Assign seats to schools</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Assign seats to schools in your district
+              Split your purchased license across schools. This does not add students by itself.
             </p>
           </div>
           <button
@@ -116,12 +122,12 @@ function InviteSchoolModal({
             className={`w-4 h-4 shrink-0 ${overLimit ? "text-destructive" : "text-primary"}`}
           />
           <span>
-            {totalAfterEdit} / {seatsPurchased} seats assigned
+            {totalAfterEdit} / {seatsPurchased} assigned to schools
             {overLimit
-              ? ` — exceeds limit by ${-seatsRemaining}`
+              ? ` — exceeds purchase by ${-seatsRemaining}`
               : seatsRemaining === 0
-                ? " — all seats assigned"
-                : ` — ${seatsRemaining} remaining`}
+                ? " — none left in the district pool"
+                : ` — ${seatsRemaining} still in district pool (unassigned)`}
           </span>
         </div>
 
@@ -149,7 +155,8 @@ function InviteSchoolModal({
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground truncate">{school.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {school.studentCount} student{school.studentCount !== 1 ? "s" : ""}
+                    {enrolledMap[school.id] ?? school.studentCount} enrolled · cap{" "}
+                    {seats[school.id] ?? 0}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -231,6 +238,75 @@ interface DistrictPlanCardProps {
   onRefresh: () => void;
 }
 
+function PurchaseSeatsPanel({
+  label,
+  defaultSeats,
+  mode,
+  onSuccess,
+}: {
+  label: string;
+  defaultSeats: number;
+  mode?: "set" | "add";
+  onSuccess: () => void;
+}) {
+  const { toast } = useToast();
+  const [seatCount, setSeatCount] = useState(defaultSeats);
+  const [purchasing, setPurchasing] = useState(false);
+
+  async function handlePurchase() {
+    const count = Math.max(1, Math.floor(seatCount) || 1);
+    setPurchasing(true);
+    try {
+      const result = await districtApi.purchasePlan(customFetch, {
+        seatCount: count,
+        mode,
+      });
+      toast({
+        title: "Payment successful (test mode)",
+        description: `Your district now has ${result.plan.seatsPurchased} seat${result.plan.seatsPurchased !== 1 ? "s" : ""} purchased.`,
+      });
+      onSuccess();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Purchase failed";
+      toast({ title: msg, variant: "destructive" });
+    } finally {
+      setPurchasing(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-end gap-3 pt-2">
+      <div className="flex-1 space-y-1.5">
+        <label className="text-xs font-bold text-muted-foreground">{label}</label>
+        <Input
+          type="number"
+          min={1}
+          value={seatCount}
+          onChange={(e) => setSeatCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+          className="font-bold rounded-xl"
+        />
+      </div>
+      <Button
+        onClick={() => void handlePurchase()}
+        disabled={purchasing}
+        className="btn-brand font-bold rounded-xl shrink-0"
+      >
+        {purchasing ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Processing…
+          </>
+        ) : (
+          <>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Complete purchase
+          </>
+        )}
+      </Button>
+    </div>
+  );
+}
+
 export function DistrictPlanCard({
   plan,
   allocations,
@@ -241,22 +317,37 @@ export function DistrictPlanCard({
 
   if (!plan.hasActivePlan) {
     return (
-      <div className="bg-card border border-border rounded-2xl px-5 py-4 flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
-          <CreditCard className="w-5 h-5 text-muted-foreground" />
+      <div className="bg-card border border-border rounded-2xl px-5 py-5 space-y-3">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+            <CreditCard className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-foreground text-sm">Organization plan</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Purchase seats for your district, then assign them to schools. Test checkout always
+              succeeds until live Stripe is enabled.
+            </p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-foreground text-sm">No active plan</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Purchase an Organization plan to allocate seats to your schools.
-          </p>
-        </div>
+        <PurchaseSeatsPanel
+          label="Number of seats to purchase"
+          defaultSeats={50}
+          mode="set"
+          onSuccess={onRefresh}
+        />
       </div>
     );
   }
 
+  const seatsEnrolled = plan.seatsEnrolled ?? 0;
+  const seatsAvailableToEnroll =
+    plan.seatsAvailableToEnroll ?? Math.max(0, plan.seatsPurchased - seatsEnrolled);
+  const seatsUnassigned =
+    plan.seatsUnassignedToSchools ?? plan.seatsRemaining;
+
   const pct = plan.seatsPurchased > 0
-    ? Math.min(100, Math.round((plan.seatsAllocated / plan.seatsPurchased) * 100))
+    ? Math.min(100, Math.round((seatsEnrolled / plan.seatsPurchased) * 100))
     : 0;
 
   return (
@@ -278,10 +369,13 @@ export function DistrictPlanCard({
                 Active
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {plan.seatsAllocated} of {plan.seatsPurchased} seats assigned to schools ·{" "}
-              <span className={plan.seatsRemaining === 0 ? "text-energy-orange font-bold" : "text-growth-green font-bold"}>
-                {plan.seatsRemaining} remaining
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              <span className="font-bold text-foreground">{plan.seatsPurchased} purchased</span>
+              {" · "}
+              {seatsEnrolled} student{seatsEnrolled !== 1 ? "s" : ""} enrolled
+              {" · "}
+              <span className="font-bold text-growth-green">
+                {seatsAvailableToEnroll} open to enroll
               </span>
             </p>
           </div>
@@ -291,7 +385,7 @@ export function DistrictPlanCard({
             className="btn-brand font-bold rounded-xl text-xs shrink-0"
           >
             <Building2 className="w-3.5 h-3.5 mr-1.5" />
-            Invite School
+            Assign seats
           </Button>
         </div>
 
@@ -307,23 +401,53 @@ export function DistrictPlanCard({
             />
           </div>
 
-          {/* 3-stat row */}
-          <div className="grid grid-cols-3 gap-3">
+          <p className="text-[11px] text-muted-foreground px-0.5">
+            Bar shows students enrolled vs seats purchased.{" "}
+            {seatsUnassigned > 0
+              ? `${seatsUnassigned} purchased seat${seatsUnassigned !== 1 ? "s" : ""} are not assigned to a school yet — use Assign seats.`
+              : "All purchased seats are assigned to schools; you can still enroll students up to each school’s cap."}
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: "Purchased", value: plan.seatsPurchased, icon: CreditCard },
-              { label: "Assigned", value: plan.seatsAllocated, icon: Users },
-              { label: "Remaining", value: plan.seatsRemaining, icon: Building2 },
-            ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="bg-card border border-border/40 shadow-sm rounded-xl px-3 py-2.5 text-center">
+              { label: "Purchased", value: plan.seatsPurchased, hint: "District license" },
+              { label: "Students", value: seatsEnrolled, hint: "Currently enrolled" },
+              { label: "Open to enroll", value: seatsAvailableToEnroll, hint: "Purchased − enrolled" },
+              { label: "School pool", value: seatsUnassigned, hint: "Not assigned to a school" },
+            ].map(({ label, value, hint }) => (
+              <div
+                key={label}
+                className="bg-card border border-border/40 shadow-sm rounded-xl px-3 py-2.5 text-center"
+              >
                 <p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
                   {label}
                 </p>
                 <p className="text-xl font-black text-foreground mt-0.5">{value}</p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">{hint}</p>
               </div>
             ))}
           </div>
 
+          <div className="flex items-center gap-2 text-xs text-muted-foreground px-0.5">
+            <Users className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              {plan.seatsAllocated} of {plan.seatsPurchased} purchased seats assigned to schools
+            </span>
+          </div>
+
           {/* Per-school allocation list */}
+          <div className="pt-2 border-t border-border/10">
+            <p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground px-1 mb-2">
+              Buy more seats
+            </p>
+            <PurchaseSeatsPanel
+              label="Additional seats (added to your current plan)"
+              defaultSeats={25}
+              mode="add"
+              onSuccess={onRefresh}
+            />
+          </div>
+
           {allocations.length > 0 && (
             <div className="space-y-1.5 pt-1">
               <p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground px-1">
@@ -338,8 +462,8 @@ export function DistrictPlanCard({
                   <span className="flex-1 text-xs font-medium text-foreground truncate">
                     {a.schoolName}
                   </span>
-                  <span className="text-xs font-black text-foreground">
-                    {a.seatsAllocated} seat{a.seatsAllocated !== 1 ? "s" : ""}
+                  <span className="text-xs font-black text-foreground text-right">
+                    {a.seatsEnrolled ?? 0} / {a.seatsAllocated} used
                   </span>
                   <ChevronRight className="w-3 h-3 text-muted-foreground" />
                 </div>

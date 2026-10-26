@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useApi, extractErrorMessage } from "@/hooks/use-api";
@@ -6,12 +6,19 @@ import {
   CreateStudentBodyGradeBand,
   CreateStudentBodyStateAssessment,
 } from "@/api-generated";
-import { Button } from "@/components/ui/button";
 import { AppSelect } from "@/components/app-select";
 import { InputField } from "@/components/input-field";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { BackButton } from "@/components/back-button";
 import { GoogleButton } from "@/components/google-button";
+import { AuthSplitLayout } from "@/components/auth-split-layout";
+import {
+  AuthDivider,
+  AuthErrorBanner,
+  AuthFormHeader,
+  AuthPrimaryButton,
+  AuthStepProgress,
+  AuthSubmitSpinner,
+  authStepMotion,
+} from "@/components/auth-signup-ui";
 import { useAuthConfig } from "@/hooks/use-auth-config";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe2, Mail, Lock, Eye, EyeOff, GraduationCap, MessageCircle, CheckCircle2 } from "lucide-react";
@@ -19,6 +26,7 @@ import {
   loadPendingGoogleAuth,
   clearPendingGoogleAuth,
 } from "@/auth-callback/auth-callback";
+import { EmailVerificationCheckInbox } from "@/components/email-verification-ui";
 
 const COMMON_LANGUAGES = [
   "Spanish", "Mandarin Chinese", "Arabic", "Haitian Creole", "Portuguese",
@@ -31,11 +39,11 @@ const COMMON_LANGUAGES = [
 
 type StudentTrack = "academic" | "general";
 
-const slide = {
-  initial: { opacity: 0, x: 40 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -40 },
-};
+const ONBOARDING_PANEL_FEATURES = [
+  "Practice aligned to your state assessment",
+  "Goals that match your classroom track",
+  "Progress your teacher can see",
+];
 
 // ── Track card config ─────────────────────────────────────────────────────────
 
@@ -276,61 +284,49 @@ export default function Onboarding() {
 
   const trackOptions = getTrackOptions(stateAssessment as string);
 
+  const showProgress = step < 6;
+
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 sm:px-6 lg:px-10 py-6 sm:py-8 bg-[radial-gradient(125%_120%_at_50%_-10%,hsl(var(--primary)/0.08)_0%,transparent_45%)]">
-      <div className="max-w-xl w-full bg-card border border-border/40 shadow-sm rounded-2xl  transition-all relative">
-        <div className="flex items-center justify-between mb-8">
-          {step < 6 ? (
-            <BackButton onClick={handleBack} />
-          ) : (
-            <span />
-          )}
-          <ThemeToggle />
-        </div>
-        <div className="flex gap-2 mb-10">
-          {Array.from({ length: totalDots }, (_, i) => i + 1).map(i => (
-            <div
-              key={i}
-              className={`h-3 flex-1 rounded-full border border-border/40 transition-all duration-300 ${step >= i ? "bg-primary " : "bg-muted"}`}
-            />
-          ))}
-        </div>
+    <AuthSplitLayout
+      panelTitle="Practice built around you"
+      panelSubtitle="Set your language, assessment, and goal — we’ll tailor every session."
+      panelFeatures={ONBOARDING_PANEL_FEATURES}
+      panelIcon={<Globe2 className="w-7 h-7 text-white" strokeWidth={2.25} />}
+      onBack={handleBack}
+      showBack={showProgress}
+      backTo="/login"
+    >
+      <div className="w-full max-w-lg">
+        {showProgress ? <AuthStepProgress total={totalDots} current={step} /> : null}
 
         <AnimatePresence mode="wait">
 
           {/* ── Step 1: Home language ── */}
           {step === 1 && (
-            <motion.div key="step1" {...slide} transition={{ duration: 0.25 }} className="space-y-8">
-              <div className="text-center space-y-4">
-                <div className="flex justify-center">
-                  <div className="w-20 h-20 bg-trust-blue border border-border/40  rounded-full flex items-center justify-center  transform hover: transition-transform">
-                    <Globe2 className="w-10 h-10 text-white" />
-                  </div>
-                </div>
-                <h2 className="text-4xl font-bold text-foreground tracking-tight ">Your Language</h2>
-                <p className="text-muted-foreground font-bold text-lg">This helps us personalize your practice.</p>
-              </div>
+            <motion.div key="step1" {...authStepMotion} transition={{ duration: 0.28 }} className="space-y-6">
+              <AuthFormHeader
+                eyebrow="Student signup"
+                title="Your home language"
+                subtitle="We use this to personalize instructions and support."
+              />
 
               {googleEnabled && !isGoogleMode && (
                 <>
                   <GoogleButton label="Sign up with Google" />
-                  <div className="flex items-center gap-3">
-                    <div className="h-1 flex-1 bg-foreground" />
-                    <span className="text-xs font-bold uppercase tracking-widest text-foreground">or continue manually</span>
-                    <div className="h-1 flex-1 bg-foreground" />
-                  </div>
+                  <AuthDivider label="or continue manually" />
                 </>
               )}
 
-              <div className="grid grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-2 pb-2">
+              <div className="grid grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1 pb-1">
                 {COMMON_LANGUAGES.map(lang => (
                   <button
                     key={lang}
+                    type="button"
                     onClick={() => setHomeLanguage(lang)}
-                    className={`text-left px-4 py-3 rounded-2xl border font-bold transition-all outline-none focus-visible:ring-4 focus-visible:ring-foreground ${
+                    className={`text-left px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                       homeLanguage === lang
-                        ? "bg-primary text-primary-foreground border-border/40  -translate-y-1"
-                        : "border-border bg-card hover:border-border/40 hover: hover:-translate-y-1 text-foreground"
+                        ? "bg-primary text-primary-foreground border-primary/30 shadow-sm"
+                        : "border-border/60 bg-card/80 hover:border-primary/25 hover:bg-card text-foreground"
                     }`}
                   >
                     {lang}
@@ -339,7 +335,7 @@ export default function Onboarding() {
               </div>
 
               {homeLanguage === "Other" && (
-                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="font-bold">
+                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
                   <InputField
                     label="Type your home language"
                     autoFocus
@@ -350,39 +346,30 @@ export default function Onboarding() {
                 </motion.div>
               )}
 
-              <Button
-                className={`w-full h-14 text-xl font-bold rounded-2xl border transition-all ${
-                  !resolvedLanguage
-                    ? "bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed hover:bg-muted active:translate-x-0 active:translate-y-0 "
-                    : "bg-primary text-primary-foreground border-border/40    hover:   "
-                }`}
-                onClick={handleNext}
-                disabled={!resolvedLanguage}
-              >
-                CONTINUE
-              </Button>
+              <AuthPrimaryButton onClick={handleNext} disabled={!resolvedLanguage}>
+                Continue
+              </AuthPrimaryButton>
             </motion.div>
           )}
 
           {/* ── Step 2: About you ── */}
           {step === 2 && (
-            <motion.div key="step2" {...slide} transition={{ duration: 0.25 }} className="space-y-8">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl font-bold text-foreground tracking-tight">About You</h2>
-                <p className="text-muted-foreground font-bold text-lg">Tell us a bit so we can set the right goal.</p>
-              </div>
+            <motion.div key="step2" {...authStepMotion} transition={{ duration: 0.28 }} className="space-y-6">
+              <AuthFormHeader
+                eyebrow={`Step 2 of ${totalDots}`}
+                title="About you"
+                subtitle="Tell us a bit so we can set the right goal."
+              />
 
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {!isGoogleMode && (
-                  <div className="font-bold">
-                    <InputField
-                      label="What's your first name?"
-                      autoFocus
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      placeholder="First name"
-                    />
-                  </div>
+                  <InputField
+                    label="What's your first name?"
+                    autoFocus
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="First name"
+                  />
                 )}
                 <div className="space-y-2">
                   <AppSelect
@@ -416,31 +403,27 @@ export default function Onboarding() {
                 </div>
               </div>
 
-              <Button
-                className={`w-full h-14 text-xl font-bold rounded-2xl border transition-all ${
-                  isGoogleMode ? (!gradeBand || !stateAssessment) : (!name || !gradeBand || !stateAssessment)
-                    ? "bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed hover:bg-muted active:translate-x-0 active:translate-y-0 "
-                    : "bg-primary text-primary-foreground border-border/40    hover:   "
-                }`}
+              <AuthPrimaryButton
                 onClick={handleNext}
-                disabled={isGoogleMode ? (!gradeBand || !stateAssessment) : (!name || !gradeBand || !stateAssessment)}
+                disabled={isGoogleMode ? !gradeBand || !stateAssessment : !name || !gradeBand || !stateAssessment}
               >
-                CONTINUE
-              </Button>
+                Continue
+              </AuthPrimaryButton>
             </motion.div>
           )}
 
           {/* ── Step 3: Track selection ── */}
           {step === 3 && (
-            <motion.div key="step3track" {...slide} transition={{ duration: 0.25 }} className="space-y-8">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl font-bold text-foreground tracking-tight">Your Goal</h2>
-                <p className="text-muted-foreground font-bold text-lg">
-                  {stateAssessment === "WIDA"
+            <motion.div key="step3track" {...authStepMotion} transition={{ duration: 0.28 }} className="space-y-6">
+              <AuthFormHeader
+                eyebrow={`Step 3 of ${totalDots}`}
+                title="Your goal"
+                subtitle={
+                  stateAssessment === "WIDA"
                     ? "WIDA has two common exit levels."
-                    : "Pick the proficiency level you're working toward."}
-                </p>
-              </div>
+                    : "Pick the proficiency level you're working toward."
+                }
+              />
 
               <div className="space-y-4">
                 {trackOptions.map(opt => {
@@ -449,33 +432,36 @@ export default function Onboarding() {
                   return (
                     <button
                       key={opt.value}
+                      type="button"
                       onClick={() => setTrack(opt.value)}
-                      className={`w-full text-left rounded-3xl border p-5 transition-all outline-none focus-visible:ring-4 focus-visible:ring-foreground ${
-                        selected ? `border-border/40  -translate-y-1 bg-card` : "border-border bg-card hover:border-border/40 hover: hover:-translate-y-1"
+                      className={`w-full text-left rounded-2xl border p-4 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                        selected
+                          ? "border-primary/35 bg-card shadow-[0_8px_24px_hsl(var(--primary)/0.08)]"
+                          : "border-border/50 bg-card/80 hover:border-primary/20 hover:bg-card"
                       }`}
                     >
                       <div className="flex items-start gap-4">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 border border-border/40 transition-colors ${selected ? opt.bg + ' ' : "bg-muted"}`}>
-                          <Icon className={`w-7 h-7 ${selected ? "text-white" : "text-muted-foreground"}`} />
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ring-1 transition-colors ${selected ? `${opt.bg} ring-transparent` : "bg-muted/80 ring-border/40"}`}>
+                          <Icon className={`w-6 h-6 ${selected ? "text-white" : "text-muted-foreground"}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className={`font-bold text-lg text-foreground`}>
+                            <span className="font-semibold text-[15px] tracking-tight text-foreground">
                               {opt.title}
                             </span>
-                            <span className={`text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-border/40 flex-shrink-0 transition-colors ${
-                              selected ? opt.bg + " text-white" : "bg-muted text-muted-foreground border-transparent"
+                            <span className={`text-[10px] font-medium uppercase tracking-[0.14em] px-2.5 py-0.5 rounded-full flex-shrink-0 transition-colors ${
+                              selected ? `${opt.badgeBg}` : "bg-muted text-muted-foreground"
                             }`}>
                               {opt.badge}
                             </span>
                           </div>
-                          <p className={`text-sm font-bold mb-3 ${selected ? "text-foreground/80" : "text-muted-foreground"}`}>
+                          <p className={`text-sm mb-2.5 ${selected ? "text-foreground/75" : "text-muted-foreground"}`}>
                             {opt.subtitle}
                           </p>
                           <ul className="space-y-1.5">
                             {opt.bullets.map((b, i) => (
-                              <li key={i} className="flex items-start gap-2 text-sm font-semibold text-muted-foreground">
-                                <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selected ? opt.color : "text-muted-foreground/50"}`} />
+                              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground leading-snug">
+                                <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${selected ? opt.color : "text-muted-foreground/45"}`} />
                                 {b}
                               </li>
                             ))}
@@ -487,73 +473,62 @@ export default function Onboarding() {
                 })}
               </div>
 
-              <p className="text-sm font-bold text-muted-foreground text-center">
-                You can change this later from your profile settings.
+              <p className="text-sm text-muted-foreground text-center">
+                You can change this later in profile settings.
               </p>
 
-              <Button
-                className="btn-brand w-full h-14 text-lg rounded-xl mt-6"
-                onClick={handleNext}
-              >
-                CONTINUE
-              </Button>
+              <AuthPrimaryButton onClick={handleNext}>Continue</AuthPrimaryButton>
             </motion.div>
           )}
 
           {/* ── Step 4 Google mode: teacher code ── */}
           {step === 4 && isGoogleMode && (
-            <motion.div key="step4g" {...slide} transition={{ duration: 0.25 }} className="space-y-8">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl font-bold text-foreground tracking-tight">Link Your Teacher</h2>
-                <p className="text-muted-foreground font-bold text-lg">Enter your teacher's email so they can track your progress.</p>
-              </div>
+            <motion.div key="step4g" {...authStepMotion} transition={{ duration: 0.28 }} className="space-y-6">
+              <AuthFormHeader
+                eyebrow={`Step 4 of ${totalDots}`}
+                title="Link your teacher"
+                subtitle="Enter your teacher's email so they can track your progress."
+              />
 
-              <div className="font-bold">
-                <InputField
-                  label="Teacher email"
-                  id="ob-teacher-g"
-                  type="email"
-                  icon={Mail}
-                  autoFocus
-                  value={teacherCode}
-                  onChange={e => setTeacherCode(e.target.value)}
-                  placeholder="teacher@school.edu"
-                />
-              </div>
+              <InputField
+                label="Teacher email"
+                id="ob-teacher-g"
+                type="email"
+                icon={Mail}
+                autoFocus
+                value={teacherCode}
+                onChange={e => setTeacherCode(e.target.value)}
+                placeholder="teacher@school.edu"
+              />
 
-              {registerError && (
-                <p className="text-sm font-bold text-destructive">{registerError}</p>
-              )}
+              {registerError ? <AuthErrorBanner message={registerError} /> : null}
 
-              <div className="space-y-4">
-                <Button
-                  className="btn-brand w-full h-14 text-lg rounded-xl mt-6"
-                  onClick={handleNext}
-                  disabled={isPending}
-                >
-                  {isPending ? "SAVING…" : "FINISH"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full h-12 text-base font-bold text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl"
+              <div className="space-y-3">
+                <AuthPrimaryButton onClick={handleNext} disabled={isPending}>
+                  {isPending ? <AuthSubmitSpinner /> : "Finish setup"}
+                </AuthPrimaryButton>
+                <button
+                  type="button"
+                  className="w-full h-11 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-xl transition-colors disabled:opacity-50"
                   onClick={() => completeGoogleProfile({ skipTeacher: true })}
                   disabled={isPending}
                 >
-                  {isPending ? "SAVING…" : "Skip for now"}
-                </Button>
+                  Skip for now
+                </button>
               </div>
             </motion.div>
           )}
 
           {/* ── Step 4 Normal mode: email + password ── */}
           {step === 4 && !isGoogleMode && (
-            <motion.div key="step4" {...slide} transition={{ duration: 0.25 }} className="space-y-8">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl font-bold text-foreground tracking-tight">Create Account</h2>
-                <p className="text-muted-foreground font-bold text-lg">Your email and password to log back in.</p>
-              </div>
+            <motion.div key="step4" {...authStepMotion} transition={{ duration: 0.28 }} className="space-y-6">
+              <AuthFormHeader
+                eyebrow={`Step 4 of ${totalDots}`}
+                title="Create your login"
+                subtitle="Your email and password to sign in again."
+              />
 
-              <div className="space-y-6 font-bold">
+              <div className="space-y-4">
                 <InputField
                   label="Email address"
                   id="ob-email"
@@ -598,111 +573,71 @@ export default function Onboarding() {
                 />
               </div>
 
-              <Button
-                className={`w-full h-14 text-xl font-bold rounded-2xl border transition-all ${
-                  !email.trim() || password.length < 8 || password !== confirmPassword
-                    ? "bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed hover:bg-muted active:translate-x-0 active:translate-y-0 "
-                    : "bg-primary text-primary-foreground border-border/40    hover:   "
-                }`}
+              <AuthPrimaryButton
                 onClick={handleNext}
                 disabled={!email.trim() || password.length < 8 || password !== confirmPassword}
               >
-                CONTINUE
-              </Button>
+                Continue
+              </AuthPrimaryButton>
             </motion.div>
           )}
 
           {/* ── Step 5 Normal mode: teacher code ── */}
           {step === 5 && !isGoogleMode && (
-            <motion.div key="step5" {...slide} transition={{ duration: 0.25 }} className="space-y-8">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl font-bold text-foreground tracking-tight">Link Your Teacher</h2>
-                <p className="text-muted-foreground font-bold text-lg">Enter your teacher's email so they can track your progress.</p>
-              </div>
+            <motion.div key="step5" {...authStepMotion} transition={{ duration: 0.28 }} className="space-y-6">
+              <AuthFormHeader
+                eyebrow={`Step 5 of ${totalDots}`}
+                title="Link your teacher"
+                subtitle="Enter your teacher's email so they can track your progress."
+              />
 
-              <div className="font-bold">
-                <InputField
-                  label="Teacher email"
-                  id="ob-teacher"
-                  type="email"
-                  icon={Mail}
-                  value={teacherCode}
-                  onChange={e => setTeacherCode(e.target.value)}
-                  placeholder="teacher@school.edu"
-                />
-              </div>
+              <InputField
+                label="Teacher email"
+                id="ob-teacher"
+                type="email"
+                icon={Mail}
+                value={teacherCode}
+                onChange={e => setTeacherCode(e.target.value)}
+                placeholder="teacher@school.edu"
+              />
 
-              {registerError && (
-                <p className="text-sm font-bold text-destructive">{registerError}</p>
-              )}
+              {registerError ? <AuthErrorBanner message={registerError} /> : null}
 
-              <div className="space-y-4">
-                <Button
-                  className="btn-brand w-full h-14 text-lg rounded-xl mt-6"
-                  onClick={handleNext}
-                  disabled={isPending}
-                >
-                  {isPending ? "CREATING..." : "FINISH"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full h-12 text-base font-bold text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl"
+              <div className="space-y-3">
+                <AuthPrimaryButton onClick={handleNext} disabled={isPending}>
+                  {isPending ? <AuthSubmitSpinner /> : "Create account"}
+                </AuthPrimaryButton>
+                <button
+                  type="button"
+                  className="w-full h-11 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-xl transition-colors disabled:opacity-50"
                   onClick={createAccount}
                   disabled={isPending}
                 >
-                  {isPending ? "CREATING..." : "Skip for now"}
-                </Button>
+                  Skip for now
+                </button>
               </div>
             </motion.div>
           )}
 
           {/* ── Step 6 Normal mode: email verification sent ── */}
           {step === 6 && !isGoogleMode && (
-            <motion.div key="step6" {...slide} transition={{ duration: 0.25 }} className="space-y-8 text-center">
-              <div className="flex justify-center">
-                <div className="w-24 h-24 rounded-full bg-trust-blue border border-border/40  flex items-center justify-center  transform hover: transition-transform">
-                  <Mail className="w-12 h-12 text-white" />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-4xl font-bold text-foreground tracking-tight ">Check your inbox!</h2>
-                <p className="text-muted-foreground font-bold text-lg">
-                  We sent a verification link to <span className="font-bold text-foreground">{email}</span>.
-                </p>
-                <p className="text-muted-foreground font-bold text-lg mt-2">
-                  Click the link in that email to activate your account and start practicing.
-                </p>
-              </div>
-              <div className="bg-card border border-border/40 shadow-sm rounded-2xl p-6  text-left space-y-2 mt-6">
-                <p className="text-sm font-bold text-foreground tracking-widest">Didn't get it?</p>
-                <p className="text-base font-bold text-muted-foreground">Check your spam folder or{" "}
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="font-bold h-auto p-0 text-base text-primary hover:text-foreground"
-                    onClick={async () => {
-                      await request("/api/auth/resend-verification", {
-                        method: "POST",
-                        body: JSON.stringify({ email, role: "student" }),
-                      }).catch(() => {});
-                    }}
-                  >
-                    resend the email
-                  </Button>.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                className="w-full h-14 text-xl font-bold rounded-2xl border border-border/40 hover:bg-muted   transition-all"
-                onClick={() => setLocation("/login")}
-              >
-                BACK TO LOG IN
-              </Button>
+            <motion.div key="step6" {...authStepMotion} transition={{ duration: 0.28 }}>
+              <EmailVerificationCheckInbox
+                email={email}
+                onLogin={() => setLocation("/login")}
+                onResend={async () => {
+                  await request("/api/auth/resend-verification", {
+                    method: "POST",
+                    body: JSON.stringify({ email, role: "student" }),
+                  }).catch(() => {});
+                }}
+                resendLabel="resend the email"
+              />
             </motion.div>
           )}
 
         </AnimatePresence>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }

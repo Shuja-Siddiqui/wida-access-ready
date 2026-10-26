@@ -13,7 +13,7 @@ export interface ProfileLockedDetail {
 interface ProfilePageShellProps {
   displayName: string;
   roleLabel: string;
-  roleTone?: "student" | "educator";
+  roleTone?: "student" | "educator" | "principal";
   avatar: ReactNode;
   lockedDetails: ProfileLockedDetail[];
   children: ReactNode;
@@ -68,9 +68,11 @@ export function ProfilePageShell({
                 <span
                   className={cn(
                     "mt-2 inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider",
-                    roleTone === "educator"
-                      ? "bg-accent/15 text-accent"
-                      : "bg-primary/10 text-primary",
+                    roleTone === "principal"
+                      ? "bg-violet-500/15 text-violet-700 dark:text-violet-300"
+                      : roleTone === "educator"
+                        ? "bg-accent/15 text-accent"
+                        : "bg-primary/10 text-primary",
                   )}
                 >
                   {roleLabel}

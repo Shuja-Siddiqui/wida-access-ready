@@ -215,6 +215,27 @@
     @apply text-xs font-semibold uppercase tracking-widest text-primary/80;
   }
 
+  /* Auth / signup — calm, modern type scale */
+  .auth-eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground;
+  }
+
+  .auth-title {
+    @apply text-[1.75rem] sm:text-[2rem] font-bold tracking-tight text-foreground leading-[1.15];
+  }
+
+  .auth-subtitle {
+    @apply text-[15px] sm:text-base text-muted-foreground leading-relaxed font-normal;
+  }
+
+  .auth-panel-title {
+    @apply text-[1.875rem] xl:text-[2.25rem] font-bold text-white leading-[1.12] tracking-tight;
+  }
+
+  .auth-panel-subtitle {
+    @apply text-[15px] text-white/70 leading-relaxed font-normal max-w-md;
+  }
+
   .bg-brand-spectrum {
     background: linear-gradient(
       120deg,

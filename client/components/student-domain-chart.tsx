@@ -4,6 +4,7 @@ import {
 } from "recharts";
 import { TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
 
 export interface SessionForChart {
   domain: string;
@@ -55,7 +56,7 @@ export function StudentDomainChart({ sessions, title = "Progress History" }: Stu
   const isEmpty = sessions.length === 0;
 
   return (
-    <Card className="rounded-2xl border border-border/40 shadow-sm bg-card overflow-hidden">
+    <Card className={DASHBOARD_PANEL_OVERFLOW}>
       <CardHeader className="pb-0 pt-6 px-6">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-black text-foreground flex items-center gap-2 tracking-tight">

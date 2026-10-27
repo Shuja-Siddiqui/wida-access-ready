@@ -7,6 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
+import { DASHBOARD_OUTLINE_BTN, DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
+import { cn } from "@/lib/utils";
 import { LoadingScreen } from "@/components/loading-screen";
 import { StatCard } from "@/components/stat-card";
 import { DomainLevelBadge } from "@/teacher/components/domain-level-badge";
@@ -61,22 +64,20 @@ export default function TeacherDashboard() {
   const stalledCount = dashboard.allStudents.filter((s) => s.isStalled).length;
 
   return (
-    <PageContainer className="space-y-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
-          <div className="space-y-1">
-            <h1 className="heading-page text-3xl">Dashboard</h1>
-            <p className="text-sm font-medium text-muted-foreground">
-              Track every learner's progress toward their exit goal.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={handleExport} variant="outline" className="font-bold border border-border/40 shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all rounded-xl bg-card hover:bg-card">
+    <PageContainer className="space-y-8" themeWash>
+        <PageHeader
+          eyebrow="Teacher"
+          title="Dashboard"
+          description="Track every learner's progress toward their exit goal."
+          actions={
+          <>
+            <Button onClick={handleExport} variant="outline" className={DASHBOARD_OUTLINE_BTN}>
               <Download className="w-4 h-4 mr-2" /> Export CSV
             </Button>
             {isSoloTeacher && (
               <>
                 <PlanGatedAction hasPlan={hasPlan} isLoading={planLoading} label="Import Students" icon={<Upload className="w-4 h-4" />} variant="outline" className="shadow-sm">
-                  <Button onClick={() => setLocation("/teacher/import")} variant="outline" className="font-bold border border-border/40 shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all rounded-xl bg-card hover:bg-card">
+                  <Button onClick={() => setLocation("/teacher/import")} variant="outline" className={DASHBOARD_OUTLINE_BTN}>
                     <Upload className="w-4 h-4 mr-2" /> Import Students
                   </Button>
                 </PlanGatedAction>
@@ -90,8 +91,9 @@ export default function TeacherDashboard() {
                 </PlanGatedAction>
               </>
             )}
-          </div>
-        </div>
+          </>
+          }
+        />
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard icon={Users} label="Students" value={dashboard.totalStudents} />
@@ -115,7 +117,7 @@ export default function TeacherDashboard() {
           </motion.div>
         )}
 
-        <div className="bg-card rounded-2xl border border-border/40 shadow-sm overflow-x-auto">
+        <div className={cn(DASHBOARD_PANEL_OVERFLOW, "overflow-x-auto")}>
           <Table>
             <TableHeader className="bg-muted/50 border-b border-border/40">
               <TableRow className="border-none hover:bg-transparent">

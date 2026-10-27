@@ -205,6 +205,15 @@ export function ImageLibrarySession({
   const [coach, setCoach]                 = useState<ItemFeedbackPayload | null>(null);
   const [coachLoading, setCoachLoading]   = useState(false);
   const spokenListenKeyRef = useRef<string | null>(null);
+  const answersRef = useRef<AnswerRecord[]>([]);
+
+  const appendAnswer = (rec: AnswerRecord) => {
+    setAnswers((prev) => {
+      const next = [...prev, rec];
+      answersRef.current = next;
+      return next;
+    });
+  };
   const feedbackRef      = useRef<HTMLDivElement>(null);
 
   const { passage, imageUrl, detectionResults, questions, topic, tapMode = "box_tap", keyUse } = data;
@@ -392,10 +401,7 @@ export function ImageLibrarySession({
     setIsRetrying(false);
     if (!questionRecorded) {
       setQuestionRecorded(true);
-      setAnswers((prev) => [
-        ...prev,
-        { question: questionText, content: currentQ, submittedAnswer: label, correct },
-      ]);
+      appendAnswer({ question: questionText, content: currentQ, submittedAnswer: label, correct });
     }
   }
 
@@ -410,10 +416,7 @@ export function ImageLibrarySession({
     setIsRetrying(false);
     if (!questionRecorded) {
       setQuestionRecorded(true);
-      setAnswers((prev) => [
-        ...prev,
-        { question: questionText, content: currentQ, submittedAnswer: option, correct },
-      ]);
+      appendAnswer({ question: questionText, content: currentQ, submittedAnswer: option, correct });
     }
   }
 
@@ -427,10 +430,7 @@ export function ImageLibrarySession({
     setIsRetrying(false);
     if (!questionRecorded) {
       setQuestionRecorded(true);
-      setAnswers((prev) => [
-        ...prev,
-        { question: questionText, content: currentQ, submittedAnswer: choice, correct },
-      ]);
+      appendAnswer({ question: questionText, content: currentQ, submittedAnswer: choice, correct });
     }
   }
 
@@ -446,13 +446,17 @@ export function ImageLibrarySession({
       setTappedLabel(null);
       setYesNoAnswer(null);
     } else {
-      onComplete(answers);
+      onComplete(answersRef.current);
     }
   }
 
   function handleTryAgain() {
     // Remove the recorded wrong answer so the retry can overwrite it.
-    setAnswers((prev) => prev.slice(0, -1));
+    setAnswers((prev) => {
+      const next = prev.slice(0, -1);
+      answersRef.current = next;
+      return next;
+    });
     setQuestionRecorded(false);
     setShowFeedback(false);
     setTappedLabel(null);

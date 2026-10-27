@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
 import { getThemeConfettiColors } from "@/lib/theme-colors";
 import type { AnswerRecord } from "../home-types";
 
@@ -157,7 +158,7 @@ export function SessionCompleteView({ answers, sessionResult, onContinue }: Sess
         </header>
 
         <div className="flex-1 flex items-center justify-center min-h-0">
-          <div className="w-full rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+          <div className={cn(DASHBOARD_PANEL_OVERFLOW, "w-full border-border/60")}>
             {/* Summary strip */}
             <div className="flex flex-wrap items-center gap-4 sm:gap-5 px-5 sm:px-6 py-5 bg-primary/[0.04] border-b border-border/50">
               <div className="relative shrink-0">

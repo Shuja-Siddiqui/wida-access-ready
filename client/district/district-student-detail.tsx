@@ -4,17 +4,21 @@ import { useGetStudent, getGetStudentQueryKey } from "@/api-generated";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Calendar, AlertCircle, Mail, Loader2, CheckCircle2 } from "lucide-react";
+import { Calendar, AlertCircle, Mail, Loader2, CheckCircle2, Trash2 } from "lucide-react";
+import { DeleteStudentDialog } from "@/teacher/components/delete-student-dialog";
 import { useApi, extractErrorMessage } from "@/hooks/use-api";
 import { useToast } from "@/hooks/use-toast";
 import { MemberActiveToggle } from "./member-active-toggle";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/page-container";
+import { PageBackLink, PageHeader, StudentMetaLine } from "@/components/page-header";
 import { LoadingScreen } from "@/components/loading-screen";
 import { StudentDomainProgressBars } from "@/components/student-domain-progress-bars";
 import { StudentDomainChart } from "@/components/student-domain-chart";
 import { StudentAiUsageChart } from "@/components/student-ai-usage-chart";
 import { useAuth } from "@/hooks/use-auth";
+import { DASHBOARD_PANEL, DASHBOARD_PANEL_HOVER } from "@/components/dashboard-ui-styles";
+import { cn } from "@/lib/utils";
 
 export default function DistrictStudentDetail() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -24,6 +28,7 @@ export default function DistrictStudentDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [verifying, setVerifying] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (ready && userType !== "district_admin") setLocation("/");
@@ -37,11 +42,13 @@ export default function DistrictStudentDetail() {
 
   if (isError || !data) {
     return (
-      <PageContainer maxWidth="max-w-5xl" className="space-y-4">
-        <Button variant="ghost" onClick={() => setLocation("/district")} className="-ml-4">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to district
-        </Button>
-        <p className="text-sm text-muted-foreground font-medium">Could not load this student.</p>
+      <PageContainer className="space-y-8" themeWash>
+        <PageHeader
+          leading={<PageBackLink onClick={() => setLocation("/district")}>Back to district</PageBackLink>}
+          eyebrow="Student profile"
+          title="Student not found"
+          description="Could not load this student. They may have been removed or you may not have access."
+        />
       </PageContainer>
     );
   }
@@ -73,23 +80,35 @@ export default function DistrictStudentDetail() {
   }));
 
   return (
-    <PageContainer maxWidth="max-w-5xl" className="space-y-8">
-      <Button variant="ghost" onClick={() => setLocation("/district")} className="mb-2 text-muted-foreground hover:text-foreground -ml-4">
-        <ArrowLeft className="w-4 h-4 mr-2" /> Back to district
-      </Button>
+    <PageContainer className="space-y-8" themeWash>
+      <PageHeader
+        leading={<PageBackLink onClick={() => setLocation("/district")}>Back to district</PageBackLink>}
+        eyebrow="Student profile"
+        title={student.name}
+        description={<StudentMetaLine assessment={student.stateAssessment} gradeBand={student.gradeBand} />}
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            className="shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 font-semibold rounded-xl"
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete student
+          </Button>
+        }
+      />
 
-      <div className="space-y-1">
-        <h1 className="text-4xl font-black text-foreground tracking-tight">{student.name}</h1>
-        <p className="text-muted-foreground flex items-center gap-2 font-medium text-sm flex-wrap">
-          <span className="font-bold text-foreground bg-muted border border-border/40 shadow-sm px-2 py-0.5 rounded-lg">
-            {student.stateAssessment}
-          </span>
-          <span className="font-bold text-foreground">Grade {student.gradeBand}</span>
-        </p>
-      </div>
+      <DeleteStudentDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        student={{ id: student.id, name: student.name }}
+        successDescription="was permanently removed from the district."
+        onSuccess={() => setLocation("/district")}
+      />
 
       {studentAccount.email && (
-        <Card className="rounded-2xl border border-border/40 shadow-sm bg-card">
+        <Card className={DASHBOARD_PANEL}>
           <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -136,7 +155,7 @@ export default function DistrictStudentDetail() {
       )}
 
       {!studentAccount.email && (
-        <Card className="rounded-2xl border border-border/40 shadow-sm bg-card">
+        <Card className={DASHBOARD_PANEL}>
           <CardContent className="p-5 flex items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">No login email on file for this student.</p>
             <MemberActiveToggle
@@ -154,7 +173,7 @@ export default function DistrictStudentDetail() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {progress.domains.map((d, i) => (
           <motion.div key={d.domain} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card className="rounded-2xl border border-border/40 shadow-sm transition-all hover:-translate-y-1 hover:shadow-sm bg-card">
+            <Card className={DASHBOARD_PANEL_HOVER}>
               <CardContent className="p-5 flex flex-col items-center justify-center text-center space-y-1">
                 <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{d.domain}</span>
                 <span className="text-5xl font-black text-foreground">{d.currentLevel.toFixed(1)}</span>
@@ -178,7 +197,7 @@ export default function DistrictStudentDetail() {
         <StudentDomainProgressBars domains={progress.domains} />
       </div>
 
-      <Card className="rounded-2xl border border-border/40 shadow-sm bg-card">
+      <Card className={DASHBOARD_PANEL}>
         <CardHeader className="border-b border-border/10 pb-4">
           <CardTitle className="text-lg font-extrabold text-foreground flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" /> Exit Projections

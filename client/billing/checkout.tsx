@@ -25,14 +25,15 @@ import {
   type SavedPaymentMethod,
 } from "@/api-generated";
 import { useAuth } from "@/hooks/use-auth";
-import { PageContainer } from "@/components/page-container";
+import { PageContainer, PAGE_FORM_MAX_WIDTH } from "@/components/page-container";
 import { LoadingScreen, PageLoader } from "@/components/loading-screen";
 import { Loader2, Lock, Plus, Check, Building2, User } from "lucide-react";
-import { BackButton } from "@/components/back-button";
+import { PageBackLink, PageHeader } from "@/components/page-header";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { BillingTrustFooter } from "@/billing/billing-shared";
+import { DASHBOARD_PANEL } from "@/components/dashboard-ui-styles";
 
 // Maps the app's hot-pink theme tokens into Stripe Elements' `appearance` API.
 function hsl(triple: string): string {
@@ -131,7 +132,7 @@ function SavedCardSelector({
               "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all text-left group",
               active
                 ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
-                : "border-border/50 bg-card hover:border-border hover:bg-muted/20",
+                : "border-border/50 bg-gradient-to-br from-card via-card to-primary/[0.05] hover:border-border hover:to-primary/[0.08]",
             )}
           >
             <div className="w-12 h-8 rounded-md border border-border/50 bg-foreground text-background flex items-center justify-center text-[10px] font-bold shrink-0">
@@ -171,7 +172,7 @@ function SavedCardSelector({
           "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all text-left group",
           selectedId === null
             ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
-            : "border-border/50 bg-card hover:border-border hover:bg-muted/20",
+            : "border-border/50 bg-gradient-to-br from-card via-card to-primary/[0.05] hover:border-border hover:to-primary/[0.08]",
         )}
       >
         <div className="w-12 h-8 rounded-md border border-border/50 bg-muted flex items-center justify-center shrink-0">
@@ -233,7 +234,7 @@ function NewCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       onSubmit={handleSubmit}
-      className="space-y-6 bg-card border border-border/50 p-6 rounded-2xl shadow-sm"
+      className={cn(DASHBOARD_PANEL, "space-y-6 p-6")}
     >
       <PaymentElement className="min-h-[220px]" />
       <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -245,7 +246,7 @@ function NewCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
           type="button"
           onClick={onCancel}
           disabled={submitting}
-          className="flex-1 h-11 font-semibold bg-card border border-border/50 rounded-xl hover:bg-muted/40 transition-colors disabled:opacity-50"
+          className="flex-1 h-11 font-semibold border border-border/50 rounded-xl bg-gradient-to-br from-card via-card to-primary/[0.05] hover:to-primary/[0.1] transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
@@ -411,22 +412,20 @@ export default function Checkout() {
   }
 
   return (
-    <PageContainer maxWidth="max-w-2xl" className="space-y-8">
-      <BackButton to="/billing" label="Back to billing" />
-
-      <header className="space-y-2 border-b border-border/40 pb-6">
-        <p className="heading-eyebrow">Checkout</p>
-        <h1 className="heading-page text-3xl">Complete your subscription</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Review your plan, then confirm payment. You can manage billing anytime from your account.
-        </p>
-      </header>
+    <PageContainer maxWidth={PAGE_FORM_MAX_WIDTH} className="space-y-8" themeWash>
+      <PageHeader
+        leading={<PageBackLink onClick={() => setLocation("/billing")}>Back to billing</PageBackLink>}
+        eyebrow="Checkout"
+        title="Complete your subscription"
+        description="Review your plan, then confirm payment. You can manage billing anytime from your account."
+        className="border-b border-border/40 pb-6"
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="rounded-2xl border border-border/50 bg-card p-5 shadow-sm"
+        className={cn(DASHBOARD_PANEL, "p-5")}
       >
         <div className="flex items-start gap-4">
           <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -457,7 +456,7 @@ export default function Checkout() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col items-center justify-center gap-5 py-20 bg-card border border-border/50 rounded-2xl shadow-sm"
+            className={cn(DASHBOARD_PANEL, "flex flex-col items-center justify-center gap-5 py-20")}
           >
             <PageLoader />
             <p className="text-base font-semibold text-foreground">Activating your subscription</p>
@@ -491,7 +490,7 @@ export default function Checkout() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                 onSubmit={(e) => void handleSavedCardSubmit(e)}
-                className="space-y-5 bg-card border border-border/50 p-6 rounded-2xl shadow-sm"
+                className={cn(DASHBOARD_PANEL, "space-y-5 p-6")}
               >
                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Lock className="w-4 h-4 shrink-0" strokeWidth={2.25} />
@@ -502,7 +501,7 @@ export default function Checkout() {
                     type="button"
                     onClick={() => setLocation("/billing")}
                     disabled={savedCardSubmitting}
-                    className="flex-1 h-11 font-semibold bg-card border border-border/50 rounded-xl hover:bg-muted/40 transition-colors disabled:opacity-50"
+                    className="flex-1 h-11 font-semibold border border-border/50 rounded-xl bg-gradient-to-br from-card via-card to-primary/[0.05] hover:to-primary/[0.1] transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -529,7 +528,7 @@ export default function Checkout() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="flex items-center justify-center py-20 bg-card border border-border/50 rounded-2xl shadow-sm"
+                  className={cn(DASHBOARD_PANEL, "flex items-center justify-center py-20")}
                 >
                   <PageLoader />
                 </motion.div>

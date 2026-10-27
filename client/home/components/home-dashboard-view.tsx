@@ -1,13 +1,20 @@
 import { ChevronRight, Flame, Lock, Star, Zap } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { DomainCharts, type DomainProgress } from "./domain-charts";
 import { DOMAIN_CONFIG, domainLabel } from "../home-types";
 import { DashboardSuggestions, type PracticeSuggestion } from "./dashboard-suggestions";
-import { DASHBOARD_MICRO, DASHBOARD_PANEL, DASHBOARD_PANEL_HOVER } from "./dashboard-ui-styles";
-import { domainBrand, domainBrandStroke } from "./domain-brand-colors";
+import {
+  DASHBOARD_MICRO,
+  DASHBOARD_PANEL,
+  DASHBOARD_STAT_RANK,
+  DASHBOARD_STAT_STREAK,
+  DASHBOARD_STAT_XP,
+} from "./dashboard-ui-styles";
+import { domainBrand, domainBrandStroke, domainDashboardCardShell } from "./domain-brand-colors";
 
 function MobileDomainCard({
   d, cfg, index, onStart,
@@ -28,16 +35,22 @@ function MobileDomainCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08 + index * 0.05, duration: 0.28 }}
       onClick={() => onStart(d.domain)}
-      className={cn(
-        DASHBOARD_PANEL_HOVER,
-        "group w-full overflow-hidden text-left relative flex flex-col",
-      )}
+      className={cn(domainDashboardCardShell(d.domain), "group w-full text-left flex flex-col")}
     >
-      <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: stroke }} />
+      <div
+        aria-hidden
+        className={cn("absolute -right-8 -top-8 h-28 w-28 rounded-full blur-3xl opacity-45 pointer-events-none", brand.glow)}
+      />
+      <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl opacity-90" style={{ background: stroke }} />
 
-      <div className="p-5 flex-1 space-y-5">
+      <div className="relative p-5 flex-1 space-y-5">
         <div className="flex items-start gap-4">
-          <div className={cn("shrink-0 w-10 h-10 rounded-xl flex items-center justify-center", brand.bgSoft)}>
+          <div
+            className={cn(
+              "shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ring-1 ring-white/20 dark:ring-white/10 shadow-sm",
+              brand.bgSoft,
+            )}
+          >
             <Icon className={cn("w-5 h-5", brand.text)} />
           </div>
           <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
@@ -66,15 +79,25 @@ function MobileDomainCard({
           </div>
         </div>
 
-        <div className="h-2 bg-muted/80 rounded-full overflow-hidden">
+        <div className="h-2.5 bg-muted/60 rounded-full overflow-hidden ring-1 ring-border/10">
           <div
-            className="h-full rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${pct}%`, backgroundColor: stroke }}
+            className="h-full rounded-full transition-all duration-700 ease-out shadow-sm"
+            style={{
+              width: `${pct}%`,
+              background: `linear-gradient(90deg, ${stroke}, hsl(var(--primary) / 0.85))`,
+            }}
           />
         </div>
       </div>
 
-      <div className="px-5 py-3.5 border-t border-border/10 flex justify-between items-center">
+      <div
+        className={cn(
+          "relative px-5 py-3.5 border-t flex justify-between items-center",
+          brand.footerWash,
+          "border-t",
+          brand.panelBorder,
+        )}
+      >
         <span className={DASHBOARD_MICRO}>Practice now</span>
         <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-0.5 group-hover:text-foreground transition-all" />
       </div>
@@ -92,6 +115,7 @@ interface HomeDashboardViewProps {
   domains:          DomainProgress[];
   nudgeMessage?:    string;
   suggestions?:     PracticeSuggestion[];
+  showCoachSuggestions?: boolean;
   speaking?:        boolean;
   onSpeakSuggestion?: (text: string) => void;
   onStopSpeaking?:  () => void;
@@ -107,6 +131,7 @@ function StatTile({
   icon: Icon,
   iconClass,
   iconWrapClass,
+  shellClass,
   delay = 0,
 }: {
   label: string;
@@ -114,6 +139,7 @@ function StatTile({
   icon: React.ComponentType<{ className?: string }>;
   iconClass: string;
   iconWrapClass: string;
+  shellClass: string;
   delay?: number;
 }) {
   return (
@@ -121,10 +147,15 @@ function StatTile({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3 }}
-      className={cn(DASHBOARD_PANEL, "p-5 flex flex-col gap-4 min-h-[8.5rem]")}
+      className={cn(shellClass, "p-5 flex flex-col gap-4 min-h-[8.5rem] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md")}
     >
       <div className="flex items-center gap-2.5">
-        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", iconWrapClass)}>
+        <div
+          className={cn(
+            "w-9 h-9 rounded-xl flex items-center justify-center ring-1 ring-white/15 shadow-inner",
+            iconWrapClass,
+          )}
+        >
           <Icon className={cn("w-4 h-4", iconClass)} />
         </div>
         <span className={DASHBOARD_MICRO}>{label}</span>
@@ -146,6 +177,7 @@ export function HomeDashboardView({
   domains,
   nudgeMessage,
   suggestions = [],
+  showCoachSuggestions = true,
   speaking = false,
   onSpeakSuggestion,
   onStopSpeaking,
@@ -157,38 +189,33 @@ export function HomeDashboardView({
   const xpProgress = nextRankXp > 0 ? Math.min(100, (totalXp / nextRankXp) * 100) : 0;
 
   return (
-    <PageContainer shellClassName="py-6 sm:py-10 relative">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-primary/[0.05] to-transparent"
-      />
-
+    <PageContainer themeWash>
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         className="relative space-y-10 sm:space-y-12"
       >
-        <header className="flex items-center justify-between gap-6">
-          <div className="min-w-0">
-            <h2 className="heading-eyebrow mb-2">Welcome Back</h2>
-            <h1 className="heading-page text-4xl sm:text-5xl leading-none truncate">
-              {studentName || "Student"}
-            </h1>
-          </div>
-          <Avatar className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 border border-border/20 shadow-sm">
-            {avatarUrl && (
-              <AvatarImage
-                src={`/api/storage${avatarUrl}`}
-                alt={studentName}
-                className="object-cover"
-              />
-            )}
-            <AvatarFallback className="bg-primary text-primary-foreground text-xl sm:text-2xl font-black">
-              {(studentName || "S").charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </header>
+        <PageHeader
+          size="hero"
+          eyebrow="Welcome back"
+          title={studentName || "Student"}
+          description="Pick a domain and keep your streak going with today's practice."
+          actions={
+            <Avatar className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 border border-border/20 shadow-sm">
+              {avatarUrl && (
+                <AvatarImage
+                  src={`/api/storage${avatarUrl}`}
+                  alt={studentName}
+                  className="object-cover"
+                />
+              )}
+              <AvatarFallback className="bg-primary text-primary-foreground text-xl sm:text-2xl font-black">
+                {(studentName || "S").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          }
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           <div className="space-y-6 lg:col-span-4 xl:col-span-3">
@@ -198,15 +225,17 @@ export function HomeDashboardView({
                 value={totalXp.toLocaleString()}
                 icon={Zap}
                 iconClass="text-primary"
-                iconWrapClass="bg-primary/15"
+                iconWrapClass="bg-gradient-to-br from-primary/30 to-trust-blue/15"
+                shellClass={DASHBOARD_STAT_XP}
                 delay={0.05}
               />
               <StatTile
                 label="Day Streak"
                 value={currentStreak}
                 icon={Flame}
-                iconClass="text-streak-gold"
-                iconWrapClass="bg-streak-gold/15"
+                iconClass="text-logo-gold"
+                iconWrapClass="bg-gradient-to-br from-logo-gold/35 to-primary/10"
+                shellClass={DASHBOARD_STAT_STREAK}
                 delay={0.1}
               />
             </div>
@@ -215,7 +244,7 @@ export function HomeDashboardView({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.3 }}
-              className={cn(DASHBOARD_PANEL, "p-6 sm:p-7 space-y-6")}
+              className={cn(DASHBOARD_STAT_RANK, "p-6 sm:p-7 space-y-6")}
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -224,18 +253,18 @@ export function HomeDashboardView({
                     {rank}
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/25 to-trust-blue/15 flex items-center justify-center shrink-0 ring-1 ring-white/15 shadow-inner">
                   <Star className="w-5 h-5 text-primary" />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <div className="h-2 bg-muted/80 rounded-full overflow-hidden">
+                <div className="h-2.5 bg-muted/60 rounded-full overflow-hidden ring-1 ring-border/10">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${xpProgress}%` }}
                     transition={{ duration: 0.9, delay: 0.25, ease: "easeOut" }}
-                    className="h-full bg-primary rounded-full"
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-trust-blue"
                   />
                 </div>
                 <div className="flex justify-between text-xs font-semibold text-muted-foreground">
@@ -245,7 +274,7 @@ export function HomeDashboardView({
               </div>
             </motion.div>
 
-            {(suggestions.length > 0 || nudgeMessage) && onSpeakSuggestion && onStopSpeaking && (
+            {showCoachSuggestions && (suggestions.length > 0 || nudgeMessage) && onSpeakSuggestion && onStopSpeaking && (
               <DashboardSuggestions
                 suggestions={suggestions}
                 nudgeMessage={nudgeMessage}
@@ -264,7 +293,7 @@ export function HomeDashboardView({
                   Practice Today
                 </h2>
               </div>
-              <span className={cn(DASHBOARD_MICRO, "self-start sm:self-auto px-3 py-1.5 rounded-full bg-muted/40 border border-border/10")}>
+              <span className={cn(DASHBOARD_MICRO, "self-start sm:self-auto px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary")}>
                 {domains.length} domain{domains.length !== 1 ? "s" : ""}
               </span>
             </div>

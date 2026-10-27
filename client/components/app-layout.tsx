@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { PageThemeWashBackdrop } from "@/components/page-theme-wash";
 
 export type AppLayoutMode = "scroll" | "viewport";
 
@@ -52,17 +53,18 @@ export function AppMain({
     <main
       id="app-main"
       className={cn(
-        "flex-1 min-h-0 bg-background",
+        "relative flex-1 min-h-0 bg-background",
         mode === "scroll"
           ? "overflow-y-auto themed-scroll overscroll-contain"
           : "overflow-hidden flex flex-col",
       )}
     >
+      <PageThemeWashBackdrop />
       <div
         className={cn(
           PAGE_SHELL_X,
           PAGE_MAX_WIDTH,
-          "mx-auto w-full",
+          "relative mx-auto w-full",
           mode === "scroll" ? "min-h-full" : "flex-1 min-h-0 flex flex-col",
         )}
       >

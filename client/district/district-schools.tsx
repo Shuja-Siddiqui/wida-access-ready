@@ -12,6 +12,9 @@ import { AppInput } from "@/components/app-input";
 import { LoadingScreen } from "@/components/loading-screen";
 import { useDistrict } from "@/contexts/district-context";
 import { customFetch } from "@/api-generated/custom-fetch";
+import { DASHBOARD_PANEL } from "@/components/dashboard-ui-styles";
+import { PageBackLink, PageHeader } from "@/components/page-header";
+import { cn } from "@/lib/utils";
 
 interface InviteSent {
   principalName: string;
@@ -124,31 +127,23 @@ export default function DistrictSchools() {
   }
 
   return (
-    <PageContainer maxWidth="max-w-4xl" className="space-y-8">
-      {/* Header */}
+    <PageContainer className="space-y-8" themeWash>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
-          <div className="space-y-1">
-            <button
-              onClick={() => setLocation("/district")}
-              className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors mb-2"
+        <PageHeader
+          leading={<PageBackLink onClick={() => setLocation("/district")}>Back to dashboard</PageBackLink>}
+          eyebrow="District"
+          title="Schools"
+          description={`${district?.name ?? "My District"} · Manage schools and invite principals.`}
+          actions={
+            <Button
+              onClick={() => { setShowForm(true); setInvited(null); }}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-sm shadow-primary/25 shrink-0"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Back to dashboard
-            </button>
-            <h1 className="heading-page text-3xl">Schools</h1>
-            <p className="text-sm font-medium text-muted-foreground">
-              {district?.name ?? "My District"} · Manage schools and principals
-            </p>
-          </div>
-          <Button
-            onClick={() => { setShowForm(true); setInvited(null); }}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-sm shadow-primary/25 shrink-0"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add School
-          </Button>
-        </div>
+              <Plus className="w-4 h-4 mr-2" />
+              Add School
+            </Button>
+          }
+        />
       </motion.div>
 
       {/* Add-school form */}
@@ -159,7 +154,7 @@ export default function DistrictSchools() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="bg-card border border-border/40 rounded-2xl p-6"
+            className={cn(DASHBOARD_PANEL, "p-6")}
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-extrabold text-foreground">New School</h2>
@@ -322,7 +317,7 @@ export default function DistrictSchools() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card border border-border rounded-2xl py-20 flex flex-col items-center gap-3 text-muted-foreground"
+          className={cn(DASHBOARD_PANEL, "py-20 flex flex-col items-center gap-3 text-muted-foreground")}
         >
           <Building2 className="w-10 h-10" />
           <p className="font-bold">No schools yet</p>
@@ -344,7 +339,7 @@ export default function DistrictSchools() {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className="bg-card border border-border rounded-2xl px-5 py-4 flex items-center gap-4"
+              className={cn(DASHBOARD_PANEL, "px-5 py-4 flex items-center gap-4")}
             >
               <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <Building2 className="w-5 h-5 text-primary" />

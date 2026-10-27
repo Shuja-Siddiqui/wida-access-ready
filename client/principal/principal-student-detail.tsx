@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, Star } from "lucide-react";
+import { Flame, Star, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DeleteStudentDialog } from "@/teacher/components/delete-student-dialog";
 import { useApi } from "@/hooks/use-api";
 import { useToast } from "@/hooks/use-toast";
 import { PageContainer } from "@/components/page-container";
@@ -11,6 +13,7 @@ import { StudentDomainProgressBars } from "@/components/student-domain-progress-
 import { StudentDomainChart } from "@/components/student-domain-chart";
 import { StudentAiUsageChart } from "@/components/student-ai-usage-chart";
 import { principalApi, type StudentDetailResponse } from "./api";
+import { PageBackLink, PageHeader, StudentMetaLine } from "@/components/page-header";
 
 export default function PrincipalStudentDetail() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -20,6 +23,7 @@ export default function PrincipalStudentDetail() {
 
   const [detail, setDetail] = useState<StudentDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (!studentId) return;
@@ -48,35 +52,34 @@ export default function PrincipalStudentDetail() {
     .map((s) => ({ domain: s.domain, levelStart: s.levelStart }));
 
   return (
-    <PageContainer maxWidth="max-w-5xl" className="space-y-6">
-      {/* Back */}
-      <button
-        onClick={() => setLocation("/principal")}
-        className="flex items-center gap-2 text-sm text-foreground bg-card border border-border/40 shadow-sm px-3 py-1.5 rounded-lg  hover:-translate-y-1 hover:shadow-xl active:translate-y-0 transition-all font-bold w-fit"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to school
-      </button>
-
-      {/* Student header */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border/40 shadow-sm rounded-2xl p-6 flex items-start gap-5"
-      >
-        <div className="w-16 h-16 rounded-2xl bg-[hsl(150_62%_41%)]/10 border border-[hsl(150_62%_41%)]/20 flex items-center justify-center text-2xl font-black text-[hsl(150_62%_41%)] flex-shrink-0">
-          {student.name[0]}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-black tracking-tight">{student.name}</h1>
-          <div className="flex flex-wrap items-center gap-3 mt-2">
-            <span className="font-bold text-foreground bg-muted border border-border/40 shadow-sm px-2 py-0.5 rounded-lg text-sm">
-              {student.stateAssessment}
-            </span>
-            <span className="text-sm font-bold text-muted-foreground">Grade {student.gradeBand}</span>
-          </div>
-        </div>
+    <PageContainer className="space-y-8" themeWash>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <PageHeader
+          leading={<PageBackLink onClick={() => setLocation("/principal")}>Back to school</PageBackLink>}
+          eyebrow="Student profile"
+          title={student.name}
+          description={<StudentMetaLine assessment={student.stateAssessment} gradeBand={student.gradeBand} />}
+          actions={
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0 text-destructive border-destructive/30 hover:bg-destructive/10 font-semibold rounded-xl"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete student
+            </Button>
+          }
+        />
       </motion.div>
+
+      <DeleteStudentDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        student={{ id: student.id, name: student.name }}
+        successDescription="was permanently removed from your school."
+        onSuccess={() => setLocation("/principal")}
+      />
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 gap-4">

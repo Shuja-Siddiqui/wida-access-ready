@@ -2,6 +2,9 @@ import { useState, useCallback, useRef } from "react";
 import * as XLSX from "xlsx";
 import { useApi, extractErrorMessage } from "@/hooks/use-api";
 import { PageContainer } from "@/components/page-container";
+import { PageBackLink, PageHeader } from "@/components/page-header";
+import { DASHBOARD_PANEL, DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -538,20 +541,13 @@ export function BulkImportWizard({ mode, onBack, districtSchools }: BulkImportWi
   };
 
   return (
-    <PageContainer maxWidth="max-w-5xl" className="space-y-6">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-sm text-foreground bg-card border border-border/40 shadow-sm px-3 py-1.5 rounded-lg  hover:-translate-y-1 hover:shadow-xl active:translate-y-0 transition-all font-bold"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-      </div>
-
-      <div className="space-y-1">
-        <h1 className="heading-page text-3xl">Import Students</h1>
-        <p className="text-sm text-muted-foreground font-medium">Upload a spreadsheet to add multiple students at once.</p>
-      </div>
+    <PageContainer className="space-y-8" themeWash>
+      <PageHeader
+        leading={<PageBackLink onClick={onBack}>Back</PageBackLink>}
+        eyebrow="Roster"
+        title="Import students"
+        description="Upload a spreadsheet to add multiple students at once."
+      />
 
       <AnimatePresence mode="wait">
         {step === "upload" && (
@@ -572,7 +568,7 @@ export function BulkImportWizard({ mode, onBack, districtSchools }: BulkImportWi
                   id="district-import-school"
                   value={selectedSchoolId}
                   onChange={(e) => setSelectedSchoolId(e.target.value)}
-                  className="flex h-12 w-full max-w-md rounded-xl border border-border/40 bg-card px-4 text-sm font-bold text-foreground shadow-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="flex h-12 w-full max-w-md rounded-xl border border-border/40 bg-gradient-to-br from-card via-card to-primary/[0.04] px-4 text-sm font-bold text-foreground shadow-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">Select a school…</option>
                   {districtSchools!.map((s) => (
@@ -606,7 +602,7 @@ export function BulkImportWizard({ mode, onBack, districtSchools }: BulkImportWi
                 }
                 fileInputRef.current?.click();
               }}
-              className={`relative group rounded-3xl border-4 transition-all duration-200 shadow-sm bg-card ${
+              className={`relative group rounded-3xl border-4 transition-all duration-200 shadow-sm bg-gradient-to-br from-card via-card to-primary/[0.06] ${
                 requireDistrictSchool && !selectedSchoolId
                   ? "cursor-not-allowed opacity-60 border-border/40"
                   : "cursor-pointer hover:-translate-y-1 hover:shadow-sm"
@@ -702,7 +698,7 @@ export function BulkImportWizard({ mode, onBack, districtSchools }: BulkImportWi
               </div>
             )}
 
-            <Card className="border border-border/40 shadow-sm overflow-hidden rounded-2xl bg-card">
+            <Card className={DASHBOARD_PANEL_OVERFLOW}>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-muted/50 border-b border-border/40">
@@ -800,14 +796,14 @@ export function BulkImportWizard({ mode, onBack, districtSchools }: BulkImportWi
                 <p className="text-5xl font-black text-growth-green">{importSummary.created}</p>
                 <p className="text-sm font-bold text-foreground">Students created</p>
               </div>
-              <div className={`rounded-2xl p-6 flex flex-col items-center gap-2 border border-border/40 shadow-sm ${importSummary.failed > 0 ? "bg-destructive/10" : "bg-card"}`}>
+              <div className={cn("rounded-2xl p-6 flex flex-col items-center gap-2 border border-border/40 shadow-sm", importSummary.failed > 0 ? "bg-destructive/10" : DASHBOARD_PANEL)}>
                 <XCircle className={`w-12 h-12 ${importSummary.failed > 0 ? "text-destructive" : "text-muted-foreground"}`} />
                 <p className={`text-5xl font-black ${importSummary.failed > 0 ? "text-destructive" : "text-muted-foreground"}`}>{importSummary.failed}</p>
                 <p className="text-sm font-bold text-foreground">Failed</p>
               </div>
             </div>
 
-            <Card className="border border-border/40 shadow-sm overflow-hidden rounded-2xl bg-card mt-6">
+            <Card className={cn(DASHBOARD_PANEL_OVERFLOW, "mt-6")}>
               <CardHeader className="pb-3 border-b border-border/40 bg-muted/20">
                 <CardTitle className="text-lg font-extrabold text-foreground">Import results</CardTitle>
               </CardHeader>

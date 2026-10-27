@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { LevelRing } from "@/components/level-ring";
+import { DASHBOARD_PANEL } from "@/components/dashboard-ui-styles";
+import { cn } from "@/lib/utils";
 
 const DOMAIN_COLORS: Record<string, string> = {
   listening: "var(--color-trust-blue)",
@@ -42,7 +44,7 @@ export function StudentDomainProgressBars({ domains, columns = "2" }: StudentDom
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.07 }}
-            className="bg-card border border-border/40 rounded-2xl p-5 flex flex-col items-center gap-3 shadow-sm"
+            className={cn(DASHBOARD_PANEL, "p-5 flex flex-col items-center gap-3")}
           >
             {/* Domain label */}
             <span

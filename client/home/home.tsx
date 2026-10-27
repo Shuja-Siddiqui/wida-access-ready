@@ -27,6 +27,7 @@ import { SessionCompleteView } from "./components/session-complete-view";
 import { SessionActiveView }   from "./components/session-active-view";
 import { formatStudentAnswerForFeedback } from "./components/session-answer-format";
 import { useBreadcrumbTrail, type Crumb } from "@/components/breadcrumbs";
+import { buildCompleteSessionPayload } from "@/lib/session-complete-payload";
 
 export default function Home() {
   const {
@@ -49,6 +50,7 @@ export default function Home() {
   // ─── Question state ───────────────────────────────────────────────────────
   const [qIdx, setQIdx]                   = useState(0);
   const [answers, setAnswers]             = useState<AnswerRecord[]>([]);
+  const answersRef = useRef<AnswerRecord[]>([]);
   const [showFeedback, setShowFeedback]   = useState(false);
   const [lastCorrect, setLastCorrect]     = useState(false);
   const [selectedIdx, setSelectedIdx]     = useState(-1);
@@ -102,23 +104,36 @@ export default function Home() {
 
   const [suggestions, setSuggestions] = useState<PracticeSuggestion[]>([]);
 
+  const aiSuggestionsEnabled =
+    (fullStudentData?.student as { aiSuggestionsEnabled?: boolean } | undefined)?.aiSuggestionsEnabled !== false;
+
   const loadSuggestions = useCallback(async () => {
-    if (!studentId) return;
+    if (!studentId || !aiSuggestionsEnabled) {
+      setSuggestions([]);
+      return;
+    }
     try {
-      const data = await request<{ suggestions: PracticeSuggestion[] }>(
+      const data = await request<{ suggestions: PracticeSuggestion[]; aiSuggestionsEnabled?: boolean }>(
         `/api/students/${studentId}/suggestions`,
       );
+      if (data.aiSuggestionsEnabled === false) {
+        setSuggestions([]);
+        return;
+      }
       setSuggestions(data.suggestions ?? []);
     } catch {
       setSuggestions([]);
     }
-  }, [studentId, request]);
+  }, [studentId, request, aiSuggestionsEnabled]);
 
   useEffect(() => {
-    if (studentId && view === "home") {
+    if (studentId && view === "home" && aiSuggestionsEnabled) {
       void loadSuggestions();
     }
-  }, [studentId, view, loadSuggestions]);
+    if (!aiSuggestionsEnabled) {
+      setSuggestions([]);
+    }
+  }, [studentId, view, loadSuggestions, aiSuggestionsEnabled]);
 
   // ─── Auto-start from ?domain= query param (e.g. from /listening page) ──────
   useEffect(() => {
@@ -241,6 +256,7 @@ export default function Home() {
     unlockAudioPlayback();
     setActiveDomain(domain);
     setQIdx(0);
+    answersRef.current = [];
     setAnswers([]);
     setShowFeedback(false);
     setSelectedIdx(-1);
@@ -307,11 +323,8 @@ export default function Home() {
     stopSpeaking();
     setView("finishing");
 
-    const finalAnswers  = overrideAnswers ?? answers;
-    const questions     = session.content?.data?.questions || [];
-    const correctCount  = finalAnswers.filter(a => a.correct).length;
-    const total         = questions.length || 1;
-    const scorePct      = total > 0 ? (correctCount / total) * 100 : 80;
+    const finalAnswers = overrideAnswers ?? answersRef.current;
+    const questions = session.content?.data?.questions || [];
     const durationSeconds = Math.round((Date.now() - sessionStartTime.current) / 1000) || 600;
 
     const weakTypes: string[] = [];
@@ -324,9 +337,16 @@ export default function Home() {
 
     try {
       const topic: string | undefined = session.content?.data?.topic;
+      const payload = buildCompleteSessionPayload({
+        finalAnswers,
+        questionsLength: questions.length,
+        durationSeconds,
+        weakTypes,
+        topic,
+      });
       const data = await request(`/api/students/${studentId}/sessions/${session.sessionId}/complete`, {
         method: "POST",
-        body: JSON.stringify({ scorePct, durationSeconds, weakTypes, answers: finalAnswers, topic }),
+        body: JSON.stringify(payload),
       });
       setSessionResult(data);
     } catch (err) {
@@ -341,7 +361,7 @@ export default function Home() {
     refetchStreak();
     refetchStudent();
     void loadSuggestions();
-  }, [session, answers, studentId, refetchProgress, refetchStreak, refetchStudent, stopSpeaking, request, loadSuggestions]);
+  }, [session, studentId, refetchProgress, refetchStreak, refetchStudent, stopSpeaking, request, loadSuggestions]);
 
   const loadItemFeedback = useCallback(async (body: Record<string, unknown>) => {
     if (!studentId) return null;
@@ -436,6 +456,7 @@ export default function Home() {
       submittedAnswer: productionReview.text,
       correct: productionReview.feedback?.meetsTask ?? false,
     };
+    answersRef.current = [rec];
     setAnswers([rec]);
     setProductionReview(null);
     completeSession([rec]);
@@ -459,12 +480,16 @@ export default function Home() {
     setLastCorrect(correct);
     setLastSubmittedAnswer(currentQ?.options?.[idx] ?? idx);
     setShowFeedback(true);
-    setAnswers(prev => [...prev, {
-      question: currentQ?.question ?? "",
-      content: currentQ,
-      submittedAnswer: currentQ?.options?.[idx] ?? idx,
-      correct,
-    }]);
+    setAnswers((prev) => {
+      const next = [...prev, {
+        question: currentQ?.question ?? "",
+        content: currentQ,
+        submittedAnswer: currentQ?.options?.[idx] ?? idx,
+        correct,
+      }];
+      answersRef.current = next;
+      return next;
+    });
   };
 
   const handleAnswerNonMC = (submittedAnswer: unknown, isCorrect: boolean) => {
@@ -478,12 +503,16 @@ export default function Home() {
       : typeof submittedAnswer === "string"
         ? submittedAnswer
         : JSON.stringify(submittedAnswer);
-    setAnswers(prev => [...prev, {
-      question: currentQ?.question ?? "",
-      content: currentQ,
-      submittedAnswer: submittedText,
-      correct: isCorrect,
-    }]);
+    setAnswers((prev) => {
+      const next = [...prev, {
+        question: currentQ?.question ?? "",
+        content: currentQ,
+        submittedAnswer: submittedText,
+        correct: isCorrect,
+      }];
+      answersRef.current = next;
+      return next;
+    });
   };
 
   const handleNext = () => {
@@ -500,7 +529,11 @@ export default function Home() {
   };
 
   const handleRetryQuestion = () => {
-    setAnswers((prev) => prev.slice(0, -1));
+    setAnswers((prev) => {
+      const next = prev.slice(0, -1);
+      answersRef.current = next;
+      return next;
+    });
     setShowFeedback(false);
     setSelectedIdx(-1);
     setLastSubmittedAnswer(null);
@@ -560,6 +593,7 @@ export default function Home() {
         domains={domains}
         nudgeMessage={pathwayData?.nudgeMessage}
         suggestions={suggestions}
+        showCoachSuggestions={aiSuggestionsEnabled}
         speaking={speaking}
         onSpeakSuggestion={speakPassage}
         onStopSpeaking={stopSpeaking}
@@ -635,6 +669,7 @@ export default function Home() {
         stopSpeaking={stopSpeaking}
         onComplete={(imageAnswers) => {
           stopSpeaking();
+          answersRef.current = imageAnswers;
           setAnswers(imageAnswers);
           completeSession(imageAnswers);
         }}

@@ -74,7 +74,7 @@ export default function ResetPassword() {
           <AppLogo href="/" imageClassName="h-14" />
         </div>
 
-        <div className="bg-card border border-border/40 shadow-sm rounded-2xl p-8">
+        <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-card via-card to-primary/[0.08] shadow-sm p-8">
           <AnimatePresence mode="wait">
             {step === "form" && (
               <motion.div

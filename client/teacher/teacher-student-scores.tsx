@@ -5,10 +5,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { InputField } from "@/components/input-field";
 import { SelectField } from "@/components/select-field";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/page-container";
+import { PageBackLink, PageHeader } from "@/components/page-header";
+import { DASHBOARD_PANEL } from "@/components/dashboard-ui-styles";
 import { LoadingScreen } from "@/components/loading-screen";
 
 export default function TeacherStudentScores() {
@@ -117,17 +119,23 @@ export default function TeacherStudentScores() {
   };
 
   return (
-    <PageContainer maxWidth="max-w-2xl" className="space-y-6">
-        <Button variant="ghost" onClick={() => setLocation(`/teacher/student/${studentId}`)} className="mb-2 text-muted-foreground hover:text-foreground -ml-4">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Student
-        </Button>
+    <PageContainer className="space-y-8" themeWash>
+        <PageHeader
+          leading={
+            <PageBackLink onClick={() => setLocation(`/teacher/student/${studentId}`)}>
+              Back to student
+            </PageBackLink>
+          }
+          eyebrow="Teacher"
+          title="Enter scores"
+          description={
+            <>
+              For <span className="font-bold text-foreground">{student.name}</span> ({student.stateAssessment})
+            </>
+          }
+        />
 
-        <div className="space-y-1">
-          <h1 className="text-4xl font-black text-foreground tracking-tight">Enter Scores</h1>
-          <p className="text-muted-foreground text-lg font-medium">For <span className="font-bold text-foreground">{student.name}</span> ({student.stateAssessment})</p>
-        </div>
-
-        <motion.form initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className="bg-card rounded-2xl border border-border shadow-sm p-8 space-y-8">
+        <motion.form initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className={`${DASHBOARD_PANEL} p-8 space-y-8`}>
           <InputField label="Assessment Year" type="number" value={year} onChange={e => setYear(parseInt(e.target.value))} required className="sm:w-1/2" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

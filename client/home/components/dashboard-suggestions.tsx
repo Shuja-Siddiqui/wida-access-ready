@@ -55,7 +55,10 @@ export function DashboardSuggestions({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2, duration: 0.3 }}
-      className={cn(DASHBOARD_PANEL, "px-3.5 py-3 border-primary/15")}
+      className={cn(
+        DASHBOARD_PANEL,
+        "px-4 py-4 border-primary/25 shadow-sm bg-gradient-to-br from-primary/[0.1] via-card to-trust-blue/[0.06]",
+      )}
     >
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <div className={cn(DASHBOARD_MICRO, "flex items-center gap-1.5 min-w-0")}>

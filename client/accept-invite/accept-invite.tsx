@@ -155,7 +155,7 @@ export default function AcceptInvite() {
           )}
         </div>
 
-        <div className="bg-card border border-border/40 shadow-sm rounded-2xl  p-8">
+        <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-card via-card to-primary/[0.08] shadow-sm p-8">
           <AnimatePresence mode="wait">
             {step === "loading" && (
               <motion.div key="loading" {...slide} className="flex flex-col items-center gap-6 py-6">

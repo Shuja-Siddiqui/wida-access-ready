@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
+import { DASHBOARD_OUTLINE_BTN, DASHBOARD_PANEL, DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
+import { cn } from "@/lib/utils";
 import { StudentFormDialog } from "@/teacher/components/student-form-dialog";
 import { principalApi } from "./api";
 import { useSchool } from "@/contexts/school-context";
@@ -157,38 +160,34 @@ export default function PrincipalDashboard() {
     allStaff.find((t) => t.id === id)?.name ?? (id ? "Assigned teacher" : "Unassigned");
 
   return (
-    <PageContainer maxWidth="max-w-5xl" className="space-y-8">
-      {/* Header */}
+    <PageContainer className="space-y-8" themeWash>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
-          <div className="space-y-1">
-            <h1 className="heading-page text-3xl">
-              {school?.name ?? "My School"}
-            </h1>
-            <p className="text-sm font-medium text-muted-foreground">
-              {school?.districtName ?? "School dashboard"}
-            </p>
-          </div>
-          <PlanGatedAction hasPlan={hasPlan} isLoading={planLoading} label="Import Students" icon={<Upload className="w-4 h-4" />} variant="outline" className="shadow-sm shrink-0">
-            <Button
-              onClick={() => {
-                if (seatsExhausted) {
-                  toast({
-                    title: "Seat limit reached",
-                    description: "All district-allocated seats for your school are in use. Contact your district admin to increase the allocation.",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-                setLocation("/principal/import");
-              }}
-              variant="outline"
-              className="font-bold border border-border/40 shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all rounded-xl shrink-0 bg-card hover:bg-card"
-            >
-              <Upload className="w-4 h-4 mr-2" /> Import Students
-            </Button>
-          </PlanGatedAction>
-        </div>
+        <PageHeader
+          eyebrow="Principal"
+          title={school?.name ?? "My School"}
+          description={school?.districtName ?? "Manage teachers, students, and seat allocation for your school."}
+          actions={
+            <PlanGatedAction hasPlan={hasPlan} isLoading={planLoading} label="Import Students" icon={<Upload className="w-4 h-4" />} variant="outline" className="shadow-sm shrink-0">
+              <Button
+                onClick={() => {
+                  if (seatsExhausted) {
+                    toast({
+                      title: "Seat limit reached",
+                      description: "All district-allocated seats for your school are in use. Contact your district admin to increase the allocation.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  setLocation("/principal/import");
+                }}
+                variant="outline"
+                className={cn(DASHBOARD_OUTLINE_BTN, "shrink-0")}
+              >
+                <Upload className="w-4 h-4 mr-2" /> Import Students
+              </Button>
+            </PlanGatedAction>
+          }
+        />
       </motion.div>
 
       {/* Stats — 3 columns when allocation exists, 2 otherwise */}
@@ -197,13 +196,15 @@ export default function PrincipalDashboard() {
         <StatCard icon={GraduationCap} label="Students" value={studentCount} tone="success" />
         {seats && (
           <div
-            className={`bg-card border shadow-sm rounded-2xl px-5 py-5 flex flex-col gap-1 ${
+            className={cn(
+              DASHBOARD_PANEL,
+              "px-5 py-5 flex flex-col gap-1",
               seatsExhausted
                 ? "border-destructive"
                 : (seats.seatsRemaining ?? 1) <= 3 && seats.hasAllocation
                   ? "border-[hsl(40_94%_52%)]"
-                  : "border-border/40"
-            }`}
+                  : undefined,
+            )}
           >
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">
@@ -441,7 +442,7 @@ export default function PrincipalDashboard() {
       </Dialog>
 
       {/* List */}
-      <div className="bg-card border border-border/40 shadow-sm rounded-2xl overflow-hidden">
+      <div className={DASHBOARD_PANEL_OVERFLOW}>
         {tab === "teachers" ? (
           teachers.length === 0 ? (
             <div className="py-16 flex flex-col items-center gap-2 text-muted-foreground">

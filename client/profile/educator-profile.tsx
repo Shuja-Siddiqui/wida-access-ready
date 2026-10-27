@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getGetTeacherQueryKey, useUpdateTeacher } from "@/api-generated";
 import { useUser } from "@/contexts/user-context";
 import { PageContainer } from "@/components/page-container";
+import { PageHeader } from "@/components/page-header";
 import { LoadingScreen } from "@/components/loading-screen";
 import { AppInput } from "@/components/app-input";
 import { useToast } from "@/hooks/use-toast";
@@ -79,7 +80,12 @@ export function EducatorProfile({ teacherId }: { teacherId: string }) {
   };
 
   return (
-    <PageContainer maxWidth="max-w-5xl">
+    <PageContainer className="space-y-8" themeWash>
+      <PageHeader
+        eyebrow="Account"
+        title="Profile"
+        description="Update your name, avatar, and how you appear across your classes."
+      />
       <ProfilePageShell
         displayName={name || teacher.name}
         roleLabel={teacher.role === "parent" ? "Parent" : "Teacher"}

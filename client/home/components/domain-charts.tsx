@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { domainLabel } from "../home-types";
 import { LevelRing, SessionBars } from "@/components/level-ring";
-import { DASHBOARD_MICRO, DASHBOARD_PANEL_HOVER } from "./dashboard-ui-styles";
-import { domainBrand, domainBrandStroke } from "./domain-brand-colors";
+import { DASHBOARD_MICRO } from "./dashboard-ui-styles";
+import { domainBrand, domainBrandStroke, domainDashboardCardShell } from "./domain-brand-colors";
 
 export type SessionPoint = {
   date: string;
@@ -51,18 +51,24 @@ function SingleDomainCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08 + index * 0.05, duration: 0.28 }}
       onClick={() => onSelect(d.domain)}
-      className={cn(
-        DASHBOARD_PANEL_HOVER,
-        "group w-full text-left relative overflow-hidden flex flex-col",
-      )}
+      className={cn(domainDashboardCardShell(d.domain), "group w-full text-left flex flex-col")}
     >
-      <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: stroke }} />
+      <div
+        aria-hidden
+        className={cn("absolute -right-10 -top-10 h-36 w-36 rounded-full blur-3xl opacity-50 pointer-events-none", brand.glow)}
+      />
+      <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl opacity-90" style={{ background: stroke }} />
 
-      <div className="p-6 flex-1 flex flex-col gap-5">
+      <div className="relative p-6 flex-1 flex flex-col gap-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0">
-            <div className={cn("shrink-0 w-9 h-9 rounded-lg flex items-center justify-center", brand.bgSoft)}>
-              <Icon className={cn("w-4 h-4", brand.text)} />
+            <div
+              className={cn(
+                "shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ring-1 ring-white/20 dark:ring-white/10 shadow-sm",
+                brand.bgSoft,
+              )}
+            >
+              <Icon className={cn("w-5 h-5", brand.text)} />
             </div>
             <div>
               <span className="block font-black text-xl tracking-tight leading-none text-foreground">
@@ -97,7 +103,14 @@ function SingleDomainCard({
         </div>
       </div>
 
-      <div className="px-6 py-3.5 border-t border-border/10 flex justify-between items-center">
+      <div
+        className={cn(
+          "relative px-6 py-3.5 border-t flex justify-between items-center",
+          brand.footerWash,
+          "border-t",
+          brand.panelBorder,
+        )}
+      >
         <span className={DASHBOARD_MICRO}>
           {sessCount > 0 ? `${sessCount} sessions` : "New"}
         </span>

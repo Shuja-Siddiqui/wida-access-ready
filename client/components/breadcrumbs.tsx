@@ -127,6 +127,9 @@ function buildCrumbs(
   if (location === "/detect") {
     return [home(), { label: "Box testing", icon: Scan }];
   }
+  if (location === "/settings") {
+    return [home(), { label: "Settings" }];
+  }
   if (location === "/profile") {
     return [home(), { label: "Profile", icon: User }];
   }

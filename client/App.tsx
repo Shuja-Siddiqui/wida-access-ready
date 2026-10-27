@@ -21,6 +21,7 @@ import AuthCallback from "@/auth-callback/auth-callback";
 import ForgotPassword from "@/forgot-password/forgot-password";
 import ResetPassword from "@/reset-password/reset-password";
 import Profile from "@/profile/profile";
+import Settings from "@/settings/settings";
 import Billing from "@/billing/billing";
 import Checkout from "@/billing/checkout";
 import Session from "@/session/session";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/accept-invite" component={AcceptInvite} />
       <Route path="/profile" component={Profile} />
+      <Route path="/settings" component={Settings} />
       <Route path="/billing" component={Billing} />
       <Route path="/billing/checkout" component={Checkout} />
       <Route path="/session/complete" component={SessionComplete} />

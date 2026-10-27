@@ -17,6 +17,8 @@ interface DeleteStudentDialogProps {
   onOpenChange: (open: boolean) => void;
   student?: { id: string; name: string } | null;
   onSuccess?: () => void;
+  /** Toast line after delete; default is teacher roster wording. */
+  successDescription?: string;
 }
 
 export function DeleteStudentDialog({
@@ -24,6 +26,7 @@ export function DeleteStudentDialog({
   onOpenChange,
   student,
   onSuccess,
+  successDescription = "was removed from your roster.",
 }: DeleteStudentDialogProps) {
   const { toast } = useToast();
   const deleteStudent = useDeleteStudent();
@@ -32,7 +35,7 @@ export function DeleteStudentDialog({
     if (!student) return;
     try {
       await deleteStudent.mutateAsync({ studentId: student.id });
-      toast({ title: "Student deleted", description: `${student.name} was removed from your roster.` });
+      toast({ title: "Student deleted", description: `${student.name} ${successDescription}` });
       onSuccess?.();
       onOpenChange(false);
     } catch {

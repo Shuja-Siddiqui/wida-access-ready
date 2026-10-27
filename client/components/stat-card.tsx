@@ -3,34 +3,47 @@ import type { LucideIcon } from "lucide-react";
 
 export type StatTone = "default" | "success" | "warning" | "danger";
 
-const TONES: Record<StatTone, { bg: string; iconBg: string; iconColor: string; text: string; label: string }> = {
+const TONES: Record<
+  StatTone,
+  {
+    shell: string;
+    iconWrap: string;
+    iconColor: string;
+    value: string;
+    label: string;
+  }
+> = {
   default: {
-    bg: "bg-gradient-to-br from-trust-blue/10 to-trust-blue/5",
-    iconBg: "bg-trust-blue/20",
-    iconColor: "text-trust-blue",
-    text: "text-trust-blue",
-    label: "text-trust-blue/80"
+    shell:
+      "border-primary/15 bg-gradient-to-br from-primary/[0.12] via-card to-trust-blue/[0.1]",
+    iconWrap: "bg-gradient-to-br from-primary/25 to-trust-blue/20 shadow-inner",
+    iconColor: "text-primary",
+    value: "text-foreground",
+    label: "text-muted-foreground",
   },
   success: {
-    bg: "bg-gradient-to-br from-growth-green/10 to-growth-green/5",
-    iconBg: "bg-growth-green/20",
+    shell:
+      "border-growth-green/20 bg-gradient-to-br from-growth-green/[0.14] via-card to-primary/[0.05]",
+    iconWrap: "bg-gradient-to-br from-growth-green/30 to-growth-green/10 shadow-inner",
     iconColor: "text-growth-green",
-    text: "text-growth-green",
-    label: "text-growth-green/80"
+    value: "text-foreground",
+    label: "text-muted-foreground",
   },
   warning: {
-    bg: "bg-gradient-to-br from-streak-gold/15 to-streak-gold/5",
-    iconBg: "bg-streak-gold/20",
-    iconColor: "text-streak-gold",
-    text: "text-foreground",
-    label: "text-foreground/70"
+    shell:
+      "border-logo-gold/25 bg-gradient-to-br from-logo-gold/[0.16] via-card to-primary/[0.05]",
+    iconWrap: "bg-gradient-to-br from-logo-gold/35 to-logo-gold/10 shadow-inner",
+    iconColor: "text-logo-gold",
+    value: "text-foreground",
+    label: "text-muted-foreground",
   },
   danger: {
-    bg: "bg-gradient-to-br from-energy-orange/10 to-energy-orange/5",
-    iconBg: "bg-energy-orange/20",
+    shell:
+      "border-energy-orange/25 bg-gradient-to-br from-energy-orange/[0.14] via-card to-destructive/[0.06]",
+    iconWrap: "bg-gradient-to-br from-energy-orange/30 to-energy-orange/10 shadow-inner",
     iconColor: "text-energy-orange",
-    text: "text-energy-orange",
-    label: "text-energy-orange/80"
+    value: "text-foreground",
+    label: "text-muted-foreground",
   },
 };
 
@@ -46,17 +59,25 @@ export function StatCard({
   tone?: StatTone;
 }) {
   const styles = TONES[tone];
-  
+
   return (
-    <div className={cn(
-      "rounded-2xl border border-border/30 p-6 flex flex-col gap-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
-      styles.bg
-    )}>
-      <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm", styles.iconBg)}>
+    <div
+      className={cn(
+        "rounded-2xl border p-6 flex flex-col gap-5 shadow-sm",
+        "transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5",
+        styles.shell,
+      )}
+    >
+      <div
+        className={cn(
+          "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ring-1 ring-white/10 dark:ring-white/5",
+          styles.iconWrap,
+        )}
+      >
         <Icon className={cn("w-6 h-6 stroke-[2]", styles.iconColor)} />
       </div>
       <div className="min-w-0">
-        <p className={cn("text-4xl sm:text-5xl font-black leading-none tabular-nums tracking-tight", styles.text)}>
+        <p className={cn("text-4xl sm:text-5xl font-black leading-none tabular-nums tracking-tight", styles.value)}>
           {value}
         </p>
         <p className={cn("text-xs font-semibold uppercase tracking-widest mt-3 truncate", styles.label)}>

@@ -3,6 +3,8 @@ import { ExternalLink, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
+import { PageHeader } from "@/components/page-header";
 
 export const PERSONAL_FEATURES = [
   "1 student profile",
@@ -31,11 +33,12 @@ export function BillingPageHeader({
   description: string;
 }) {
   return (
-    <header className="space-y-3 border-b border-border/40 pb-6">
-      <p className="heading-eyebrow">{eyebrow}</p>
-      <h1 className="heading-page text-3xl sm:text-4xl">{title}</h1>
-      <p className="text-base text-muted-foreground font-medium max-w-2xl leading-relaxed">{description}</p>
-    </header>
+    <PageHeader
+      eyebrow={eyebrow}
+      title={title}
+      description={description}
+      className="border-b border-border/40 pb-6"
+    />
   );
 }
 
@@ -67,7 +70,7 @@ export function SubscriptionOverview({
   cancelAtPeriodEnd?: boolean;
 }) {
   return (
-    <section className="rounded-2xl border border-border/50 bg-card shadow-sm overflow-hidden border-l-4 border-l-primary">
+    <section className={cn(DASHBOARD_PANEL_OVERFLOW, "border-l-4 border-l-primary")}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 px-6 py-5 border-b border-border/40 bg-primary/[0.04]">
         <div className="space-y-1.5 min-w-0">
           <div className="flex flex-wrap items-center gap-2">

@@ -35,9 +35,13 @@ export function PlanCard({
     <article
       className={cn(
         "group relative flex flex-col rounded-2xl border overflow-hidden transition-all duration-300",
-        locked && "border-border/40 bg-card/80 opacity-80",
-        highlighted && !locked && "border-primary/40 bg-card shadow-lg shadow-primary/10 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/15",
-        !locked && !highlighted && "border-border/50 bg-card shadow-sm hover:-translate-y-0.5 hover:shadow-md",
+        locked && "border-border/40 bg-gradient-to-br from-card/80 via-card/80 to-primary/[0.04] opacity-80",
+        highlighted &&
+          !locked &&
+          "border-primary/40 bg-gradient-to-br from-card via-card to-primary/[0.1] shadow-lg shadow-primary/10 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/15",
+        !locked &&
+          !highlighted &&
+          "border-border/50 bg-gradient-to-br from-card via-card to-primary/[0.06] shadow-sm hover:-translate-y-0.5 hover:shadow-md",
       )}
     >
       {/* Header band */}

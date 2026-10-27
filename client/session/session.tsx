@@ -12,6 +12,7 @@ import { useViewportPageLayout } from "@/components/app-layout";
 import { LoadingScreen } from "@/components/loading-screen";
 import { cn } from "@/lib/utils";
 import { resolveSessionStartFromUiKey } from "@/home/home-types";
+import { buildCompleteSessionPayload, sanitizeAnswerForApi } from "@/lib/session-complete-payload";
 
 type SessionState = "loading" | "error" | "active" | "finishing";
 
@@ -84,30 +85,33 @@ export default function Session() {
     if (!session) return;
     setState("finishing");
 
-    const correctCount = answers.filter(a => a.correct).length;
-    const total = session.content?.data?.questions?.length || 1;
-    const scorePct = total > 0 ? (correctCount / total) * 100 : 80;
-
     try {
       const questions = session.content?.data?.questions || [];
       const payloadAnswers = (questions.length > 0 ? questions : [session.content?.data]).map(
-        (q: Record<string, unknown> | undefined, i: number) => ({
-          question: String(q?.question ?? q?.prompt ?? ""),
-          content: q && typeof q === "object" ? q : undefined,
-          submittedAnswer: answers[i],
-          correct: Boolean(answers[i]?.correct),
-        }),
+        (q: Record<string, unknown> | undefined, i: number) =>
+          sanitizeAnswerForApi({
+            question: String(q?.question ?? q?.prompt ?? ""),
+            content: q && typeof q === "object" && !Array.isArray(q) ? q : undefined,
+            submittedAnswer: answers[i],
+            correct: Boolean(answers[i]?.correct),
+          }),
       );
+      const payload = buildCompleteSessionPayload({
+        finalAnswers: payloadAnswers.map((row: ReturnType<typeof sanitizeAnswerForApi>) => ({
+          question: row.question,
+          content: row.content,
+          submittedAnswer: row.submittedAnswer,
+          correct: row.correct,
+        })),
+        questionsLength: questions.length || 1,
+        durationSeconds: 600,
+        weakTypes: [],
+      });
       const result = await request(
         `/api/students/${studentId}/sessions/${session.sessionId}/complete`,
         {
           method: "POST",
-          body: JSON.stringify({
-            scorePct,
-            durationSeconds: 600,
-            weakTypes: [],
-            answers: payloadAnswers,
-          }),
+          body: JSON.stringify(payload),
         },
       );
       localStorage.setItem("lastSessionResult", JSON.stringify(result));

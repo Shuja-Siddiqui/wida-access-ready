@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useApi } from "@/hooks/use-api";
 import type { DistrictSchool, DistrictPlanInfo, SchoolAllocation } from "./api";
+import { DASHBOARD_PANEL, DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
+import { cn } from "@/lib/utils";
 
 interface InviteSchoolModalProps {
   schools: DistrictSchool[];
@@ -91,7 +93,7 @@ function InviteSchoolModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.18 }}
-        className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col"
+        className={cn(DASHBOARD_PANEL, "shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col")}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -182,7 +184,7 @@ function InviteSchoolModal({
                         [school.id]: Math.max(0, parseInt(e.target.value, 10) || 0),
                       }))
                     }
-                    className="w-14 text-center text-sm font-black bg-card border border-border/40 rounded-xl px-2 py-1.5 text-foreground shadow-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                    className="w-14 text-center text-sm font-black border border-border/40 rounded-xl px-2 py-1.5 text-foreground shadow-sm bg-gradient-to-br from-card via-card to-primary/[0.05] focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   />
                   <button
                     className="w-7 h-7 rounded-lg bg-muted hover:bg-muted/70 text-foreground font-black text-sm flex items-center justify-center transition-colors"
@@ -317,7 +319,7 @@ export function DistrictPlanCard({
 
   if (!plan.hasActivePlan) {
     return (
-      <div className="bg-card border border-border rounded-2xl px-5 py-5 space-y-3">
+      <div className={cn(DASHBOARD_PANEL, "px-5 py-5 space-y-3")}>
         <div className="flex items-start gap-4">
           <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
             <CreditCard className="w-5 h-5 text-muted-foreground" />
@@ -355,7 +357,7 @@ export function DistrictPlanCard({
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border/40 shadow-sm rounded-2xl overflow-hidden"
+        className={DASHBOARD_PANEL_OVERFLOW}
       >
         {/* Top bar */}
         <div className="px-5 py-4 flex items-center gap-4">
@@ -417,7 +419,7 @@ export function DistrictPlanCard({
             ].map(({ label, value, hint }) => (
               <div
                 key={label}
-                className="bg-card border border-border/40 shadow-sm rounded-xl px-3 py-2.5 text-center"
+                className={cn(DASHBOARD_PANEL, "rounded-xl px-3 py-2.5 text-center")}
               >
                 <p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
                   {label}

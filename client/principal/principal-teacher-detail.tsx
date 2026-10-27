@@ -8,6 +8,9 @@ import {
 import { useApi } from "@/hooks/use-api";
 import { useToast } from "@/hooks/use-toast";
 import { PageContainer } from "@/components/page-container";
+import { PageBackLink, PageHeader } from "@/components/page-header";
+import { DASHBOARD_PANEL, DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
+import { cn } from "@/lib/utils";
 import { LoadingScreen, PageLoader } from "@/components/loading-screen";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
@@ -158,50 +161,31 @@ export default function PrincipalTeacherDetail() {
   if (!teacher) return <LoadingScreen />;
 
   return (
-    <PageContainer maxWidth="max-w-5xl" className="space-y-6">
-      {/* Back */}
-      <button
-        onClick={() => setLocation("/principal")}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to school
-      </button>
-
-      {/* Profile card */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border rounded-2xl p-6 flex items-start gap-5"
-      >
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-black text-primary flex-shrink-0">
-          {teacher.name[0]}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-black tracking-tight">{teacher.name}</h1>
-          <div className="flex flex-wrap items-center gap-3 mt-1">
-            <span className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Mail className="w-3.5 h-3.5" />
-              {teacher.email}
+    <PageContainer className="space-y-8" themeWash>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <PageHeader
+          leading={<PageBackLink onClick={() => setLocation("/principal")}>Back to school</PageBackLink>}
+          eyebrow="Teacher profile"
+          title={teacher.name}
+          description={
+            <span className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+              <span className="inline-flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 shrink-0" aria-hidden />
+                {teacher.email}
+              </span>
+              <span className="text-xs font-bold uppercase tracking-wide bg-primary/10 text-primary px-2 py-0.5 rounded-full w-fit">
+                {teacher.role}
+              </span>
+              {teacher.school?.name ? <span>{teacher.school.name}</span> : null}
             </span>
-            <span className="text-xs font-bold uppercase tracking-wide bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-              {teacher.role}
-            </span>
-          </div>
-          {teacher.school?.name && (
-            <p className="text-sm text-muted-foreground mt-1">{teacher.school.name}</p>
-          )}
-        </div>
-
-        {/* Assign Students button */}
-        <Button
-          onClick={() => void openAssignModal()}
-          className="shrink-0 gap-2"
-          size="sm"
-        >
-          <UserPlus className="w-4 h-4" />
-          Assign Students
-        </Button>
+          }
+          actions={
+            <Button onClick={() => void openAssignModal()} className="shrink-0 gap-2" size="sm">
+              <UserPlus className="w-4 h-4" />
+              Assign Students
+            </Button>
+          }
+        />
       </motion.div>
 
       {/* Stats */}
@@ -226,7 +210,7 @@ export default function PrincipalTeacherDetail() {
         </div>
 
         {students.length === 0 ? (
-          <div className="bg-card border border-border rounded-2xl py-14 flex flex-col items-center gap-3 text-muted-foreground">
+          <div className={cn(DASHBOARD_PANEL, "py-14 flex flex-col items-center gap-3 text-muted-foreground")}>
             <GraduationCap className="w-7 h-7" />
             <p className="font-medium">No students assigned yet</p>
             <Button
@@ -239,7 +223,7 @@ export default function PrincipalTeacherDetail() {
             </Button>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className={DASHBOARD_PANEL_OVERFLOW}>
             <ul>
               {students.map((s, i) => (
                 <li key={s.id}>

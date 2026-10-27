@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DASHBOARD_PANEL } from "@/components/dashboard-ui-styles";
 
 export interface ProfileLockedDetail {
   icon: LucideIcon;
@@ -44,14 +45,14 @@ export function ProfilePageShell({
   footer,
 }: ProfilePageShellProps) {
   return (
-    <div className="mx-auto w-full max-w-5xl">
+    <div className="w-full">
       {/* Mobile: identity → form. Desktop (lg+): identity left, form right */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
         <motion.aside
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="relative overflow-hidden rounded-3xl border border-border/50 bg-card shadow-sm lg:sticky lg:top-6"
+          className={cn(DASHBOARD_PANEL, "relative overflow-hidden rounded-3xl lg:sticky lg:top-6")}
         >
           <div
             className="h-24 lg:h-28 bg-gradient-to-br from-primary/25 via-primary/8 to-transparent"
@@ -100,7 +101,7 @@ export function ProfilePageShell({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.42, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-3xl border border-border/50 bg-card p-6 sm:p-8 shadow-sm space-y-6 min-w-0"
+          className={cn(DASHBOARD_PANEL, "rounded-3xl p-6 sm:p-8 space-y-6 min-w-0")}
         >
           <div>
             <h2 className="text-lg font-bold text-foreground">Personal details</h2>

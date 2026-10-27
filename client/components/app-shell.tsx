@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavConfig } from "@/components/nav-config";
 import { BreadcrumbTrailProvider } from "@/components/breadcrumbs";
 import { AppLayoutProvider, AppMain, useAppLayout } from "@/components/app-layout";
+import { PageThemeWashProvider } from "@/components/page-theme-wash";
 import { Navbar } from "@/components/navbar";
 import { cn } from "@/lib/utils";
 
@@ -140,9 +141,11 @@ function AppShellFrame({ children }: { children: React.ReactNode }) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AppLayoutProvider>
-      <BreadcrumbTrailProvider>
-        <AppShellFrame>{children}</AppShellFrame>
-      </BreadcrumbTrailProvider>
+      <PageThemeWashProvider>
+        <BreadcrumbTrailProvider>
+          <AppShellFrame>{children}</AppShellFrame>
+        </BreadcrumbTrailProvider>
+      </PageThemeWashProvider>
     </AppLayoutProvider>
   );
 }

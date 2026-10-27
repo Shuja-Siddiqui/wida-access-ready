@@ -326,7 +326,7 @@ export default function Onboarding() {
                     className={`text-left px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                       homeLanguage === lang
                         ? "bg-primary text-primary-foreground border-primary/30 shadow-sm"
-                        : "border-border/60 bg-card/80 hover:border-primary/25 hover:bg-card text-foreground"
+                        : "border-border/60 bg-gradient-to-br from-card/90 via-card/90 to-primary/[0.06] hover:border-primary/25 hover:to-primary/[0.1] text-foreground"
                     }`}
                   >
                     {lang}
@@ -436,8 +436,8 @@ export default function Onboarding() {
                       onClick={() => setTrack(opt.value)}
                       className={`w-full text-left rounded-2xl border p-4 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                         selected
-                          ? "border-primary/35 bg-card shadow-[0_8px_24px_hsl(var(--primary)/0.08)]"
-                          : "border-border/50 bg-card/80 hover:border-primary/20 hover:bg-card"
+                          ? "border-primary/35 bg-gradient-to-br from-card via-card to-primary/[0.1] shadow-[0_8px_24px_hsl(var(--primary)/0.08)]"
+                          : "border-border/50 bg-gradient-to-br from-card/90 via-card/90 to-primary/[0.05] hover:border-primary/20 hover:to-primary/[0.08]"
                       }`}
                     >
                       <div className="flex items-start gap-4">

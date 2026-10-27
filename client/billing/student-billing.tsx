@@ -71,7 +71,7 @@ export function StudentBilling({ studentId }: { studentId: string }) {
   };
 
   return (
-    <PageContainer maxWidth="max-w-5xl" className="space-y-10">
+    <PageContainer className="space-y-8" themeWash>
       <BillingPageHeader
         eyebrow="Account"
         title="Billing and subscription"

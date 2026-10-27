@@ -25,6 +25,8 @@ import { districtApi } from "./api";
 import { DistrictPlanCard } from "./district-plan-card";
 import { MemberActiveToggle } from "./member-active-toggle";
 import { cn } from "@/lib/utils";
+import { DASHBOARD_OUTLINE_BTN, DASHBOARD_PANEL, DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
+import { PageHeader } from "@/components/page-header";
 
 const STALE_PANEL = 3 * 60 * 1000;
 
@@ -63,7 +65,7 @@ function DistrictStudentCard({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border/40 shadow-sm",
+        "flex items-center gap-3 px-4 py-3 rounded-xl border border-border/40 shadow-sm bg-gradient-to-br from-card via-card to-primary/[0.06]",
         isActive ? "hover:shadow-md hover:-translate-y-0.5 transition-all" : "opacity-70",
       )}
     >
@@ -225,34 +227,34 @@ export default function DistrictDashboard() {
     });
   }
   return (
-    <PageContainer maxWidth="max-w-5xl" className="space-y-8">
-      {/* Header */}
+    <PageContainer className="space-y-8" themeWash>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
-          <div className="space-y-1">
-            <h1 className="heading-page text-3xl">
-              {district?.name ?? "My District"}
-            </h1>
-            <p className="text-sm font-medium text-muted-foreground">
-              {district?.state ? `${district.state} · District dashboard` : "District dashboard"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-            <Button
-              onClick={() => setLocation("/district/schools")}
-              className="btn-brand font-bold rounded-xl"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Add School
-            </Button>
-            <Button
-              onClick={() => setLocation("/district/import")}
-              variant="outline"
-              className="font-bold border border-border/40 shadow-sm hover:-translate-y-1 hover:shadow-sm active:translate-y-0 active:shadow-sm transition-all rounded-xl shrink-0 bg-card hover:bg-card"
-            >
-              <Upload className="w-4 h-4 mr-2" /> Import Students
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          eyebrow="District"
+          title={district?.name ?? "My District"}
+          description={
+            district?.state
+              ? `${district.state} · Schools, staff, billing, and roster across your district.`
+              : "Schools, staff, billing, and roster across your district."
+          }
+          actions={
+            <>
+              <Button
+                onClick={() => setLocation("/district/schools")}
+                className="btn-brand font-bold rounded-xl"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Add School
+              </Button>
+              <Button
+                onClick={() => setLocation("/district/import")}
+                variant="outline"
+                className={cn(DASHBOARD_OUTLINE_BTN, "shrink-0")}
+              >
+                <Upload className="w-4 h-4 mr-2" /> Import Students
+              </Button>
+            </>
+          }
+        />
       </motion.div>
 
       {planQuery.data && (
@@ -272,7 +274,7 @@ export default function DistrictDashboard() {
       </div>
 
       {schools.length === 0 ? (
-        <div className="bg-card border border-border/40 shadow-sm rounded-2xl py-16 flex flex-col items-center gap-2 text-muted-foreground">
+        <div className={cn(DASHBOARD_PANEL, "py-16 flex flex-col items-center gap-2 text-muted-foreground")}>
           <Building2 className="w-10 h-10 mb-2" />
           <p className="font-bold">No schools in this district yet</p>
         </div>
@@ -337,7 +339,7 @@ export default function DistrictDashboard() {
 
                     if (isEmpty) {
                       return (
-                        <div className="bg-card border border-border/40 shadow-sm rounded-2xl py-12 flex flex-col items-center gap-2 text-muted-foreground">
+                        <div className={cn(DASHBOARD_PANEL, "py-12 flex flex-col items-center gap-2 text-muted-foreground")}>
                           <Users className="w-8 h-8 mb-2" />
                           <p className="font-bold text-sm">No staff or students in this school yet</p>
                         </div>
@@ -355,7 +357,7 @@ export default function DistrictDashboard() {
                             {activePanel.principals.map((principal) => (
                               <div
                                 key={principal.id}
-                                className="bg-card border border-border/40 shadow-sm rounded-2xl px-5 py-4 flex items-center gap-4"
+                                className={cn(DASHBOARD_PANEL, "px-5 py-4 flex items-center gap-4")}
                               >
                                 <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-sm font-black text-amber-700 dark:text-amber-400 flex-shrink-0">
                                   {principal.name[0]?.toUpperCase()}
@@ -399,7 +401,7 @@ export default function DistrictDashboard() {
                                   initial={{ opacity: 0, y: 6 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ delay: i * 0.04 }}
-                                  className="bg-card border border-border/40 shadow-sm rounded-2xl overflow-hidden"
+                                  className={DASHBOARD_PANEL_OVERFLOW}
                                 >
                                   <button
                                     type="button"

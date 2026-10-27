@@ -1,4 +1,4 @@
-import { CreditCard, Home as HomeIcon, LogOut, Moon, Sun, User, type LucideIcon } from "lucide-react";
+import { CreditCard, Home as HomeIcon, LogOut, Moon, Settings, Sun, User, type LucideIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
@@ -33,6 +33,7 @@ export function useNavConfig() {
   const navItems: NavItem[] = [
     { key: "home", label: "Home", icon: HomeIcon, onClick: () => setLocation(homePath), active: location === homePath },
     { key: "profile", label: "Profile", icon: User, onClick: () => setLocation("/profile"), active: location === "/profile" },
+    { key: "settings", label: "Settings", icon: Settings, onClick: () => setLocation("/settings"), active: location === "/settings" },
     { key: "billing", label: "Billing", icon: CreditCard, onClick: () => setLocation("/billing"), active: location === "/billing" },
   ];
 

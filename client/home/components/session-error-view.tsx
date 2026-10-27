@@ -13,7 +13,7 @@ export function SessionErrorView({ errorMsg, onBack, onRetry }: SessionErrorView
 
   return (
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-md bg-card border border-border/40 rounded-3xl p-8 shadow-xl text-center relative overflow-hidden">
+        <div className="w-full max-w-md rounded-3xl border border-border/40 bg-gradient-to-br from-card via-card to-primary/[0.08] p-8 shadow-xl text-center relative overflow-hidden">
           
           <div className="w-20 h-20 bg-destructive/10 rounded-2xl flex items-center justify-center mx-auto mb-6 mt-2">
             <AlertCircle className="w-10 h-10 text-destructive stroke-[2]" />

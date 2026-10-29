@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MemberActiveToggle } from "./member-active-toggle";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/page-container";
-import { PageBackLink, PageHeader, StudentMetaLine } from "@/components/page-header";
+import { PageBackLink, PageHeader, StudentProfileDescription } from "@/components/page-header";
 import { LoadingScreen } from "@/components/loading-screen";
 import { StudentDomainProgressBars } from "@/components/student-domain-progress-bars";
 import { StudentDomainChart } from "@/components/student-domain-chart";
@@ -85,7 +85,13 @@ export default function DistrictStudentDetail() {
         leading={<PageBackLink onClick={() => setLocation("/district")}>Back to district</PageBackLink>}
         eyebrow="Student profile"
         title={student.name}
-        description={<StudentMetaLine assessment={student.stateAssessment} gradeBand={student.gradeBand} />}
+        description={
+          <StudentProfileDescription
+            email={student.email}
+            assessment={student.stateAssessment}
+            gradeBand={student.gradeBand}
+          />
+        }
         actions={
           <Button
             type="button"

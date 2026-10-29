@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatStudentEmail } from "@/components/student-roster-identity";
 
 export function PageBackLink({
   onClick,
@@ -41,6 +42,26 @@ export function StudentMetaLine({
       {gradeBand != null && gradeBand !== "" && (
         <span className="text-sm font-bold text-muted-foreground">Grade {gradeBand}</span>
       )}
+    </span>
+  );
+}
+
+/** Detail page subtitle: email + assessment meta. */
+export function StudentProfileDescription({
+  email,
+  assessment,
+  gradeBand,
+}: {
+  email?: string | null;
+  assessment: string;
+  gradeBand?: string | number | null;
+}) {
+  return (
+    <span className="flex flex-col gap-2">
+      <span className="text-sm sm:text-base text-foreground font-semibold truncate">
+        {formatStudentEmail(email)}
+      </span>
+      <StudentMetaLine assessment={assessment} gradeBand={gradeBand} />
     </span>
   );
 }

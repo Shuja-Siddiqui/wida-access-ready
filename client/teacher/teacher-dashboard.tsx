@@ -4,10 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useGetTeacherDashboard, getGetTeacherDashboardQueryKey, useExportStudentsCsv, type Student } from "@/api-generated";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
+import { StudentNavPill, StudentRosterIdentity } from "@/components/student-roster-identity";
 import { DASHBOARD_OUTLINE_BTN, DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
 import { cn } from "@/lib/utils";
 import { LoadingScreen } from "@/components/loading-screen";
@@ -62,13 +62,21 @@ export default function TeacherDashboard() {
   }
 
   const stalledCount = dashboard.allStudents.filter((s) => s.isStalled).length;
+  const districtSharedRoster = dashboard.rosterMode === "district_shared";
+
+  const canManageStudent = (student: Student) =>
+    isSoloTeacher || student.teacherId === teacherId;
 
   return (
     <PageContainer className="space-y-8" themeWash>
         <PageHeader
           eyebrow="Teacher"
           title="Dashboard"
-          description="Track every learner's progress toward their exit goal."
+          description={
+            districtSharedRoster
+              ? "Demo: all students in your district are visible. You can only edit students assigned to you."
+              : "Track every learner's progress toward their exit goal."
+          }
           actions={
           <>
             <Button onClick={handleExport} variant="outline" className={DASHBOARD_OUTLINE_BTN}>
@@ -108,10 +116,13 @@ export default function TeacherDashboard() {
               <Flame className="w-5 h-5 fill-streak-gold" /> Close to Exit
             </h2>
             <div className="flex gap-2 flex-wrap">
-              {dashboard.exitWatchList.map(s => (
-                <Badge key={s.student.id} variant="outline" className="bg-card text-foreground font-bold border border-border/40 px-3 py-1.5 rounded-xl cursor-pointer hover:bg-streak-gold/20  hover:-translate-y-1 hover:bg-muted/60 shadow-sm transition-all active:translate-y-0" onClick={() => setLocation(`/teacher/student/${s.student.id}`)}>
-                  {s.student.name}
-                </Badge>
+              {dashboard.exitWatchList.map((s) => (
+                <StudentNavPill
+                  key={s.student.id}
+                  name={s.student.name}
+                  email={s.student.email}
+                  onClick={() => setLocation(`/teacher/student/${s.student.id}`)}
+                />
               ))}
             </div>
           </motion.div>
@@ -141,7 +152,13 @@ export default function TeacherDashboard() {
                 
                 return (
                   <TableRow key={s.student.id} className="cursor-pointer hover:bg-muted/30 transition-colors border-b border-border/10 last:border-none group" onClick={() => setLocation(`/teacher/student/${s.student.id}`)}>
-                    <TableCell className="font-black text-foreground group-hover:text-primary transition-colors">{s.student.name}</TableCell>
+                    <TableCell className="max-w-[220px]">
+                      <StudentRosterIdentity
+                        name={s.student.name}
+                        email={s.student.email}
+                        nameClassName="font-black text-foreground group-hover:text-primary transition-colors"
+                      />
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm font-medium">{s.student.stateAssessment}</TableCell>
                     <TableCell className="text-center"><DomainLevelBadge level={l?.currentLevel} domain="listening" /></TableCell>
                     <TableCell className="text-center"><DomainLevelBadge level={sp?.currentLevel} domain="speaking" /></TableCell>
@@ -157,26 +174,32 @@ export default function TeacherDashboard() {
                       <StudentStatusBadge isInactive={s.isInactive} isActive={s.isActive} isStalled={s.isStalled} />
                     </TableCell>
                     <TableCell className="text-right pr-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Edit ${s.student.name}`}
-                          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"
-                          onClick={(e) => { e.stopPropagation(); setEditingStudent(s.student); setFormOpen(true); }}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Delete ${s.student.name}`}
-                          className="h-8 w-8 text-muted-foreground hover:text-energy-orange hover:bg-energy-orange/10 rounded-lg"
-                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(s.student); }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      {canManageStudent(s.student) ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Edit ${s.student.name}`}
+                            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"
+                            onClick={(e) => { e.stopPropagation(); setEditingStudent(s.student); setFormOpen(true); }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Delete ${s.student.name}`}
+                            className="h-8 w-8 text-muted-foreground hover:text-energy-orange hover:bg-energy-orange/10 rounded-lg"
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget(s.student); }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                          View only
+                        </span>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

@@ -22,6 +22,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
+import { StudentRosterIdentity } from "@/components/student-roster-identity";
 import { DASHBOARD_OUTLINE_BTN, DASHBOARD_PANEL, DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
 import { cn } from "@/lib/utils";
 import { StudentFormDialog } from "@/teacher/components/student-form-dialog";
@@ -503,12 +504,16 @@ export default function PrincipalDashboard() {
                   <div className="w-9 h-9 rounded-full bg-[hsl(150_62%_41%)]/10 border border-[hsl(150_62%_41%)]/20 flex items-center justify-center text-sm font-black text-[hsl(150_62%_41%)] flex-shrink-0">
                     {s.name[0]}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold truncate group-hover:text-primary transition-colors">{s.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {s.stateAssessment} · Grade {s.gradeBand}
-                    </p>
-                  </div>
+                  <StudentRosterIdentity
+                    name={s.name}
+                    email={s.email}
+                    nameClassName="font-bold group-hover:text-primary transition-colors"
+                    secondary={
+                      <>
+                        {s.stateAssessment} · Grade {s.gradeBand}
+                      </>
+                    }
+                  />
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <span className="text-xs font-medium text-muted-foreground hidden sm:block">
                       {s.guardianId ? teacherName(s.guardianId) : <span className="italic">Unassigned</span>}

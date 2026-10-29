@@ -1,11 +1,12 @@
 import { useParams, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import { useGetStudent, getGetStudentQueryKey } from "@/api-generated";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit3, Calendar, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/page-container";
-import { PageBackLink, PageHeader, StudentMetaLine } from "@/components/page-header";
+import { PageBackLink, PageHeader, StudentProfileDescription } from "@/components/page-header";
 import { LoadingScreen } from "@/components/loading-screen";
 import { StudentDomainProgressBars } from "@/components/student-domain-progress-bars";
 import { StudentDomainChart } from "@/components/student-domain-chart";
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 export default function TeacherStudentDetail() {
   const { studentId } = useParams<{ studentId: string }>();
   const [, setLocation] = useLocation();
+  const { teacherId, teacher } = useAuth();
 
   const { data, isLoading } = useGetStudent(studentId || "", {
     query: { enabled: !!studentId, queryKey: getGetStudentQueryKey(studentId || "") }
@@ -26,6 +28,8 @@ export default function TeacherStudentDetail() {
   }
 
   const { student, progress, recentSessions } = data;
+  const isSoloTeacher = !teacher?.schoolId;
+  const canManageStudent = isSoloTeacher || student.teacherId === teacherId;
 
   const chartSessions = recentSessions.map((s) => ({
     domain: s.domain,
@@ -38,11 +42,19 @@ export default function TeacherStudentDetail() {
         leading={<PageBackLink onClick={() => setLocation("/teacher")}>Back to roster</PageBackLink>}
         eyebrow="Student profile"
         title={student.name}
-        description={<StudentMetaLine assessment={student.stateAssessment} gradeBand={student.gradeBand} />}
+        description={
+          <StudentProfileDescription
+            email={student.email}
+            assessment={student.stateAssessment}
+            gradeBand={student.gradeBand}
+          />
+        }
         actions={
-          <Button onClick={() => setLocation(`/teacher/student/${student.id}/scores`)} className="font-bold rounded-xl h-11 px-6 border border-border/40 shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all">
-            <Edit3 className="w-4 h-4 mr-2" /> Update Scores
-          </Button>
+          canManageStudent ? (
+            <Button onClick={() => setLocation(`/teacher/student/${student.id}/scores`)} className="font-bold rounded-xl h-11 px-6 border border-border/40 shadow-sm  hover:-translate-y-1 hover:shadow-sm  active:translate-y-0 active:shadow-sm transition-all">
+              <Edit3 className="w-4 h-4 mr-2" /> Update Scores
+            </Button>
+          ) : undefined
         }
       />
 

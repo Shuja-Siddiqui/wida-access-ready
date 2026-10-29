@@ -33,6 +33,8 @@ export interface SchoolStudent {
   name: string;
   gradeBand: string;
   stateAssessment: string;
+  /** @nullable */
+  email?: string | null;
   currentStreak: number;
   totalXp: number;
   isActive: boolean;

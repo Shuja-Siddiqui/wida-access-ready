@@ -557,6 +557,7 @@ export interface TeacherDashboard {
   stalledStudents: StudentWithProgress[];
   inactiveStudents: StudentWithProgress[];
   allStudents: StudentWithProgress[];
+  rosterMode?: "assigned" | "district_shared";
 }
 
 export type PlanPlanId = typeof PlanPlanId[keyof typeof PlanPlanId];

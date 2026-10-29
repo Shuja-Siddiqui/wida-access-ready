@@ -21,6 +21,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { customFetch } from "@/api-generated/custom-fetch";
 import { useDistrict } from "@/contexts/district-context";
 import type { SchoolTeacher, SchoolStudent } from "./api";
+import { StudentRosterIdentity } from "@/components/student-roster-identity";
 import { districtApi } from "./api";
 import { DistrictPlanCard } from "./district-plan-card";
 import { MemberActiveToggle } from "./member-active-toggle";
@@ -73,12 +74,16 @@ function DistrictStudentCard({
         <div className="w-10 h-10 rounded-xl bg-[hsl(286_70%_58%)]/10 border border-[hsl(286_70%_58%)]/20 flex items-center justify-center text-sm font-black text-[hsl(286_70%_58%)] flex-shrink-0">
           {student.name[0]?.toUpperCase()}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground truncate">{student.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {student.stateAssessment} · Grade {student.gradeBand}
-          </p>
-        </div>
+        <StudentRosterIdentity
+          name={student.name}
+          email={student.email}
+          nameClassName="text-sm font-semibold"
+          secondary={
+            <>
+              {student.stateAssessment} · Grade {student.gradeBand}
+            </>
+          }
+        />
       </button>
       <MemberActiveToggle
         kind="student"

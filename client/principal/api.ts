@@ -35,6 +35,8 @@ export interface SchoolStudent {
   name: string;
   gradeBand: string;
   stateAssessment: string;
+  /** @nullable */
+  email?: string | null;
   currentStreak: number;
   totalXp: number;
   guardianId?: string | null;
@@ -45,6 +47,8 @@ export interface TeacherStudent {
   name: string;
   gradeBand: string;
   stateAssessment: string;
+  /** @nullable */
+  email?: string | null;
   currentStreak: number;
   totalXp: number;
 }
@@ -63,10 +67,19 @@ export interface StudentDetailResponse {
     name: string;
     gradeBand: string;
     stateAssessment: string;
+    /** @nullable */
+    email?: string | null;
     currentStreak: number;
     totalXp: number;
   };
-  progress: { domains: StudentDomain[] };
+  progress: {
+    domains: StudentDomain[];
+    exitProjections?: Array<{
+      domain: string;
+      status?: string;
+      weeksToExit?: number | null;
+    }>;
+  };
   recentSessions: Array<{ id: string; domain: string; levelStart: number; score?: number; completedAt?: string; createdAt?: string }>;
 }
 

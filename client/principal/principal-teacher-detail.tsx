@@ -9,6 +9,7 @@ import { useApi } from "@/hooks/use-api";
 import { useToast } from "@/hooks/use-toast";
 import { PageContainer } from "@/components/page-container";
 import { PageBackLink, PageHeader } from "@/components/page-header";
+import { StudentRosterIdentity } from "@/components/student-roster-identity";
 import { DASHBOARD_PANEL, DASHBOARD_PANEL_OVERFLOW } from "@/components/dashboard-ui-styles";
 import { cn } from "@/lib/utils";
 import { LoadingScreen, PageLoader } from "@/components/loading-screen";
@@ -102,12 +103,15 @@ export default function PrincipalTeacherDetail() {
   const filteredStudents = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return allSchoolStudents;
-    return allSchoolStudents.filter(
-      (s) =>
+    return allSchoolStudents.filter((s) => {
+      const email = s.email?.toLowerCase() ?? "";
+      return (
         s.name.toLowerCase().includes(q) ||
+        email.includes(q) ||
         s.stateAssessment.toLowerCase().includes(q) ||
-        s.gradeBand.toLowerCase().includes(q),
-    );
+        s.gradeBand.toLowerCase().includes(q)
+      );
+    });
   }, [allSchoolStudents, search]);
 
   const allFilteredSelected =
@@ -236,12 +240,15 @@ export default function PrincipalTeacherDetail() {
                     <div className="w-9 h-9 rounded-full bg-[hsl(150_62%_41%)]/10 flex items-center justify-center text-sm font-black text-[hsl(150_62%_41%)] flex-shrink-0">
                       {s.name[0]}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold truncate">{s.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {s.stateAssessment} · Grade {s.gradeBand}
-                      </p>
-                    </div>
+                    <StudentRosterIdentity
+                      name={s.name}
+                      email={s.email}
+                      secondary={
+                        <>
+                          {s.stateAssessment} · Grade {s.gradeBand}
+                        </>
+                      }
+                    />
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <span className="text-sm text-muted-foreground"> {s.currentStreak}</span>
                       <span className="text-sm font-bold text-primary">{s.totalXp} XP</span>
@@ -362,12 +369,16 @@ export default function PrincipalTeacherDetail() {
                             </div>
 
                             {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-sm truncate">{s.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {s.stateAssessment} · Grade {s.gradeBand}
-                              </p>
-                            </div>
+                            <StudentRosterIdentity
+                              name={s.name}
+                              email={s.email}
+                              nameClassName="text-sm font-bold"
+                              secondary={
+                                <>
+                                  {s.stateAssessment} · Grade {s.gradeBand}
+                                </>
+                              }
+                            />
 
                             {/* Badge: already assigned to this teacher */}
                             {isAlreadyThisTeacher && (

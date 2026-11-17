@@ -304,9 +304,14 @@ export default function Landing() {
 
       {/* ── Features ─────────────────────────────────────────────────────────── */}
       <section id="features" className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 scroll-mt-20 relative">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 max-w-2xl mx-auto">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Why it works</p>
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight">Built around the test, not the curriculum</h2>
+          <h2 className="text-3xl md:text-5xl font-black tracking-tight">
+            Practice aligned to your exit standards
+          </h2>
+          <p className="text-muted-foreground font-medium text-lg mt-4 leading-relaxed">
+            Adaptive daily sessions, clear proficiency progress, and tools educators use to support learners on the path to exit.
+          </p>
         </div>
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {FEATURES.map((f, i) => (

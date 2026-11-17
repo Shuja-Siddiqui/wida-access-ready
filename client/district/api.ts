@@ -35,6 +35,7 @@ export interface SchoolStudent {
   stateAssessment: string;
   /** @nullable */
   email?: string | null;
+  assignedTeacherIds?: string[];
   currentStreak: number;
   totalXp: number;
   isActive: boolean;

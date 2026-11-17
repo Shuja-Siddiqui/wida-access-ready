@@ -29,7 +29,9 @@ export default function TeacherStudentDetail() {
 
   const { student, progress, recentSessions } = data;
   const isSoloTeacher = !teacher?.schoolId;
-  const canManageStudent = isSoloTeacher || student.teacherId === teacherId;
+  const assigned = (student as typeof student & { assignedTeacherIds?: string[] }).assignedTeacherIds;
+  const canManageStudent =
+    isSoloTeacher || student.teacherId === teacherId || assigned?.includes(teacherId ?? "");
 
   const chartSessions = recentSessions.map((s) => ({
     domain: s.domain,

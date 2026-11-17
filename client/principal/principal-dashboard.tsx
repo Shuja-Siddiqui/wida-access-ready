@@ -160,6 +160,17 @@ export default function PrincipalDashboard() {
   const teacherName = (id: string) =>
     allStaff.find((t) => t.id === id)?.name ?? (id ? "Assigned teacher" : "Unassigned");
 
+  const assignedTeacherIds = (s: (typeof students)[0]) => {
+    if (s.assignedTeacherIds?.length) return s.assignedTeacherIds;
+    return s.guardianId ? [s.guardianId] : [];
+  };
+
+  const assignedTeachersLabel = (s: (typeof students)[0]) => {
+    const ids = assignedTeacherIds(s);
+    if (!ids.length) return null;
+    return ids.map(teacherName).join(", ");
+  };
+
   return (
     <PageContainer className="space-y-8" themeWash>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
@@ -495,7 +506,9 @@ export default function PrincipalDashboard() {
           </div>
         ) : (
           <ul>
-            {students.map((s, i) => (
+            {students.map((s, i) => {
+              const teachersLabel = assignedTeachersLabel(s);
+              return (
               <li key={s.id} className={`flex items-center gap-4 px-5 py-4 ${i !== 0 ? "border-t border-border/10" : ""}`}>
                 <button
                   onClick={() => setLocation(`/principal/student/${s.id}`)}
@@ -515,8 +528,11 @@ export default function PrincipalDashboard() {
                     }
                   />
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-xs font-medium text-muted-foreground hidden sm:block">
-                      {s.guardianId ? teacherName(s.guardianId) : <span className="italic">Unassigned</span>}
+                    <span
+                      className="text-xs font-medium text-muted-foreground hidden sm:block max-w-[14rem] truncate"
+                      title={teachersLabel ?? undefined}
+                    >
+                      {teachersLabel ? teachersLabel : <span className="italic">Unassigned</span>}
                     </span>
                     <span className="text-sm font-black text-streak-gold flex items-center gap-1"><Flame className="w-4 h-4 fill-streak-gold" /> {s.currentStreak}</span>
                     <span className="text-sm font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-lg">{s.totalXp} XP</span>
@@ -530,7 +546,8 @@ export default function PrincipalDashboard() {
                   <UserCheck className="w-4 h-4" />
                 </button>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
       </div>

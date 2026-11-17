@@ -89,7 +89,12 @@ export default function PrincipalTeacherDetail() {
       setAllSchoolStudents(all);
       // pre-select students already assigned to this teacher
       const alreadyAssigned = new Set(
-        all.filter((s) => s.guardianId === teacherId).map((s) => s.id),
+        all
+          .filter((s) => {
+            const ids = s.assignedTeacherIds ?? (s.guardianId ? [s.guardianId] : []);
+            return ids.includes(teacherId);
+          })
+          .map((s) => s.id),
       );
       setSelected(alreadyAssigned);
     } catch {
@@ -281,7 +286,8 @@ export default function PrincipalTeacherDetail() {
               Assign Students to {teacher.name}
             </DialogTitle>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Select students from your school to assign to this teacher.
+              Students can belong to multiple teachers. Selection here updates {teacher.name}&apos;s roster
+              only (other teachers keep their assignments).
             </p>
           </DialogHeader>
 
@@ -345,7 +351,8 @@ export default function PrincipalTeacherDetail() {
                   <ul className="divide-y divide-border">
                     {filteredStudents.map((s) => {
                       const isSelected = selected.has(s.id);
-                      const isAlreadyThisTeacher = s.guardianId === teacherId;
+                      const assignedIds = s.assignedTeacherIds ?? (s.guardianId ? [s.guardianId] : []);
+                      const isAlreadyThisTeacher = assignedIds.includes(teacherId);
                       return (
                         <li key={s.id}>
                           <button
@@ -380,12 +387,15 @@ export default function PrincipalTeacherDetail() {
                               }
                             />
 
-                            {/* Badge: already assigned to this teacher */}
-                            {isAlreadyThisTeacher && (
+                            {isAlreadyThisTeacher ? (
                               <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-[hsl(150_62%_41%)]/10 text-[hsl(150_62%_41%)] shrink-0">
-                                Assigned
+                                Assigned here
                               </span>
-                            )}
+                            ) : assignedIds.length > 0 ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+                                + Add here
+                              </span>
+                            ) : null}
                           </button>
                         </li>
                       );

@@ -229,6 +229,8 @@ export interface UpdateStudentBody {
 export interface Student {
   id: string;
   teacherId: string;
+  /** All teachers assigned to this student (school rosters). */
+  assignedTeacherIds?: string[];
   name: string;
   gradeBand: string;
   stateAssessment: string;

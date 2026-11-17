@@ -396,7 +396,10 @@ export default function DistrictDashboard() {
                             </h2>
                             {activePanel.teachers.map((teacher, i) => {
                               const teacherStudents = activePanel.students.filter(
-                                (s) => s.guardianId === teacher.id,
+                                (s) =>
+                                  (s.assignedTeacherIds ?? (s.guardianId ? [s.guardianId] : [])).includes(
+                                    teacher.id,
+                                  ),
                               );
                               const isOpen = selectedTeacher === teacher.id;
 

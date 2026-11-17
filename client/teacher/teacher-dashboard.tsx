@@ -64,8 +64,11 @@ export default function TeacherDashboard() {
   const stalledCount = dashboard.allStudents.filter((s) => s.isStalled).length;
   const districtSharedRoster = dashboard.rosterMode === "district_shared";
 
-  const canManageStudent = (student: Student) =>
-    isSoloTeacher || student.teacherId === teacherId;
+  const canManageStudent = (student: Student & { assignedTeacherIds?: string[] }) => {
+    if (isSoloTeacher) return true;
+    if (student.teacherId === teacherId) return true;
+    return student.assignedTeacherIds?.includes(teacherId ?? "") ?? false;
+  };
 
   return (
     <PageContainer className="space-y-8" themeWash>
